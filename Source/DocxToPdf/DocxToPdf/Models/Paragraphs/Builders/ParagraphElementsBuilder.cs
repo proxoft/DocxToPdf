@@ -51,7 +51,7 @@ namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders
             var drawings = paragraph
                 .Descendants<Word.Drawing>()
                 .Where(d => d.Anchor != null)
-                .Select(d => d.Anchor.ToFixedDrawing(imageAccessor))
+                .Select(d => d.Anchor!.ToFixedDrawing(imageAccessor))
                 .ToArray();
 
             return drawings;
