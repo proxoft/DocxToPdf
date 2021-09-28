@@ -73,7 +73,7 @@ namespace Proxoft.DocxToPdf.Models.Common
             return this.Equals(obj as PagePosition);
         }
 
-        public bool Equals(PagePosition other)
+        public bool Equals(PagePosition? other)
         {
             return other is object
                 && other.PageNumber == this.PageNumber
