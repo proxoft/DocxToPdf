@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocxToPdf", "DocxToPdf\DocxToPdf.csproj", "{BA977C33-B140-4C5B-BEE3-9FCF5FB2B5B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DocxToPdf", "DocxToPdf\DocxToPdf.csproj", "{BA977C33-B140-4C5B-BEE3-9FCF5FB2B5B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocxToPdf.Runner", "DocxToPdf.Runner\DocxToPdf.Runner.csproj", "{D4501DF0-7947-4A16-9689-FAC73B5CBC6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{BA977C33-B140-4C5B-BEE3-9FCF5FB2B5B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA977C33-B140-4C5B-BEE3-9FCF5FB2B5B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA977C33-B140-4C5B-BEE3-9FCF5FB2B5B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4501DF0-7947-4A16-9689-FAC73B5CBC6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4501DF0-7947-4A16-9689-FAC73B5CBC6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4501DF0-7947-4A16-9689-FAC73B5CBC6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4501DF0-7947-4A16-9689-FAC73B5CBC6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
