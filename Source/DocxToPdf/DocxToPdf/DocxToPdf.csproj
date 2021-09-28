@@ -6,6 +6,17 @@
         <AssemblyName>Proxoft.DocxToPdf</AssemblyName>
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <PackageId>DocxToPdf</PackageId>
+        <Company>proxoft s.r.o.</Company>
+        <Product>DocxToPdf</Product>
+        <PackageIcon>128x128 Transformer coloured final.png</PackageIcon>
+        <BaseOutputPath>..\..\..\..\Build</BaseOutputPath>
     </PropertyGroup>
+
+    <ItemGroup>
+      <None Update="Resources\Icons\128x128 Transformer coloured final.png">
+        <Pack>True</Pack>
+      </None>
+    </ItemGroup>
 
 </Project>
