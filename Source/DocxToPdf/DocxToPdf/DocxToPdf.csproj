@@ -14,9 +14,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="Resources\Icons\128x128 Transformer coloured final.png">
-        <Pack>True</Pack>
-      </None>
+        <PackageReference Include="DocumentFormat.OpenXml" Version="2.13.1" />
+        <PackageReference Include="PDFsharpNetStandard2" Version="1.51.4845" />
+        <PackageReference Include="System.Text.Encoding.CodePages" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Resources\Icons\128x128 Transformer coloured final.png">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
     </ItemGroup>
 
 </Project>
