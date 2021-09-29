@@ -2,9 +2,9 @@
 
 namespace Proxoft.DocxToPdf.Tests
 {
-    public class PageNumberTests : TestBase
+    public class PageNumberTest : TestBase
     {
-        public PageNumberTests() : base("PageNumbers")
+        public PageNumberTest() : base("PageNumbers")
         {
         }
 

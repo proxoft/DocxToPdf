@@ -2,9 +2,9 @@
 
 namespace Proxoft.DocxToPdf.Tests
 {
-    public class HeaderTests : TestBase
+    public class HeaderTest : TestBase
     {
-        public HeaderTests() : base("Headers")
+        public HeaderTest() : base("Headers")
         {
             this.Options = RenderingOptions.WithDefaults(header: true);
         }

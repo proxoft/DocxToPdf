@@ -2,9 +2,9 @@
 
 namespace Proxoft.DocxToPdf.Tests
 {
-    public class FooterTests : TestBase
+    public class FooterTest : TestBase
     {
-        public FooterTests() : base("Footers")
+        public FooterTest() : base("Footers")
         {
             this.Options = RenderingOptions.WithDefaults(
                 footer: true);

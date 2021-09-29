@@ -2,9 +2,9 @@
 
 namespace Proxoft.DocxToPdf.Tests
 {
-    public class ImagesTests : TestBase
+    public class ImagesTest : TestBase
     {
-        public ImagesTests() : base("Images")
+        public ImagesTest() : base("Images")
         {
         }
 

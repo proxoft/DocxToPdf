@@ -2,9 +2,9 @@
 
 namespace Proxoft.DocxToPdf.Tests
 {
-    public class PageBreakTests : TestBase
+    public class PageBreakTest : TestBase
     {
-        public PageBreakTests() : base("PageBreaks")
+        public PageBreakTest() : base("PageBreaks")
         {
             this.Options = RenderingOptions.WithDefaults(
                 hiddenChars: true,
