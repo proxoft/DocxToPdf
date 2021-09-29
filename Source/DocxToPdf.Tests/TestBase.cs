@@ -1,8 +1,6 @@
 ﻿using System.IO;
-using System.Text;
-using Proxoft.DocxToPdf;
 
-namespace Sidea.DocxToPdf.Tests
+namespace Proxoft.DocxToPdf.Tests
 {
     public abstract class TestBase
     {

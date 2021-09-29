@@ -1,16 +1,14 @@
-﻿
-using Proxoft.DocxToPdf;
-using Xunit;
+﻿using Xunit;
 
-namespace Sidea.DocxToPdf.Tests
+namespace Proxoft.DocxToPdf.Tests
 {
     public class PageBreakTests : TestBase
     {
         public PageBreakTests() : base("PageBreaks")
         {
-            this.Options = new RenderingOptions(
+            this.Options = RenderingOptions.WithDefaults(
                 hiddenChars: true,
-                paragraphBorders: RenderingOptions.ParagraphDefault);
+                paragraph: true);
         }
 
         [Fact]

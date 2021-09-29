@@ -1,7 +1,6 @@
-using Sidea.DocxToPdf.Tests;
 using Xunit;
 
-namespace DocxToPdf.Tests
+namespace Proxoft.DocxToPdf.Tests
 {
     public class ParagraphTest : TestBase
     {
