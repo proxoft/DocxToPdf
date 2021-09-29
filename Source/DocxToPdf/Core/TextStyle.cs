@@ -4,6 +4,8 @@ namespace Proxoft.DocxToPdf.Core
 {
     internal class TextStyle
     {
+        private static object _lock = new object();
+
         private static readonly Graphics _graphics;
         private static StringFormat _stringFormat;
 
@@ -41,7 +43,13 @@ namespace Proxoft.DocxToPdf.Core
 
         public Size MeasureText(string text)
         {
-            var sizeF = _graphics.MeasureString(text, this.Font, PointF.Empty, _stringFormat);
+            SizeF sizeF;
+            lock (_lock)
+            {
+                // graphics MeasureString is not thread safe
+                sizeF = _graphics.MeasureString(text, this.Font, PointF.Empty, _stringFormat);
+            }
+
             return new Size(sizeF.Width, sizeF.Height);
         }
 
