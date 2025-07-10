@@ -1,16 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1;NET8.0;NET9.0</TargetFrameworks>
-        <RootNamespace>Proxoft.DocxToPdf</RootNamespace>
-        <AssemblyName>Proxoft.DocxToPdf</AssemblyName>
+        <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
 
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <PackageId>DocxToPdf</PackageId>
-       
-        
         <PackageIcon>Icon.png</PackageIcon>
-        
+
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,12 +1,15 @@
 ﻿<Project>
     <PropertyGroup>
         <LangVersion>12.0</LangVersion>
-        <BaseOutputPath>..\..\_Output\$(MSBuildProjectName)\bin\</BaseOutputPath>
+        <BaseOutputPath>..\..\..\_Output\$(MSBuildProjectName)\bin\</BaseOutputPath>
         <Nullable>enable</Nullable>
 
+        <AssemblyName>Proxoft.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace>Proxoft.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+
         <Product>DocxToPdf</Product>
-        
-        <Company>proxoft s.r.o.</Company>
+
+        <Company>Proxoft s.r.o.</Company>
         <Authors>Proxoft s.r.o.</Authors>
         <Copyright>www.proxoft.sk</Copyright>
         <Product>Proxoft Docx Template Engine</Product>

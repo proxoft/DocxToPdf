@@ -11,7 +11,7 @@ namespace Proxoft.DocxToPdf.Tests
 
         protected TestBase(string samplesSubFolder)
         {
-            _samplesFolder = $"../../../../Samples/{samplesSubFolder}";
+            _samplesFolder = $"../../../../../Repository/Source/Samples/{samplesSubFolder}";
             _outputFolder = $"../../../../TestOutputs/{samplesSubFolder}";
         }
 
