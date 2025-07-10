@@ -8,24 +8,22 @@ namespace Proxoft.DocxToPdf.Models.Tables.Grids
     [DebuggerDisplay("{Column}({ColumnSpan})-{Row}({RowSpan})")]
     internal class GridPosition
     {
-        private int[] _rowIndeces;
+        private readonly int[] _rowIndeces;
 
         public GridPosition(
             int column,
             int columnSpan,
             int row,
-            int rowSpan,
-            bool isLastVerticalCell)
+            int rowSpan)
         {
             this.Row = row;
             this.Column = column;
             this.RowSpan = rowSpan;
             this.ColumnSpan = columnSpan;
-            this.IsLastVerticalCell = isLastVerticalCell;
 
             _rowIndeces = rowSpan > 0
-                ? Enumerable.Range(row, rowSpan).ToArray()
-                : new int[0];
+                ? [.. Enumerable.Range(row, rowSpan)]
+                : [];
         }
 
         public int Column { get; }
@@ -39,25 +37,25 @@ namespace Proxoft.DocxToPdf.Models.Tables.Grids
 
         public bool IsRowMergedCell => this.RowSpan <= 0;
 
-        public bool IsInRow(int rowIndex)
-        {
-            return this.Row == rowIndex || _rowIndeces.Contains(rowIndex);
-        }
+        //public bool IsInRow(int rowIndex)
+        //{
+        //    return this.Row == rowIndex || _rowIndeces.Contains(rowIndex);
+        //}
 
-        public bool IsInColumn(int column)
-        {
-            return this.Column <= column
-                && this.Column + this.ColumnSpan - 1 >= column;
-        }
+        //public bool IsInColumn(int column)
+        //{
+        //    return this.Column <= column
+        //        && this.Column + this.ColumnSpan - 1 >= column;
+        //}
 
-        public bool IsFirstVerticalCellOfRow(int rowIndex)
-        {
-            return this.Row == rowIndex && this.IsFirstVerticalCell;
-        }
+        //public bool IsFirstVerticalCellOfRow(int rowIndex)
+        //{
+        //    return this.Row == rowIndex && this.IsFirstVerticalCell;
+        //}
 
-        public bool IsLastVerticalCellOfRow(int rowIndex)
-        {
-            return this.Row == rowIndex && this.IsLastVerticalCell;
-        }
+        //public bool IsLastVerticalCellOfRow(int rowIndex)
+        //{
+        //    return this.Row == rowIndex && this.IsLastVerticalCell;
+        //}
     }
 }

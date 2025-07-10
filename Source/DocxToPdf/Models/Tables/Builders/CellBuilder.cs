@@ -6,139 +6,72 @@ using Proxoft.DocxToPdf.Models.Tables.Elements;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
 using Word = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models.Tables.Builders
+namespace Proxoft.DocxToPdf.Models.Tables.Builders;
+
+internal static class CellBuilder
 {
-    internal static class CellBuilder
+    public static Cell[] InitializeCells(
+        this Word.Table table,
+        IImageAccessor imageAccessor,
+        IStyleFactory styleFactory)
     {
-        public static IEnumerable<Cell> InitializeCells(
-            this Word.Table table,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleFactory)
+        Cell[] cells = [.. table.GetCells(imageAccessor, styleFactory)];
+        return cells;
+    }
+
+    private static IEnumerable<Cell> GetCells(
+        this Word.Table table,
+        IImageAccessor imageAccessor,
+        IStyleFactory styleFactory)
+    {
+        Word.TableGrid tg = table.Grid();
+        int colCount = tg.Columns().Count();
+
+        Word.TableRow[] rows = [.. table.Rows()];
+        if(rows.Length == 0)
         {
-            var spans = table.PrepareCellSpans();
-            var cells = table
-                .Rows()
-                .SelectMany((row, index) =>
-                {
-                    var rowCells = row.InitializeCells(index, spans, imageAccessor, styleFactory);
-                    return rowCells;
-                })
-                .Where(c => !c.GridPosition.IsRowMergedCell)
-                .ToArray();
-            return cells;
+            yield break; // No rows to process
         }
 
-        private static IEnumerable<Cell> InitializeCells(
-            this Word.TableRow row,
-            int rowIndex,
-            List<GridSpanInfo[]> spans,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleFactory)
+        int rowCount = rows.Length;
+
+        Word.TableCell[,] solved = new Word.TableCell[colCount, rowCount];
+
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
         {
-            var cells = row
-                .Cells()
-                .Select((cell, index) =>
-                {
-                    var gridPosition = GetCellGridPosition(rowIndex, index, spans);
-                    var c = Cell.From(cell, gridPosition, imageAccessor, styleFactory);
-                    return c;
-                })
-                .ToArray();
+            Word.TableRow row = rows[rowIndex];
+            Word.TableCell[] cells = [.. row.Cells()];
 
-            return cells;
-        }
-
-        private static GridPosition GetCellGridPosition(
-            int rowIndex,
-            int cellIndex,
-            List<GridSpanInfo[]> spans)
-        {
-            var info = spans[rowIndex][cellIndex];
-
-            var rowSpan = info.RowSpan == 1 ? 1 : -1;
-
-            var isLastCellOfRow = true;
-            if (rowSpan == 1)
+            int colIndex = 0;
+            for(int cellIndex = 0; cellIndex < cells.Length; cellIndex++)
             {
-                var ri = rowIndex + 1;
-                while (ri < spans.Count)
+                Word.TableCell cell = cells[cellIndex];
+                if (cell == null || solved[colIndex, rowIndex] != null)
                 {
-                    var i = spans[ri].FindSpanInfoForColumn(info.Column);
-                    if (i.RowSpan == 1)
-                    {
-                        break;
-                    }
-
-                    isLastCellOfRow = false;
-                    rowSpan++;
-                    ri++;
-                }
-            }
-            else
-            {
-                var ri = rowIndex - 1;
-                while (ri >= 0)
-                {
-                    var i = spans[ri].FindSpanInfoForColumn(info.Column);
-                    rowSpan--;
-                    if (i.RowSpan > 0)
-                    {
-                        break;
-                    }
-                    ri--;
+                    colIndex++;
+                    continue; // Skip null or already processed cells
                 }
 
-                isLastCellOfRow = rowIndex == spans.Count - 1
-                    || spans[rowIndex + 1].FindSpanInfoForColumn(info.Column).RowSpan > 0;
-            }
+                int colSpan = cell.GetColSpan();
+                int rowSpan = table.GetVerticalSpan(rowIndex, cellIndex);
 
-            return new GridPosition(info.Column, info.ColSpan, rowIndex, rowSpan, isLastCellOfRow);
-        }
+                // Create a new Cell instance
+                GridPosition gridPosition = new(colIndex, colSpan, rowIndex, rowSpan);
+                Cell newCell = Cell.From(cell, gridPosition, imageAccessor, styleFactory);
 
-        private static List<GridSpanInfo[]> PrepareCellSpans(this Word.Table table)
-        {
-            var rowSpans = table
-                .Rows()
-                .Select(row =>
+                // Mark the cells in the grid as solved
+                for (int r = rowIndex; r < rowIndex + rowSpan; r++)
                 {
-                    var rowColIndex = 0;
-                    var rowCellSpans = row
-                        .Cells()
-                        .Select(cell =>
-                        {
-                            var (rowSpan, colSpan) = cell.GetCellSpans();
-                            var cellInfo = new GridSpanInfo
-                            {
-                                RowSpan = rowSpan,
-                                ColSpan = colSpan,
-                                Column = rowColIndex
-                            };
+                    for (int c = colIndex; c <= colIndex + (colSpan - 1); c++)
+                    {
+                        solved[c, r] = cell;
+                    }
+                }
 
-                            rowColIndex += colSpan;
-                            return cellInfo;
-                        })
-                            .ToArray();
+                colIndex += colSpan;
 
-                    return rowCellSpans;
-                })
-                .ToList();
-
-            return rowSpans;
-        }
-
-        private static GridSpanInfo FindSpanInfoForColumn(this IEnumerable<GridSpanInfo> rowSpanInfos, int column)
-        {
-            var info = rowSpanInfos
-                    .First(i => i.Column <= column && i.Column + i.ColSpan - 1 >= column);
-
-            return info;
-        }
-
-        private class GridSpanInfo
-        {
-            public int RowSpan { get; set; }
-            public int ColSpan { get; set; }
-            public int Column { get; set; }
+                yield return newCell;
+            }
         }
     }
 }

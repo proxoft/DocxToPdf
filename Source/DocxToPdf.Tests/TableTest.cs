@@ -4,7 +4,7 @@ public class TableTest : TestBase
 {
     public TableTest() : base("Tables")
     {
-        this.Options = RenderingOptions.WithDefaults();
+        this.Options = RenderingOptions.WithDefaults(hiddenChars: false);
     }
 
     [Fact]
@@ -29,6 +29,12 @@ public class TableTest : TestBase
     public void Layout()
     {
         this.Generate(nameof(Layout));
+    }
+
+    [Fact]
+    public void Layout2()
+    {
+        this.Generate(nameof(Layout2));
     }
 
     [Fact]
