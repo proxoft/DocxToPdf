@@ -1,16 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <RootNamespace>Proxoft.DocxToPdf</RootNamespace>
-        <AssemblyName>Proxoft.DocxToPdf</AssemblyName>
-        <Nullable>enable</Nullable>
+        <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <PackageIcon>Icon.png</PackageIcon>
         <PackageId>DocxToPdf</PackageId>
-        <Company>proxoft s.r.o.</Company>
-        <Product>DocxToPdf</Product>
-        <PackageIcon>128x128 Transformer coloured final.png</PackageIcon>
-        <BaseOutputPath>..\..\..\..\Build</BaseOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,9 +14,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="Resources\Icons\128x128 Transformer coloured final.png">
-            <Pack>True</Pack>
-            <PackagePath></PackagePath>
+        <None Include="..\..\Icons\Icon.png">
+          <Pack>True</Pack>
+          <PackagePath>\</PackagePath>
+        </None>
+        <None Include="..\..\README.md">
+          <Pack>True</Pack>
+          <PackagePath>\</PackagePath>
         </None>
     </ItemGroup>
 

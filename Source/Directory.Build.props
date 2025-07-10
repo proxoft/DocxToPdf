@@ -1,0 +1,34 @@
+﻿<Project>
+    <PropertyGroup>
+        <LangVersion>12.0</LangVersion>
+        <BaseOutputPath>..\..\..\_Output\$(MSBuildProjectName)\bin\</BaseOutputPath>
+        <AssemblyName>Proxoft.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace>Proxoft.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+        <Nullable>enable</Nullable>
+
+        <Product>DocxToPdf</Product>
+
+        <Company>Proxoft s.r.o.</Company>
+        <Authors>Proxoft s.r.o.</Authors>
+        <Copyright>www.proxoft.sk</Copyright>
+        <Product>Proxoft Docx Template Engine</Product>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageProjectUrl>https://github.com/proxoft/DocxToPdf</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/proxoft/DocxToPdf</RepositoryUrl>
+
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+        <Description>Docx to Pdf converter written in pure C# and no external dependencies.</Description>
+        <PackageTags>Docx; Pdf; Convert; DocxToPdf</PackageTags>
+
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+        <Version>0.1.0</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Proxoft.$(MSBuildProjectName).Tests" />
+    </ItemGroup>
+</Project>
