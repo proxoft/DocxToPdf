@@ -2,10 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
-
         <IsPackable>false</IsPackable>
-        <RootNamespace>Proxoft.DocxToPdf.Tests</RootNamespace>
-        <AssemblyName>Proxoft.DocxToPdf.Tests</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>

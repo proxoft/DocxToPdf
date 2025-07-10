@@ -8,6 +8,7 @@
         <RootNamespace>Proxoft.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
 
         <Product>DocxToPdf</Product>
+        <PackageId>DocxToPdf</PackageId>
 
         <Company>Proxoft s.r.o.</Company>
         <Authors>Proxoft s.r.o.</Authors>

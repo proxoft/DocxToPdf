@@ -1,12 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>
-        <TargetFramework>net9.0</TargetFramework>
-        <RootNamespace>Proxoft.DocxToPdf.Runner</RootNamespace>
-        <AssemblyName>Proxoft.DocxToPdf.Runner</AssemblyName>
-  </PropertyGroup>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.8.0" />
