@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
-        <AssemblyName>Proxoft.DocxToPdf.Runner</AssemblyName>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
