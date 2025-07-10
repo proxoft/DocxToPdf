@@ -4,11 +4,7 @@
         <BaseOutputPath>..\..\..\_Output\$(MSBuildProjectName)\bin\</BaseOutputPath>
         <Nullable>enable</Nullable>
 
-        <AssemblyName>Proxoft.$(MSBuildProjectName)</AssemblyName>
-        <RootNamespace>Proxoft.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
-
         <Product>DocxToPdf</Product>
-        <PackageId>DocxToPdf</PackageId>
 
         <Company>Proxoft s.r.o.</Company>
         <Authors>Proxoft s.r.o.</Authors>
@@ -31,6 +27,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="Proxoft.TemplateEngine.$(MSBuildProjectName).Tests" />
+        <InternalsVisibleTo Include="Proxoft.$(MSBuildProjectName).Tests" />
     </ItemGroup>
 </Project>

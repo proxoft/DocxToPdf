@@ -2,11 +2,10 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
-
+        <AssemblyName>Proxoft.DocxToPdf</AssemblyName>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-       
         <PackageIcon>Icon.png</PackageIcon>
-
+        <PackageId>DocxToPdf</PackageId>
     </PropertyGroup>
 
     <ItemGroup>
