@@ -3,6 +3,7 @@
         <LangVersion>12.0</LangVersion>
         <BaseOutputPath>..\..\..\_Output\$(MSBuildProjectName)\bin\</BaseOutputPath>
         <AssemblyName>Proxoft.$(MSBuildProjectName)</AssemblyName>
+        <RootNamespace>Proxoft.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
         <Nullable>enable</Nullable>
 
         <Product>DocxToPdf</Product>
