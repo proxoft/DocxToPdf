@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DocxToPdf.Runner/DocxToPdf.Runner.csproj" />
+  <Project Path="DocxToPdf.Tests/DocxToPdf.Tests.csproj" />
+  <Project Path="DocxToPdf/DocxToPdf.csproj" />
+</Solution>
