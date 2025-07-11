@@ -1,43 +1,40 @@
-﻿using Xunit;
+﻿namespace Proxoft.DocxToPdf.Tests;
 
-namespace Proxoft.DocxToPdf.Tests
+public class FooterTest : TestBase
 {
-    public class FooterTest : TestBase
+    public FooterTest() : base("Footers")
     {
-        public FooterTest() : base("Footers")
-        {
-            this.Options = RenderingOptions.WithDefaults(
-                footer: true);
-        }
+        this.Options = RenderingOptions.WithDefaults(
+            footer: true);
+    }
 
-        [Fact]
-        public void HelloWorld()
-        {
-            this.Generate(nameof(HelloWorld));
-        }
+    [Fact]
+    public void HelloWorld()
+    {
+        this.Generate(nameof(HelloWorld));
+    }
 
-        [Fact]
-        public void Default()
-        {
-            this.Generate(nameof(Default));
-        }
+    [Fact]
+    public void Default()
+    {
+        this.Generate(nameof(Default));
+    }
 
-        [Fact]
-        public void EvenOdd()
-        {
-            this.Generate(nameof(EvenOdd));
-        }
+    [Fact]
+    public void EvenOdd()
+    {
+        this.Generate(nameof(EvenOdd));
+    }
 
-        [Fact]
-        public void FirstEvenOdd()
-        {
-            this.Generate(nameof(FirstEvenOdd));
-        }
+    [Fact]
+    public void FirstEvenOdd()
+    {
+        this.Generate(nameof(FirstEvenOdd));
+    }
 
-        [Fact]
-        public void FirstEvenOddXL()
-        {
-            this.Generate(nameof(FirstEvenOddXL));
-        }
+    [Fact]
+    public void FirstEvenOddXL()
+    {
+        this.Generate(nameof(FirstEvenOddXL));
     }
 }

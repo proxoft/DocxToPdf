@@ -28,7 +28,7 @@ namespace Proxoft.DocxToPdf.Models.Tables.Grids
 
         public IEnumerable<PageRegion> GetPageRegions()
         {
-            var space = this.CalculateHorizontalCellSpace(new GridPosition(0, _columnWidths.Length, 0, 0, true));
+            var space = this.CalculateHorizontalCellSpace(new GridPosition(0, _columnWidths.Length, 0, 0));
             
             var pageRegions = Enumerable
                 .Range(0, _gridRows.Length)
