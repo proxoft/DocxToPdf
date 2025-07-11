@@ -1,9 +1,8 @@
 ﻿using System;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
-using Proxoft.DocxToPdf.Models.Core;
 
-namespace Proxoft.DocxToPdf.Models;
+namespace Proxoft.DocxToPdf.Models.Core;
 
 internal abstract class PageContextElement : PageElement
 {

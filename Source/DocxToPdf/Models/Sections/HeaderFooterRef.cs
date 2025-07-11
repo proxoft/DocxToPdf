@@ -1,16 +1,16 @@
 ﻿using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models.Sections
-{
-    internal class HeaderFooterRef
-    {
-        public HeaderFooterRef(string id, HeaderFooterValues type)
-        {
-            this.Id = id;
-            this.Type = type;
-        }
+namespace Proxoft.DocxToPdf.Models.Sections;
 
-        public string Id { get; }
-        public HeaderFooterValues Type { get; }
+internal record HeaderFooterRef
+{
+    public HeaderFooterRef(string id, HeaderFooterValues type)
+    {
+        this.Id = id;
+        this.Type = type;
     }
+
+    public string Id { get; }
+
+    public HeaderFooterValues Type { get; }
 }

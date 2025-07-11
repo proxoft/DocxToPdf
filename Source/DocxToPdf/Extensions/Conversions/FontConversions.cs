@@ -5,22 +5,22 @@ namespace Proxoft.DocxToPdf
 {
     internal static class FontConversions
     {
-        public static FontStyle BoldStyle(this Bold bold, FontStyle defaultFontStyle)
+        public static FontStyle BoldStyle(this Bold? bold, FontStyle defaultFontStyle)
         {
             return bold.OnOffTypeToStyle(FontStyle.Bold, defaultFontStyle & FontStyle.Bold);
         }
 
-        public static FontStyle ItalicStyle(this Italic italic, FontStyle defaultFontStyle)
+        public static FontStyle ItalicStyle(this Italic? italic, FontStyle defaultFontStyle)
         {
             return italic.OnOffTypeToStyle(FontStyle.Italic, defaultFontStyle & FontStyle.Italic);
         }
 
-        public static FontStyle StrikeStyle(this Strike strike, FontStyle defaultFontStyle)
+        public static FontStyle StrikeStyle(this Strike? strike, FontStyle defaultFontStyle)
         {
             return strike.OnOffTypeToStyle(FontStyle.Strikeout, defaultFontStyle & FontStyle.Strikeout);
         }
 
-        public static FontStyle UnderlineStyle(this Underline underline, FontStyle defaultFontStyle)
+        public static FontStyle UnderlineStyle(this Underline? underline, FontStyle defaultFontStyle)
         {
             if(underline?.Val == null)
             {
@@ -49,7 +49,7 @@ namespace Proxoft.DocxToPdf
             return (float)size;
         }
 
-        private static FontStyle OnOffTypeToStyle(this OnOffType onOff, FontStyle onValue, FontStyle nullValue)
+        private static FontStyle OnOffTypeToStyle(this OnOffType? onOff, FontStyle onValue, FontStyle nullValue)
         {
             if(onOff == null)
             {

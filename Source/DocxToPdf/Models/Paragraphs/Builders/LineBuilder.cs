@@ -1,78 +1,79 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 using Proxoft.DocxToPdf.Models.Styles;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders
+using C = Proxoft.DocxToPdf.Core;
+
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
+
+internal static class LineBuilder
 {
-    internal static class LineBuilder
+    public static Line CreateLine(
+        this Stack<LineElement> fromElements,
+        LineAlignment lineAlignment,
+        double relativeYOffset,
+        IEnumerable<FixedDrawing> fixedDrawings,
+        double availableWidth,
+        double defaultLineHeight,
+        PageVariables variables,
+        LineSpacing lineSpacing)
     {
-        public static Line CreateLine(
-            this Stack<LineElement> fromElements,
-            LineAlignment lineAlignment,
-            double relativeYOffset,
-            IEnumerable<FixedDrawing> fixedDrawings,
-            double availableWidth,
-            double defaultLineHeight,
-            PageVariables variables,
-            LineSpacing lineSpacing)
-        {
-            var (lineSegments, lineHeight) = fromElements
-                .CreateLineSegments(lineAlignment, relativeYOffset, fixedDrawings.Select(d => d.BoundingBox), availableWidth, defaultLineHeight, variables);
+        var (lineSegments, lineHeight) = fromElements
+            .CreateLineSegments(lineAlignment, relativeYOffset, fixedDrawings.Select(d => d.BoundingBox), availableWidth, defaultLineHeight, variables);
 
-            var baseLineOffset = lineSegments.Max(ls => ls.GetBaseLineOffset());
-            foreach (var ls in lineSegments)
+        var baseLineOffset = lineSegments.Max(ls => ls.GetBaseLineOffset());
+        foreach (var ls in lineSegments)
+        {
+            ls.JustifyElements(baseLineOffset, lineHeight);
+        }
+
+        return new Line(lineSegments, lineSpacing);
+    }
+
+    private static (LineSegment[], double) CreateLineSegments(
+        this Stack<LineElement> fromElements,
+        LineAlignment lineAlignment,
+        double relativeYOffset,
+        IEnumerable<C.Rectangle> fixedDrawings,
+        double availableWidth,
+        double defaultLineHeight,
+        PageVariables variables)
+    {
+        var reserveSpaceHelper = new LineReservedSpaceHelper(fixedDrawings, relativeYOffset, availableWidth);
+
+        var expectedLineHeight = 0.0;
+        var finished = false;
+
+        do
+        {
+            var segmentSpaces = reserveSpaceHelper
+                .GetLineSegments()
+                .ToArray();
+
+            var lineSegments = segmentSpaces
+                .Select((space, i) => fromElements.CreateLineSegment(space, lineAlignment, defaultLineHeight, variables))
+                .ToArray();
+
+            var maxHeight = lineSegments.Max(l => l.Size.Height);
+            expectedLineHeight = Math.Max(maxHeight, expectedLineHeight);
+            var hasChanged = reserveSpaceHelper.UpdateLineHeight(expectedLineHeight);
+
+            if (!hasChanged)
             {
-                ls.JustifyElements(baseLineOffset, lineHeight);
+                return (lineSegments, expectedLineHeight);
             }
-
-            return new Line(lineSegments, lineSpacing);
-        }
-
-        private static (LineSegment[], double) CreateLineSegments(
-            this Stack<LineElement> fromElements,
-            LineAlignment lineAlignment,
-            double relativeYOffset,
-            IEnumerable<Rectangle> fixedDrawings,
-            double availableWidth,
-            double defaultLineHeight,
-            PageVariables variables)
-        {
-            var reserveSpaceHelper = new LineReservedSpaceHelper(fixedDrawings, relativeYOffset, availableWidth);
-
-            var expectedLineHeight = 0.0;
-            var finished = false;
-
-            do
+            else
             {
-                var segmentSpaces = reserveSpaceHelper
-                    .GetLineSegments()
-                    .ToArray();
-
-                var lineSegments = segmentSpaces
-                    .Select((space, i) => fromElements.CreateLineSegment(space, lineAlignment, defaultLineHeight, variables))
-                    .ToArray();
-
-                var maxHeight = lineSegments.Max(l => l.Size.Height);
-                expectedLineHeight = Math.Max(maxHeight, expectedLineHeight);
-                var hasChanged = reserveSpaceHelper.UpdateLineHeight(expectedLineHeight);
-
-                if (!hasChanged)
+                foreach (var ls in lineSegments.Reverse())
                 {
-                    return (lineSegments, expectedLineHeight);
+                    ls.ReturnElementsToStack(fromElements);
                 }
-                else
-                {
-                    foreach (var ls in lineSegments.Reverse())
-                    {
-                        ls.ReturnElementsToStack(fromElements);
-                    }
-                }
-            } while (!finished);
+            }
+        } while (!finished);
 
-            return (new LineSegment[0], expectedLineHeight);
-        }
+        return (new LineSegment[0], expectedLineHeight);
     }
 }

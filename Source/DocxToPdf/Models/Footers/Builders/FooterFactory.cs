@@ -1,5 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 using Word = DocumentFormat.OpenXml.Wordprocessing;
 

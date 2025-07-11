@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Extensions;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Paragraphs.Builders;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 using Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 using Proxoft.DocxToPdf.Models.Styles.Services;
+
+using C = Proxoft.DocxToPdf.Core;
+
 using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs;
@@ -14,10 +19,10 @@ internal class Paragraph : PageContextElement
 {
     private readonly IStyleFactory _styleFactory;
 
-    private List<Line> _lines = new List<Line>();
-    private FixedDrawing[] _fixedDrawings = new FixedDrawing[0];
-    private Stack<LineElement> _unprocessedElements = new Stack<LineElement>();
-    private Point _pageOffset = Point.Zero;
+    private Line[] _lines = [];
+    private readonly FixedDrawing[] _fixedDrawings = [];
+    private readonly Stack<LineElement> _unprocessedElements = [];
+    private C.Point _pageOffset = C.Point.Zero;
 
     public Paragraph(IEnumerable<LineElement> elements, IEnumerable<FixedDrawing> fixedDrawings, IStyleFactory styleFactory)
     {
@@ -54,7 +59,7 @@ internal class Paragraph : PageContextElement
             .Where(l => l.Position.Page == context.PagePosition)
             .Sum(l => l.HeightWithSpacing);
 
-        this.SetPageRegion(new PageRegion(context.PagePosition, new Rectangle(context.Region.TopLeft, context.Region.Width, heightInLastRegion)));
+        this.SetPageRegion(new PageRegion(context.PagePosition, new C.Rectangle(context.Region.TopLeft, context.Region.Width, heightInLastRegion)));
     }
 
     private void PrepareFixedDrawings(PageContext context, Func<PagePosition, PageContextElement, PageContext> nextPageContextFactory)
@@ -96,14 +101,14 @@ internal class Paragraph : PageContextElement
 
         // update lines
         var i = fromLineIndex;
-        while (i < _lines.Count)
+        while (i < _lines.Length)
         {
             var line = _lines[i];
 
             var updateResult = line.Update(context.PageVariables);
             if(updateResult == ReconstructionNecessary)
             {
-                ClearLinesFromIndex(i);
+                this.ClearLinesFromIndex(i);
                 break;
             }
 
@@ -131,10 +136,14 @@ internal class Paragraph : PageContextElement
                 context.PageVariables,
                 this.ParagraphStyle.Spacing.Line);
 
-            _lines.Add(line);
+            _lines = [
+                .._lines,
+                line
+            ];
+
             if (context.Region.Y + yOffset + line.HeightWithSpacing > context.Region.BottomY)
             {
-                return (ExecuteResult.RequestNextPage, _lines.Count - 1);
+                return (ExecuteResult.RequestNextPage, _lines.Length - 1);
             }
 
             line.SetPosition(context.TopLeft.MoveY(yOffset));
@@ -145,7 +154,7 @@ internal class Paragraph : PageContextElement
         return (ExecuteResult.Done, 0);
     }
 
-    public override void Render(IRenderer renderer)
+    public override void Render(C.IRenderer renderer)
     {
         foreach(var fixedDrawing in _fixedDrawings)
         {
@@ -164,20 +173,19 @@ internal class Paragraph : PageContextElement
 
     private void ClearLinesFromIndex(int fromIndex)
     {
-        var elements = _lines
-            .Skip(fromIndex)
-            .Reverse()
-            .SelectMany(l => l.GetAllElements())
-            .ToArray();
+        LineElement[] elements = [
+            .._lines
+                .Skip(fromIndex)
+                .Reverse()
+                .SelectMany(l => l.GetAllElements())
+        ];
 
-        _lines = _lines
-            .Take(fromIndex)
-            .ToList();
+        _lines =[.._lines.Take(fromIndex)];
 
         _unprocessedElements.Push(elements);
     }
 
-    public override void SetPageOffset(Point pageOffset)
+    public override void SetPageOffset(C.Point pageOffset)
     {
         _pageOffset = pageOffset;
     }

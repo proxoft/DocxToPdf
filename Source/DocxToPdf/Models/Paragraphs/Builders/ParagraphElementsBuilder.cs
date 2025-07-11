@@ -5,6 +5,7 @@ using Word = DocumentFormat.OpenXml.Wordprocessing;
 using WDrawing = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Styles.Services;
+using Proxoft.DocxToPdf.Extensions;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
 

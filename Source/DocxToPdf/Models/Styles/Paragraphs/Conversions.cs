@@ -2,10 +2,10 @@
 using System.Drawing;
 using System.Linq;
 using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Drawing.Diagrams;
+using Proxoft.DocxToPdf.Extensions;
 using Word = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models.Styles;
+namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 
 internal static class Conversions
 {
@@ -82,22 +82,24 @@ internal static class Conversions
 
     public static ParagraphSpacing Override(
         this ParagraphSpacing defaultSpacing,
-        Word.SpacingBetweenLines spacingBetweenLines,
-        params Word.SpacingBetweenLines[] prioritized)
+        Word.SpacingBetweenLines[] prioritized)
     {
-        StringValue before = null;
-        StringValue after = null;
-        StringValue line = null;
-        EnumValue<Word.LineSpacingRuleValues> lineRule = null;
+        StringValue? before = null;
+        StringValue? after = null;
+        StringValue? line = null;
+        EnumValue<Word.LineSpacingRuleValues>? lineRule = null;
 
-        foreach (var spacing in new[] { spacingBetweenLines }.Union(prioritized).Where(s => s != null))
+        foreach (var spacing in prioritized)
         {
             before = before ?? spacing.Before;
             after = after ?? spacing.After;
             line = line ?? spacing.Line;
             lineRule = lineRule ?? spacing.LineRule;
 
-            if (before != null && after != null && line != null)
+            if (before is not null
+                && after is not null
+                && line is not null
+                && lineRule is not null)
             {
                 break;
             }
@@ -111,7 +113,7 @@ internal static class Conversions
     }
 
     public static ParagraphSpacing ToParagraphSpacing(
-        this Word.SpacingBetweenLines spacingXml,
+        this Word.SpacingBetweenLines? spacingXml,
         ParagraphSpacing ifNull)
     {
         if (spacingXml == null)
@@ -150,7 +152,7 @@ internal static class Conversions
         return lineSpacing;
     }
 
-    private static LineSpacing GetLineSpacing(this StringValue line, EnumValue<Word.LineSpacingRuleValues> lineRule)
+    private static LineSpacing GetLineSpacing(this StringValue? line, EnumValue<Word.LineSpacingRuleValues> lineRule)
     {
         Word.LineSpacingRuleValues rule = lineRule?.Value ?? Word.LineSpacingRuleValues.Auto;
 

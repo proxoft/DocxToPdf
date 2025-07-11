@@ -24,16 +24,28 @@ internal class ParagraphStyle
         ParagraphProperties paragraphProperties,
         IReadOnlyCollection<StyleParagraphProperties> styleParagraphs)
     {
-        if(paragraphProperties == null && styleParagraphs.Count == 0)
+        if(paragraphProperties is null && styleParagraphs.Count == 0)
         {
             return this;
         }
 
-        var lineAlignment = paragraphProperties == null
-            ? this.LineAlignment
-            : paragraphProperties.Justification.GetLinesAlignment(this.LineAlignment);
+        LineAlignment lineAlignment =paragraphProperties?.Justification.GetLinesAlignment(this.LineAlignment) ?? this.LineAlignment;
 
-        var spacing = this.Spacing.Override(paragraphProperties?.SpacingBetweenLines, styleParagraphs.Select(sp => sp.SpacingBetweenLines).ToArray());
+        SpacingBetweenLines?[] temp = [
+            paragraphProperties?.SpacingBetweenLines,
+            ..styleParagraphs.Select(sp => sp.SpacingBetweenLines)
+        ];
+
+        SpacingBetweenLines[] spacings = [
+            ..temp
+                .Where(sbl => sbl is not null)
+                .Select(sbl => sbl!)
+        ];
+
+        ParagraphSpacing spacing = this.Spacing.Override(
+            spacings
+        );
+
         return new ParagraphStyle(lineAlignment, spacing);
     }
 

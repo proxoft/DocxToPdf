@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Sections.Columns;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 using OpenXml = DocumentFormat.OpenXml;
@@ -193,7 +195,7 @@ internal static class SectionBuilder
         Pack.MainDocumentPart mainDocument,
         HeaderFooterConfiguration previousHeaderFooterConfiguration)
     {
-        var hasTitlePage = wordSectionProperties.ChildsOfType<Word.TitlePage>().SingleOrDefault()
+        bool hasTitlePage = wordSectionProperties.ChildsOfType<Word.TitlePage>().SingleOrDefault()
               .IsOn(ifOnOffTypeNull: false, ifOnOffValueNull: true);
 
         var headerRefs = wordSectionProperties

@@ -5,7 +5,7 @@ using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 using Word = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models;
+namespace Proxoft.DocxToPdf.Models.Core;
 
 internal static class Factory
 {
