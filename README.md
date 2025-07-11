@@ -1,6 +1,7 @@
 # DocxToPdf
 
-DocxToPdf is an API for conversion Docx file into Pdf file. The library depends only on .NET and some other purely .NET packages, i.e. there's no dependency on any external tool.
+DocxToPdf is an API for conversion Docx file into Pdf file. The library depends only on .NET and some other purely .NET packages,
+ i.e. there's no dependency on any external tool or non .NET library.
 
 ```cs
 string docxFilePath = "C:/Temp/Sample.docx";
