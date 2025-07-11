@@ -56,7 +56,7 @@ namespace Proxoft.DocxToPdf.Models.Styles
             var styles = this.GetParagraphStyles(paragraphProperties?.ParagraphStyleId?.Val)
                 .ToArray();
 
-            return ParagraphStyle.Override(paragraphProperties, styles);
+            return this.ParagraphStyle.Override(paragraphProperties, styles);
         }
 
         public TextStyle EffectiveTextStyle(RunProperties runProperties)
