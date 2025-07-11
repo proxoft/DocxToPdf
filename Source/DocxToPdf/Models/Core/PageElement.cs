@@ -14,49 +14,27 @@ internal abstract class PageElement : IRenderable
 
     public abstract void Render(IRenderer renderer);
 
-    protected void ClearPageRegions()
-    {
-        this.PageRegions = new PageRegion[0];
-    }
-
     protected void SetPageRegion(PageRegion pageRegion)
     {
-        this.PageRegions = this.PageRegions
-            .Where(pr => pr.PagePosition != pageRegion.PagePosition)
-            .Union(new[] { pageRegion })
-            .OrderBy(pr => pr.PagePosition)
-            .ToArray();
+        this.PageRegions = [
+            .. this.PageRegions
+                .Where(pr => pr.PagePosition != pageRegion.PagePosition)
+                .Union([ pageRegion ])
+                .OrderBy(pr => pr.PagePosition)
+        ];
     }
 
     protected void ResetPageRegions(IEnumerable<PageRegion> pageRegions)
     {
-        this.PageRegions = pageRegions.ToArray();
+        this.PageRegions = [.. pageRegions];
     }
 
-    protected void ResetPageRegionsFrom(IEnumerable<PageContextElement> children, Margin contentMargin = null)
+    protected void ResetPageRegionsFrom(IEnumerable<PageContextElement> children, Margin? contentMargin = null)
     {
-        this.PageRegions = children
-            .UnionPageRegions(contentMargin)
-            .ToArray();
+        this.PageRegions = [.. children.UnionPageRegions(contentMargin)];
     }
 
-    protected void RenderBordersIf(IRenderer renderer, bool condition, Point pageOffset = null)
-    {
-        if (!condition)
-        {
-            return;
-        }
-
-        var index = -1;
-        foreach (var pageRegion in this.PageRegions)
-        {
-            index++;
-            var page = renderer.GetPage(pageRegion.PagePosition.PageNumber, pageOffset ?? Point.Zero);
-            this.RenderBorder(page, pageRegion.Region, index == 0, index == this.PageRegions.Count - 1, new Drawing.Pen(Drawing.Color.Orange, 0.5f));
-        }
-    }
-
-    protected void RenderBorders(IRenderer renderer, Drawing.Pen pen, Point pageOffset = null)
+    protected void RenderBorders(IRenderer renderer, Drawing.Pen? pen, Point? pageOffset = null)
     {
         if (pen == null)
         {
