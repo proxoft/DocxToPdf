@@ -21,8 +21,16 @@ Supported features:
 - paragaphs
 - tables
     - merging of cells
-- page numbers (page and total pages)
-- breaks: Page, Column, Section
+    - border styling
+- page numbers
+    - page
+    - total pages
+- page breaks
+- section breaks
+    - including different headers and footers
+- columns
 - headers and footers
+    - first, even / odd
 - images
+    - text wrapping
 - layout
