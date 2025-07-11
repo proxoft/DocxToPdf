@@ -2,21 +2,19 @@
 using System.Linq;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models
+namespace Proxoft.DocxToPdf.Models.Core;
+
+internal static class PageContextElementExtensions
 {
-    internal static class PageContextElementExtensions
-    {
-        public static IEnumerable<PageRegion> UnionPageRegions(this IEnumerable<PageContextElement> elements, Margin contentMargin = null)
-            => elements.UnionPageRegionsCore(contentMargin ?? Margin.None);
+    public static IEnumerable<PageRegion> UnionPageRegions(
+        this IEnumerable<PageContextElement> elements,
+        Margin? contentMargin = null)
+        => elements.UnionPageRegionsCore(contentMargin ?? Margin.None);
 
-        private static IEnumerable<PageRegion> UnionPageRegionsCore(this IEnumerable<PageContextElement> elements, Margin contentMargin)
-        {
-            var pageRegions = elements
-                .SelectMany(c => c.PageRegions)
-                .UnionPageRegions(contentMargin)
-                .ToArray();
-
-            return pageRegions;
-        }
-    }
+    private static IEnumerable<PageRegion> UnionPageRegionsCore(
+        this IEnumerable<PageContextElement> elements,
+        Margin contentMargin) =>
+        elements
+            .SelectMany(c => c.PageRegions)
+            .UnionPageRegions(contentMargin);
 }

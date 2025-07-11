@@ -1,16 +1,15 @@
 ﻿using System.Collections.Generic;
 using Proxoft.DocxToPdf.Core;
 
-namespace Proxoft.DocxToPdf.Models
+namespace Proxoft.DocxToPdf.Models.Core;
+
+internal static class IRenderableExtensions
 {
-    internal static class IRenderableExtensions
+    public static void Render(this IEnumerable<IRenderable> elements, IRenderer renderer)
     {
-        public static void Render(this IEnumerable<IRenderable> elements, IRenderer renderer)
+        foreach (var e in elements)
         {
-            foreach (var e in elements)
-            {
-                e.Render(renderer);
-            }
+            e.Render(renderer);
         }
     }
 }
