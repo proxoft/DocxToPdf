@@ -32,7 +32,7 @@ namespace Proxoft.DocxToPdf
                 : FontStyle.Regular;
         }
 
-        public static double ToDouble(this FontSize fontSize, double ifNull)
+        public static double ToDouble(this FontSize? fontSize, double ifNull)
         {
             if(fontSize?.Val == null)
             {
@@ -43,7 +43,7 @@ namespace Proxoft.DocxToPdf
             return size;
         }
 
-        public static float ToFloat(this FontSize fontSize, float ifNull)
+        public static float ToFloat(this FontSize? fontSize, float ifNull)
         {
             var size = fontSize.ToDouble(ifNull);
             return (float)size;

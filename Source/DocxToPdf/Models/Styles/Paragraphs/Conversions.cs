@@ -9,7 +9,7 @@ namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 
 internal static class Conversions
 {
-    public static string EffectiveTypeFace(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, string defaultTypeFace)
+    public static string EffectiveTypeFace(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, string defaultTypeFace)
     {
         Word.RunFonts? effectiveRunFonts = EnumerableExtensions
             .MergeAndFilter(runProperties?.RunFonts, styleRuns.Select(s => s.RunFonts), rf => rf != null)
@@ -19,16 +19,16 @@ internal static class Conversions
         return typeFace ?? defaultTypeFace;
     }
 
-    public static float EffectiveFontSize(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, float defaultSize)
+    public static float EffectiveFontSize(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, float defaultSize)
     {
-        var effectiveFontSize = EnumerableExtensions
+        Word.FontSize? effectiveFontSize = EnumerableExtensions
             .MergeAndFilter(runProperties?.FontSize, styleRuns.Select(s => s.FontSize), fs => fs?.Val != null)
             .FirstOrDefault();
 
         return effectiveFontSize.ToFloat(defaultSize);
     }
 
-    public static Color EffectiveColor(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, Color defaultBrush)
+    public static Color EffectiveColor(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, Color defaultBrush)
     {
         var runColor = EnumerableExtensions
                 .MergeAndFilter(runProperties?.Color, styleRuns.Select(s => s.Color), c => c != null)
@@ -61,9 +61,14 @@ internal static class Conversions
         return fontStyle;
     }
 
-    public static FontStyle EffectiveFontStyle(this Word.RunPropertiesBaseStyle runPropertiesBase)
+    public static FontStyle EffectiveFontStyle(this Word.RunPropertiesBaseStyle? runPropertiesBase)
     {
-        var fontStyle = runPropertiesBase.Bold.BoldStyle(FontStyle.Regular)
+        if(runPropertiesBase is null)
+        {
+            return FontStyle.Regular;
+        }
+
+        FontStyle fontStyle = runPropertiesBase.Bold.BoldStyle(FontStyle.Regular)
            | runPropertiesBase.Italic.ItalicStyle(FontStyle.Regular)
            | runPropertiesBase.Strike.StrikeStyle(FontStyle.Regular)
            | runPropertiesBase.Underline.UnderlineStyle(FontStyle.Regular);

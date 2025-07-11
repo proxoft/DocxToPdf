@@ -10,10 +10,10 @@ namespace Proxoft.DocxToPdf.Models.Styles.Services;
 
 internal class StyleFactory : IStyleFactory
 {
-    private readonly MainDocumentPart _mainDocumentPart;
+    private readonly MainDocumentPart? _mainDocumentPart;
 
     private StyleFactory(
-        MainDocumentPart mainDocumentPart,
+        MainDocumentPart? mainDocumentPart,
         TextStyle textStyle,
         ParagraphStyle paragraphStyle)
     {
@@ -23,125 +23,104 @@ internal class StyleFactory : IStyleFactory
     }
 
     public TextStyle TextStyle { get; }
+
     public ParagraphStyle ParagraphStyle { get; }
 
-    public static StyleFactory Default(MainDocumentPart mainDocumentPart)
+    public static StyleFactory Default(MainDocumentPart? mainDocumentPart)
     {
-        var docDefaults = mainDocumentPart.StyleDefinitionsPart.Styles.DocDefaults;
-        var paragraph = ParagraphStyle.From(docDefaults.ParagraphPropertiesDefault.ParagraphPropertiesBaseStyle);
-        var textStyle = docDefaults.RunPropertiesDefault.CreateTextStyle(mainDocumentPart.ThemePart.Theme);
+        DocDefaults? docDefaults = mainDocumentPart?.StyleDefinitionsPart?.Styles?.DocDefaults;
+        ParagraphStyle paragraph = ParagraphStyle.From(docDefaults?.ParagraphPropertiesDefault?.ParagraphPropertiesBaseStyle);
+        TextStyle textStyle = docDefaults?.RunPropertiesDefault?.CreateTextStyle(mainDocumentPart?.ThemePart?.Theme) ?? TextStyle.Default();
 
         return new StyleFactory(mainDocumentPart, textStyle, paragraph);
     }
 
     public IStyleFactory ForParagraph(ParagraphProperties paragraphProperties)
     {
-        var ps = this.EffectiveStyle(paragraphProperties);
-        var ts = this.FontFromParagraph(paragraphProperties);
+        ParagraphStyle ps = this.EffectiveStyle(paragraphProperties);
+        TextStyle ts = this.FontFromParagraph(paragraphProperties);
 
         return new StyleFactory(_mainDocumentPart, ts, ps);
     }
 
     public IStyleFactory ForTable(TableProperties tableProperties)
     {
-        var paragraphStyles = this.GetParagraphStyles(tableProperties?.TableStyle?.Val).ToArray();
-        var runStyles = this.GetRunStyles(tableProperties?.TableStyle?.Val).ToArray();
+        StyleParagraphProperties[] paragraphStyles = [..this.GetParagraphStyles(tableProperties?.TableStyle?.Val)];
+        StyleRunProperties[] runStyles = [..this.GetRunStyles(tableProperties?.TableStyle?.Val)];
 
-        var ps = this.ParagraphStyle.Override(null, paragraphStyles);
-        var ts = this.TextStyle.Override(null, runStyles);
+        ParagraphStyle ps = this.ParagraphStyle.Override(null, paragraphStyles);
+        TextStyle ts = this.TextStyle.Override(null, runStyles);
         return new StyleFactory(_mainDocumentPart, ts, ps);
     }
 
     public ParagraphStyle EffectiveStyle(ParagraphProperties paragraphProperties)
     {
-        var styles = this.GetParagraphStyles(paragraphProperties?.ParagraphStyleId?.Val)
-            .ToArray();
-
+        StyleParagraphProperties[] styles = [.. this.GetParagraphStyles(paragraphProperties?.ParagraphStyleId?.Val)];
         return this.ParagraphStyle.Override(paragraphProperties, styles);
     }
 
     public TextStyle EffectiveTextStyle(RunProperties runProperties)
     {
-        var styleRuns = this.GetRunStyles(runProperties?.RunStyle?.Val).ToArray();
+        StyleRunProperties[] styleRuns = [.. this.GetRunStyles(runProperties?.RunStyle?.Val)];
         return this.TextStyle.Override(runProperties, styleRuns);
     }
 
     private TextStyle FontFromParagraph(ParagraphProperties paragraphProperties)
     {
-        var styles = this.GetRunStyles(paragraphProperties)
-            .ToArray();
-
+        StyleRunProperties[] styles = [.. this.GetRunStyles(paragraphProperties)];
         return this.TextStyle.Override(null, styles);
     }
 
-    private IEnumerable<StyleParagraphProperties> GetParagraphStyles(StringValue firstStyleId)
+    private IEnumerable<StyleParagraphProperties> GetParagraphStyles(StringValue? firstStyleId)
     {
         if(string.IsNullOrWhiteSpace(firstStyleId?.Value))
         {
             yield break;
         }
 
-        var styleId = firstStyleId;
+        StringValue? styleId = firstStyleId;
         do
         {
-            var style = this.FindStyle(styleId);
-            if (style.StyleParagraphProperties != null)
+            Style? style = this.FindStyle(styleId);
+            if (style?.StyleParagraphProperties != null)
             {
                 yield return style.StyleParagraphProperties;
             }
 
-            styleId = style.BasedOn?.Val;
+            styleId = style?.BasedOn?.Val;
         } while (styleId != null);
     }
 
-    private IEnumerable<StyleRunProperties> GetRunStyles(ParagraphProperties paragraphProperties)
+    private IEnumerable<StyleRunProperties> GetRunStyles(ParagraphProperties paragraphProperties) =>
+        this.FindStyles(paragraphProperties?.ParagraphStyleId?.Val);
+
+    private IEnumerable<StyleRunProperties> GetRunStyles(StringValue? firstStyleId) =>
+        this.FindStyles(firstStyleId);
+
+    private IEnumerable<StyleRunProperties> FindStyles(StringValue? fromStyleId)
     {
-        if (paragraphProperties?.ParagraphStyleId?.Val == null)
+        if (string.IsNullOrWhiteSpace(fromStyleId?.Value))
         {
             yield break;
         }
 
-        var styleId = paragraphProperties.ParagraphStyleId.Val;
+        StringValue? styleId = fromStyleId;
         do
         {
-            var style = this.FindStyle(styleId);
-            if (style.StyleRunProperties != null)
+            Style? style = this.FindStyle(styleId);
+            if (style?.StyleRunProperties != null)
             {
                 yield return style.StyleRunProperties;
             }
 
-            styleId = style.BasedOn?.Val;
+            styleId = style?.BasedOn?.Val;
         } while (styleId != null);
     }
 
-    private IEnumerable<StyleRunProperties> GetRunStyles(StringValue firstStyleId)
-    {
-        if (string.IsNullOrWhiteSpace(firstStyleId?.Value))
-        {
-            yield break;
-        }
-
-        var styleId = firstStyleId;
-        do
-        {
-            var style = this.FindStyle(styleId);
-            if (style.StyleRunProperties != null)
-            {
-                yield return style.StyleRunProperties;
-            }
-
-            styleId = style.BasedOn?.Val;
-        } while (styleId != null);
-    }
-
-    private Style FindStyle(StringValue styleId)
-    {
-        var style = _mainDocumentPart
-            .StyleDefinitionsPart
-            .Styles
+    private Style? FindStyle(StringValue styleId) =>
+        _mainDocumentPart?
+            .StyleDefinitionsPart?
+            .Styles?
             .OfType<Style>()
             .SingleOrDefault(s => s.StyleId == styleId);
-
-        return style;
-    }
 }

@@ -31,9 +31,7 @@ internal class Document
 
     private void InitializeSections()
     {
-        _sections = _docx.MainDocumentPart
-            .SplitToSections(_styleAccessor)
-            .ToArray();
+        _sections = _docx.MainDocumentPart.SplitToSections(_styleAccessor);
     }
 
     private void PrepareSections()

@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace Proxoft.DocxToPdf.Core;
 
@@ -60,4 +61,7 @@ internal class TextStyle
             brush ?? this.Brush,
             background ?? this.Background);
     }
+
+    public static TextStyle Default() =>
+        new(new Font("Arial", 11, FontStyle.Regular), Color.Black, Color.Empty);
 }

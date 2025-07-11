@@ -21,7 +21,7 @@ internal class ParagraphStyle
     public ParagraphSpacing Spacing { get; }
 
     public ParagraphStyle Override(
-        ParagraphProperties paragraphProperties,
+        ParagraphProperties? paragraphProperties,
         IReadOnlyCollection<StyleParagraphProperties> styleParagraphs)
     {
         if(paragraphProperties is null && styleParagraphs.Count == 0)
@@ -49,7 +49,7 @@ internal class ParagraphStyle
         return new ParagraphStyle(lineAlignment, spacing);
     }
 
-    public static ParagraphStyle From(ParagraphPropertiesBaseStyle style)
+    public static ParagraphStyle From(ParagraphPropertiesBaseStyle? style)
     {
         var spacing = style?.SpacingBetweenLines?.ToParagraphSpacing(ParagraphSpacing.Default) ?? ParagraphSpacing.Default;
         var lineAlignment = style?.Justification?.GetLinesAlignment(LineAlignment.Left) ?? LineAlignment.Left;

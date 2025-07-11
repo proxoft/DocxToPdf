@@ -14,32 +14,41 @@ namespace Proxoft.DocxToPdf.Models.Sections.Builders;
 
 internal static class SectionBuilder
 {
-    public static IEnumerable<Section> SplitToSections(
-        this Pack.MainDocumentPart mainDocument,
+    public static Section[] SplitToSections(
+        this Pack.MainDocumentPart? mainDocument,
         IStyleFactory styleFactory)
     {
-        var sections = mainDocument.Document.Body
-            .SplitToSectionsCore(mainDocument, styleFactory)
-            .ToArray();
+        if (mainDocument?.Document.Body is null)
+        {
+            return [];
+        }
+
+        Section[] sections = mainDocument.Document.Body
+            .SplitToSectionsCore(mainDocument, styleFactory);
 
         return sections;
     }
 
-    private static IEnumerable<Section> SplitToSectionsCore(
+    private static Section[] SplitToSectionsCore(
         this Word.Body body,
         Pack.MainDocumentPart mainDocumentPart,
         IStyleFactory styleFactory)
     {
-        var sections = new List<Section>();
+        if (body is null)
+        {
+            return [];
+        }
 
-        var sectionElements = new List<OpenXml.OpenXmlCompositeElement>();
-        var headerFooterConfiguration = HeaderFooterConfiguration.Empty;
-        Word.SectionProperties wordSectionProperties;
+        Section[] sections = [];
 
-        foreach (var e in body.RenderableChildren())
+        List<OpenXml.OpenXmlCompositeElement> sectionElements = [];
+        HeaderFooterConfiguration headerFooterConfiguration = HeaderFooterConfiguration.Empty;
+        Word.SectionProperties? wordSectionProperties;
+
+        foreach (OpenXml.OpenXmlCompositeElement e in body.RenderableChildren())
         {
             sectionElements.Add(e);
-            if (!(e is Word.Paragraph paragraph))
+            if (e is not Word.Paragraph paragraph)
             {
                 continue;
             }
@@ -50,9 +59,13 @@ internal static class SectionBuilder
                 continue;
             }
 
-            var section = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Count == 0, styleFactory);
+            Section section = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Length == 0, styleFactory);
             headerFooterConfiguration = section.HeaderFooterConfiguration;
-            sections.Add(section);
+            sections = [
+                ..sections,
+                section
+            ];
+
             sectionElements.Clear();
         }
 
@@ -60,8 +73,11 @@ internal static class SectionBuilder
            .ChildsOfType<Word.SectionProperties>()
            .Single();
 
-        var lastSection = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Count == 0, styleFactory);
-        sections.Add(lastSection);
+        Section lastSection = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Length == 0, styleFactory);
+        sections = [
+            ..sections,
+            lastSection
+        ];
         return sections;
     }
 
@@ -135,10 +151,8 @@ internal static class SectionBuilder
         return sectionContents;
     }
 
-    private static Word.SectionProperties GetSectionProperties(this Word.Paragraph paragraph)
-    {
-        return paragraph.ParagraphProperties?.SectionProperties;
-    }
+    private static Word.SectionProperties? GetSectionProperties(this Word.Paragraph paragraph) =>
+        paragraph.ParagraphProperties?.SectionProperties;
 
     private static SectionProperties CreateSectionProperties(
         this Word.SectionProperties wordSectionProperties,
