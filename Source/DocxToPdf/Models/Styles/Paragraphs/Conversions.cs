@@ -4,6 +4,7 @@ using System.Linq;
 using DocumentFormat.OpenXml;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Extensions.Conversions;
+using Proxoft.DocxToPdf.Extensions.Units;
 
 namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 

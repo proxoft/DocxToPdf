@@ -1,7 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf;
+namespace Proxoft.DocxToPdf.Extensions;
 
 internal static class HeaderFooterXmlExtensions
 {

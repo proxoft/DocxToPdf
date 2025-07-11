@@ -1,4 +1,5 @@
 ﻿using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Pages;
 using Drawing = System.Drawing;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Grids

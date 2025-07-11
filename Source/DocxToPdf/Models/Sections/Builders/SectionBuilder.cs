@@ -2,6 +2,7 @@
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Extensions;
+using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Sections.Columns;
@@ -193,7 +194,8 @@ internal static class SectionBuilder
 
     private static PageMargin GetPageMargin(this Word.SectionProperties sectionProperties)
     {
-        var pageMargin = sectionProperties.ChildsOfType<Word.PageMargin>().Single();
+        Word.PageMargin pageMargin = sectionProperties.ChildsOfType<Word.PageMargin>().Single();
+
         return new PageMargin(
             pageMargin.Top.DxaToPoint(),
             pageMargin.Right.DxaToPoint(),

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace Proxoft.DocxToPdf.Core;
+namespace Proxoft.DocxToPdf.Core.Pages;
 
 [DebuggerDisplay("PageNumber: {_number}")]
 internal class PageNumber : IEquatable<PageNumber>, IComparable<PageNumber>
@@ -21,7 +21,7 @@ internal class PageNumber : IEquatable<PageNumber>, IComparable<PageNumber>
         _number = number;
     }
 
-    public PageNumber Next() => new PageNumber(_number + 1);
+    public PageNumber Next() => new(_number + 1);
 
     public bool Equals(PageNumber? other)
     {
@@ -56,5 +56,5 @@ internal class PageNumber : IEquatable<PageNumber>, IComparable<PageNumber>
 
     public static implicit operator int(PageNumber pageNumber) => pageNumber._number;
 
-    public static explicit operator PageNumber(int value) => new PageNumber(value);
+    public static explicit operator PageNumber(int value) => new(value);
 }

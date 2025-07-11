@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Common;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Elements

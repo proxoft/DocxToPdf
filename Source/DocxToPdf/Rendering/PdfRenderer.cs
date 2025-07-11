@@ -2,6 +2,7 @@
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Pages;
 
 namespace Proxoft.DocxToPdf.Rendering
 {

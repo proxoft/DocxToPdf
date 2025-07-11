@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Extensions.Units;
 
 namespace Proxoft.DocxToPdf.Extensions.Conversions;
 

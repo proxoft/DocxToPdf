@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
+using Proxoft.DocxToPdf.Extensions.Units;
 
 namespace Proxoft.DocxToPdf.Extensions.Conversions;
 

@@ -1,30 +1,23 @@
 ﻿using System;
 using System.Diagnostics;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Pages;
 
 namespace Proxoft.DocxToPdf.Models.Common;
 
 [DebuggerDisplay("PN: {PageNumber}, {Column}/{_totalColumns}")]
-internal class PagePosition : IEquatable<PagePosition>, IComparable<PagePosition>
+internal class PagePosition(PageNumber pageNumber, PageColumn column, PageColumn totalColumns) : IEquatable<PagePosition>, IComparable<PagePosition>
 {
     public static readonly PagePosition None = new(PageNumber.None, PageColumn.None, PageColumn.None);
 
-    private readonly PageColumn _totalColumns;
+    private readonly PageColumn _totalColumns = totalColumns;
 
     public PagePosition(PageNumber pageNumber) : this(pageNumber, PageColumn.First, PageColumn.One)
     {
     }
 
-    public PagePosition(PageNumber pageNumber, PageColumn column, PageColumn totalColumns)
-    {
-        this.PageNumber = pageNumber;
-        this.Column = column;
-        _totalColumns = totalColumns;
-    }
+    public PageNumber PageNumber { get; } = pageNumber;
 
-    public PageNumber PageNumber { get; }
-
-    public PageColumn Column { get; }
+    public PageColumn Column { get; } = column;
 
     public int PageColumnIndex => this.Column - 1;
 

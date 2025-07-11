@@ -1,4 +1,6 @@
-﻿namespace Proxoft.DocxToPdf.Core
+﻿using Proxoft.DocxToPdf.Core.Pages;
+
+namespace Proxoft.DocxToPdf.Core
 {
     internal interface IRenderer
     {
