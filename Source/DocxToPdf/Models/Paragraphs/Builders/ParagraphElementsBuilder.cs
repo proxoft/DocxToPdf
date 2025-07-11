@@ -43,7 +43,7 @@ internal static class ParagraphElementsBuilder
             }
         }
 
-        return elements.Union(new[] { ParagraphCharElement.Create(styleFactory.TextStyle) });
+        return elements.Union([ParagraphCharElement.Create(styleFactory.TextStyle)]);
     }
 
     public static IEnumerable<FixedDrawing> CreateFixedDrawingElements(this Word.Paragraph paragraph, IImageAccessor imageAccessor)
@@ -71,9 +71,9 @@ internal static class ParagraphElementsBuilder
                 return c switch
                 {
                     Word.Text t => t.SplitTextToElements(textStyle),
-                    Word.TabChar t => new LineElement[] { new TabElement(textStyle) },
+                    Word.TabChar t => [new TabElement(textStyle)],
                     Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
-                    Word.CarriageReturn _ => new LineElement[] { new NewLineElement(textStyle) },
+                    Word.CarriageReturn _ => [new NewLineElement(textStyle)],
                     Word.Break b => b.CreateBreakElement(textStyle),
                     _ => throw new RendererException("unprocessed child")
                 };

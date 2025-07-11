@@ -1,34 +1,33 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf
+namespace Proxoft.DocxToPdf;
+
+internal static class HeaderFooterXmlExtensions
 {
-    internal static class HeaderFooterXmlExtensions
+    public static Header? FindHeader(
+        this MainDocumentPart mainDocumentPart,
+        string? headerReferenceId)
     {
-        public static Header? FindHeader(
-            this MainDocumentPart mainDocumentPart,
-            string headerReferenceId)
+        if (headerReferenceId == null)
         {
-            if (headerReferenceId == null)
-            {
-                return null;
-            }
-
-            var headerPart = (HeaderPart)mainDocumentPart.GetPartById(headerReferenceId);
-            return headerPart.Header;
+            return null;
         }
 
-        public static Footer? FindFooter(
-            this MainDocumentPart mainDocumentPart,
-            string footerReferenceId)
-        {
-            if (footerReferenceId == null)
-            {
-                return null;
-            }
+        var headerPart = (HeaderPart)mainDocumentPart.GetPartById(headerReferenceId);
+        return headerPart.Header;
+    }
 
-            var footerPart = (FooterPart)mainDocumentPart.GetPartById(footerReferenceId);
-            return footerPart.Footer;
+    public static Footer? FindFooter(
+        this MainDocumentPart mainDocumentPart,
+        string footerReferenceId)
+    {
+        if (footerReferenceId == null)
+        {
+            return null;
         }
+
+        var footerPart = (FooterPart)mainDocumentPart.GetPartById(footerReferenceId);
+        return footerPart.Footer;
     }
 }

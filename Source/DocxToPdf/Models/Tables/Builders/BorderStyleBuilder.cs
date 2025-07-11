@@ -1,4 +1,5 @@
-﻿using Proxoft.DocxToPdf.Models.Common;
+﻿using Proxoft.DocxToPdf.Extensions.Conversions;
+using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Tables.Elements;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Builders;

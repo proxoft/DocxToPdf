@@ -98,13 +98,13 @@ internal static class SectionBuilder
         return sd;
     }
 
-    private static IEnumerable<SectionContent> SplitToSectionContents(
+    private static SectionContent[] SplitToSectionContents(
         this IEnumerable<OpenXml.OpenXmlCompositeElement> xmlElements,
         ColumnsConfiguration columnsConfiguration,
         IImageAccessor imageAccessor,
         IStyleFactory styleFactory)
     {
-        var sectionContents = new List<SectionContent>();
+        List<SectionContent> sectionContents = [];
 
         var stack = xmlElements.ToStack();
         var contentElements = new List<OpenXml.OpenXmlCompositeElement>();
@@ -147,7 +147,7 @@ internal static class SectionBuilder
             sectionContents.Add(new SectionContent(childElements, columnsConfiguration, SectionContentBreak.None));
         }
 
-        return sectionContents;
+        return [.. sectionContents];
     }
 
     private static Word.SectionProperties? GetSectionProperties(this Word.Paragraph paragraph) =>
@@ -211,13 +211,13 @@ internal static class SectionBuilder
         bool hasTitlePage = wordSectionProperties.ChildsOfType<Word.TitlePage>().SingleOrDefault()
               .IsOn(ifOnOffTypeNull: false, ifOnOffValueNull: true);
 
-        var headerRefs = wordSectionProperties
+        HeaderFooterRef[] headerRefs = [.. wordSectionProperties
             .ChildsOfType<Word.HeaderReference>()
-            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type));
+            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type))];
 
-        var footerRefs = wordSectionProperties
+        HeaderFooterRef[] footerRefs = [.. wordSectionProperties
             .ChildsOfType<Word.FooterReference>()
-            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type));
+            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type))];
 
         return previousHeaderFooterConfiguration.Inherited(mainDocument, hasTitlePage, headerRefs, footerRefs);
     }

@@ -7,7 +7,7 @@ namespace Proxoft.DocxToPdf.Models.Sections;
 
 internal class HeaderFooterConfiguration
 {
-    public static readonly HeaderFooterConfiguration Empty = new HeaderFooterConfiguration(null, false, [], []);
+    public static readonly HeaderFooterConfiguration Empty = new(null, false, [], []);
 
     private readonly HeaderFooterRef[] _headers;
     private readonly HeaderFooterRef[] _footers;
@@ -17,20 +17,20 @@ internal class HeaderFooterConfiguration
     private HeaderFooterConfiguration(
         MainDocumentPart? mainDocument,
         bool hasTitlePage,
-        IEnumerable<HeaderFooterRef> headers,
-        IEnumerable<HeaderFooterRef> footers /*, int pageNumberStart*/)
+        HeaderFooterRef[] headers,
+        HeaderFooterRef[] footers)
     {
         _mainDocument = mainDocument;
         _hasTitlePage = hasTitlePage;
-        _headers = headers.ToArray();
-        _footers = footers.ToArray();
+        _headers = headers;
+        _footers = footers;
     }
 
     private bool UseEvenOddHeadersAndFooters => _mainDocument?.DocumentSettingsPart?.EvenOddHeadersAndFooters() ?? false;
 
     public Word.Header? FindHeader(PageNumber pageNumber)
     {
-        var referenceId = this.GetHeaderReferenceId(pageNumber);
+        string? referenceId = this.GetHeaderReferenceId(pageNumber);
         var header = _mainDocument?.FindHeader(referenceId);
         return header;
     }
@@ -45,35 +45,27 @@ internal class HeaderFooterConfiguration
     public HeaderFooterConfiguration Inherited(
         MainDocumentPart mainDocument,
         bool hasTitlePage,
-        IEnumerable<HeaderFooterRef> headers,
-        IEnumerable<HeaderFooterRef> footers)
+        HeaderFooterRef[] headers,
+        HeaderFooterRef[] footers)
     {
-        var h = headers.ToArray();
-        if (h.Length == 0)
-        {
-            h = _headers.ToArray();
-        }
+        HeaderFooterRef[] h = headers.Length > 0
+            ? headers
+            : _headers;
 
-        var f = footers.ToArray();
-        if (f.Length == 0)
-        {
-            f = _footers.ToArray();
-        }
+        HeaderFooterRef[] f = footers.Length > 0
+            ? footers
+            : _footers;
 
         return new HeaderFooterConfiguration(mainDocument, hasTitlePage, h, f);
     }
 
-    private string GetHeaderReferenceId(PageNumber pageNumber)
-    {
-        return this.GetReferenceId(_headers, pageNumber);
-    }
+    private string? GetHeaderReferenceId(PageNumber pageNumber) =>
+        this.GetReferenceId(_headers, pageNumber);
 
-    private string GetFooterReferenceId(PageNumber pageNumber)
-    {
-        return this.GetReferenceId(_footers, pageNumber);
-    }
+    private string? GetFooterReferenceId(PageNumber pageNumber) =>
+        this.GetReferenceId(_footers, pageNumber);
 
-    private string GetReferenceId(IEnumerable<HeaderFooterRef> references, int pageNumber)
+    private string? GetReferenceId(HeaderFooterRef[] references, int pageNumber)
     {
         if (_hasTitlePage && pageNumber == 1)
         {
