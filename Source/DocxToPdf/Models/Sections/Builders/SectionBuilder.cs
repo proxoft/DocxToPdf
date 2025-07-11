@@ -8,7 +8,6 @@ using Proxoft.DocxToPdf.Models.Sections.Columns;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 using OpenXml = DocumentFormat.OpenXml;
 using Pack = DocumentFormat.OpenXml.Packaging;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Models.Sections.Builders;
 

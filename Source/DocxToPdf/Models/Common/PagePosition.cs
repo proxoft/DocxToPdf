@@ -55,7 +55,7 @@ namespace Proxoft.DocxToPdf.Models.Common
         public int CompareTo(PagePosition other)
         {
             var pnSign = this.PageNumber.CompareTo(other.PageNumber);
-            if(pnSign != 0)
+            if (pnSign != 0)
             {
                 return pnSign;
             }

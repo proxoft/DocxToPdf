@@ -3,7 +3,6 @@ using System.Linq;
 using DocumentFormat.OpenXml;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Styles.Services;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Models.Core;
 
