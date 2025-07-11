@@ -1,11 +1,10 @@
 ﻿using System.Drawing;
 using System.Globalization;
 using OpenXml = DocumentFormat.OpenXml;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 using static DocumentFormat.OpenXml.Wordprocessing.HighlightColorValues;
 
-namespace Proxoft.DocxToPdf;
+namespace Proxoft.DocxToPdf.Extensions.Conversions;
 
 internal static class ColorConversions
 {
@@ -46,7 +45,7 @@ internal static class ColorConversions
 
     private static (int r, int g, int b) ToRgb(this string hex)
     {
-        var r = int.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+        var r = int.Parse(hex[..2], NumberStyles.HexNumber);
         var g = int.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
         var b = int.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
         return (r, g, b);

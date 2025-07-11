@@ -1,44 +1,42 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models.Tables.Builders
+namespace Proxoft.DocxToPdf.Models.Tables.Builders;
+
+internal static class GridBuilder
 {
-    internal static class GridBuilder
+    public static Grid InitializeGrid(this Word.Table table)
     {
-        public static Grid InitializeGrid(this Word.Table table)
-        {
-            var columnWidths = table
-               .GetGridColumnWidths();
+        var columnWidths = table
+           .GetGridColumnWidths();
 
-            var rowHeights = table
-                .ChildsOfType<Word.TableRow>()
-                .Select(r => r.ToGridRow());
+        var rowHeights = table
+            .ChildsOfType<Word.TableRow>()
+            .Select(r => r.ToGridRow());
 
-            return new Grid(columnWidths, rowHeights);
-        }
+        return new Grid(columnWidths, rowHeights);
+    }
 
-        private static IEnumerable<double> GetGridColumnWidths(this Word.Table table)
-        {
-            var grid = table.Grid();
-            var columns = grid.Columns().ToArray();
-            var widths = columns
-                .Select(c => c.Width.ToPoint());
-            return widths;
-        }
+    private static IEnumerable<double> GetGridColumnWidths(this Word.Table table)
+    {
+        var grid = table.Grid();
+        var columns = grid.Columns().ToArray();
+        var widths = columns
+            .Select(c => c.Width.ToPoint());
+        return widths;
+    }
 
-        private static GridRow ToGridRow(this Word.TableRow row)
-        {
-            var trh = row
-                .TableRowProperties?
-                .ChildsOfType<Word.TableRowHeight>()
-                .FirstOrDefault();
+    private static GridRow ToGridRow(this Word.TableRow row)
+    {
+        var trh = row
+            .TableRowProperties?
+            .ChildsOfType<Word.TableRowHeight>()
+            .FirstOrDefault();
 
-            var rowHeight = trh?.Val.DxaToPoint() ?? 10;
-            var rule = trh?.HeightType?.Value ?? Word.HeightRuleValues.Auto;
+        var rowHeight = trh?.Val?.DxaToPoint() ?? 10;
+        var rule = trh?.HeightType?.Value ?? Word.HeightRuleValues.Auto;
 
-            return new GridRow(rowHeight, rule);
-        }
+        return new GridRow(rowHeight, rule);
     }
 }

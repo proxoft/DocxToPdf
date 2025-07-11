@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 using Proxoft.DocxToPdf.Core;
-
+using Proxoft.DocxToPdf.Extensions.Conversions;
 using Draw = DocumentFormat.OpenXml.Drawing;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 

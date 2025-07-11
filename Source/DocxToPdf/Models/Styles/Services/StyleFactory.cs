@@ -35,7 +35,7 @@ internal class StyleFactory : IStyleFactory
         return new StyleFactory(mainDocumentPart, textStyle, paragraph);
     }
 
-    public IStyleFactory ForParagraph(ParagraphProperties paragraphProperties)
+    public IStyleFactory ForParagraph(ParagraphProperties? paragraphProperties)
     {
         ParagraphStyle ps = this.EffectiveStyle(paragraphProperties);
         TextStyle ts = this.FontFromParagraph(paragraphProperties);
@@ -53,19 +53,19 @@ internal class StyleFactory : IStyleFactory
         return new StyleFactory(_mainDocumentPart, ts, ps);
     }
 
-    public ParagraphStyle EffectiveStyle(ParagraphProperties paragraphProperties)
+    private ParagraphStyle EffectiveStyle(ParagraphProperties? paragraphProperties)
     {
         StyleParagraphProperties[] styles = [.. this.GetParagraphStyles(paragraphProperties?.ParagraphStyleId?.Val)];
         return this.ParagraphStyle.Override(paragraphProperties, styles);
     }
 
-    public TextStyle EffectiveTextStyle(RunProperties runProperties)
+    public TextStyle EffectiveTextStyle(RunProperties? runProperties)
     {
         StyleRunProperties[] styleRuns = [.. this.GetRunStyles(runProperties?.RunStyle?.Val)];
         return this.TextStyle.Override(runProperties, styleRuns);
     }
 
-    private TextStyle FontFromParagraph(ParagraphProperties paragraphProperties)
+    private TextStyle FontFromParagraph(ParagraphProperties? paragraphProperties)
     {
         StyleRunProperties[] styles = [.. this.GetRunStyles(paragraphProperties)];
         return this.TextStyle.Override(null, styles);
@@ -91,7 +91,7 @@ internal class StyleFactory : IStyleFactory
         } while (styleId != null);
     }
 
-    private IEnumerable<StyleRunProperties> GetRunStyles(ParagraphProperties paragraphProperties) =>
+    private IEnumerable<StyleRunProperties> GetRunStyles(ParagraphProperties? paragraphProperties) =>
         this.FindStyles(paragraphProperties?.ParagraphStyleId?.Val);
 
     private IEnumerable<StyleRunProperties> GetRunStyles(StringValue? firstStyleId) =>

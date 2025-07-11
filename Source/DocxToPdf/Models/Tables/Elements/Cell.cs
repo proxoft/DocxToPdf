@@ -7,14 +7,13 @@ using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 using Proxoft.DocxToPdf.Models.Tables.Builders;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Elements;
 
 internal class Cell : PageContextElement
 {
     private readonly Margin _contentMargin;
-    private PageContextElement[] _childs = [];
+    private readonly PageContextElement[] _childs = [];
 
     private Cell(IEnumerable<PageContextElement> childs, GridPosition gridPosition, BorderStyle borderStyle)
     {
@@ -26,6 +25,7 @@ internal class Cell : PageContextElement
     }
 
     public GridPosition GridPosition { get; }
+
     public BorderStyle BorderStyle { get; }
 
     public override void Prepare(PageContext pageContext, Func<PagePosition, PageContextElement, PageContext> nextPageContextFactory)

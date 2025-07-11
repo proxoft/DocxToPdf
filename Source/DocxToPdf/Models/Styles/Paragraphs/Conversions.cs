@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Linq;
 using DocumentFormat.OpenXml;
 using Proxoft.DocxToPdf.Extensions;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Extensions.Conversions;
 
 namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 
@@ -37,7 +37,7 @@ internal static class Conversions
         return runColor?.ToColor() ?? defaultBrush;
     }
 
-    public static FontStyle EffectiveFontStyle(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, FontStyle defaultFontStyle)
+    public static FontStyle EffectiveFontStyle(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, FontStyle defaultFontStyle)
     {
         var bold = runProperties?.Bold
                 ?? styleRuns.Select(s => s.Bold).FirstOrDefault(x => x != null);
@@ -96,10 +96,10 @@ internal static class Conversions
 
         foreach (var spacing in prioritized)
         {
-            before = before ?? spacing.Before;
-            after = after ?? spacing.After;
-            line = line ?? spacing.Line;
-            lineRule = lineRule ?? spacing.LineRule;
+            before ??= spacing.Before;
+            after ??= spacing.After;
+            line ??= spacing.Line;
+            lineRule ??= spacing.LineRule;
 
             if (before is not null
                 && after is not null
@@ -157,7 +157,7 @@ internal static class Conversions
         return lineSpacing;
     }
 
-    private static LineSpacing GetLineSpacing(this StringValue? line, EnumValue<Word.LineSpacingRuleValues> lineRule)
+    private static LineSpacing GetLineSpacing(this StringValue? line, EnumValue<Word.LineSpacingRuleValues>? lineRule)
     {
         Word.LineSpacingRuleValues rule = lineRule?.Value ?? Word.LineSpacingRuleValues.Auto;
 

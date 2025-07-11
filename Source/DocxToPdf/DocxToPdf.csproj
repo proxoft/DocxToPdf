@@ -14,6 +14,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Using Alias="Word" Include="DocumentFormat.OpenXml.Wordprocessing" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Include="..\..\Icons\Icon.png">
           <Pack>True</Pack>
           <PackagePath>\</PackagePath>

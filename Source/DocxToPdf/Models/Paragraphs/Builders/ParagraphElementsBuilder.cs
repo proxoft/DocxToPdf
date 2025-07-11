@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 using WDrawing = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Styles.Services;
@@ -58,7 +57,7 @@ internal static class ParagraphElementsBuilder
         return drawings;
     }
 
-    private static IEnumerable<LineElement> CreateParagraphElements(
+    private static LineElement[] CreateParagraphElements(
         this Word.Run run,
         IImageAccessor imageAccessor,
         IStyleFactory styleAccessor)
@@ -84,21 +83,13 @@ internal static class ParagraphElementsBuilder
         return elements;
     }
 
-    private static IEnumerable<LineElement> CreateBreakElement(this Word.Break breakXml, TextStyle textStyle)
-    {
-        if(breakXml.Type == null)
-        {
-            return new LineElement[] { new NewLineElement(textStyle) };
-        }
+    private static LineElement[] CreateBreakElement(this Word.Break breakXml, TextStyle textStyle) =>
+        breakXml.Type is null
+            ? [new NewLineElement(textStyle)]
+            : [];
 
-        return new LineElement[0];
-    }
-
-    private static IEnumerable<LineElement> SplitTextToElements(
-        this Word.Text text,
-        TextStyle textStyle)
-    {
-        var elements = text.InnerText
+    private static LineElement[] SplitTextToElements(this Word.Text text, TextStyle textStyle) =>
+        [..text.InnerText
             .SplitToWordsAndWhitechars()
             .Select(s =>
             {
@@ -108,20 +99,17 @@ internal static class ParagraphElementsBuilder
                     _ => new WordElement(s, textStyle)
                 };
             })
-            .ToArray();
-
-        return elements;
-    }
+        ];
 
     private static InilineDrawing[] CreateInlineDrawing(this Word.Drawing drawing, IImageAccessor imageAccessor)
     {
         if (drawing.Inline == null)
         {
-            return new InilineDrawing[0];
+            return [];
         }
 
-        var inlineDrawing = drawing.Inline.ToInilineDrawing(imageAccessor);
-        return new[] { inlineDrawing };
+        InilineDrawing inlineDrawing = drawing.Inline.ToInilineDrawing(imageAccessor);
+        return [ inlineDrawing ];
     }
 
     private static InilineDrawing ToInilineDrawing(this WDrawing.Inline inline, IImageAccessor imageAccessor)

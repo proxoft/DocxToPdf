@@ -3,8 +3,6 @@ using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using Proxoft.DocxToPdf.Core;
 
-using Word = DocumentFormat.OpenXml.Wordprocessing;
-
 namespace Proxoft.DocxToPdf.Models.Sections;
 
 internal class HeaderFooterConfiguration

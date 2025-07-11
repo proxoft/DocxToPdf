@@ -4,7 +4,6 @@ using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
 using Proxoft.DocxToPdf.Models.Styles.Services;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
 
