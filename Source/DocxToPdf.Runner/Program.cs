@@ -49,9 +49,9 @@ namespace Proxoft.DocxToPdf.Runner
 
         private static void ExecuteConvert(string docxFilePath, string pdfOutputFilePath)
         {
-            using var docxStream = File.Open(docxFilePath, FileMode.Open, FileAccess.Read);
-            var pdfGenerator = new PdfGenerator();
-            var pdf = pdfGenerator.GenerateAsByteArray(docxStream);
+            using FileStream docxStream = File.Open(docxFilePath, FileMode.Open, FileAccess.Read);
+            PdfGenerator pdfGenerator = new();
+            byte[] pdf = pdfGenerator.GenerateAsByteArray(docxStream);
             File.WriteAllBytes(pdfOutputFilePath, pdf);
         }
     }
