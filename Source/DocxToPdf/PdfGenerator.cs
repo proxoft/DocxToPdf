@@ -5,45 +5,47 @@ using PdfSharp.Pdf;
 using Proxoft.DocxToPdf.Models;
 using Proxoft.DocxToPdf.Rendering;
 
-namespace Proxoft.DocxToPdf
+namespace Proxoft.DocxToPdf;
+
+public class PdfGenerator
 {
-    public class PdfGenerator
+    static PdfGenerator()
     {
-        static PdfGenerator()
-        {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        }
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
 
-        public PdfDocument Generate(Stream docxStream, RenderingOptions? options = null)
-        {
-            using var docx = WordprocessingDocument.Open(docxStream, false);
-            var pdf = this.Generate(docx, options);
-            return pdf;
-        }
+    public PdfDocument Generate(Stream docxStream, RenderingOptions? options = null)
+    {
+        using WordprocessingDocument docx = WordprocessingDocument.Open(docxStream, false);
+        PdfDocument pdf = docx.Generate(options);
+        return pdf;
+    }
 
-        public MemoryStream GenerateAsStream(Stream docxStream, RenderingOptions? options = null)
-        {
-            var pdf = this.Generate(docxStream, options);
-            var ms = new MemoryStream();
-            pdf.Save(ms);
-            return ms;
-        }
+    public MemoryStream GenerateAsStream(Stream docxStream, RenderingOptions? options = null)
+    {
+        PdfDocument pdf = this.Generate(docxStream, options);
+        MemoryStream ms = new();
+        pdf.Save(ms);
+        return ms;
+    }
 
-        public byte[] GenerateAsByteArray(Stream docxStream, RenderingOptions? options = null)
-        {
-            using var ms = this.GenerateAsStream(docxStream, options);
-            return ms.ToArray();
-        }
+    public byte[] GenerateAsByteArray(Stream docxStream, RenderingOptions? options = null)
+    {
+        using MemoryStream ms = this.GenerateAsStream(docxStream, options);
+        return ms.ToArray();
+    }
+}
 
-        private PdfDocument Generate(WordprocessingDocument docx, RenderingOptions? options = null)
-        {
-            var renderingOptions = options ?? RenderingOptions.Default;
+file static class Operators
+{
+    public static PdfDocument Generate(this WordprocessingDocument docx, RenderingOptions? options = null)
+    {
+        RenderingOptions renderingOptions = options ?? RenderingOptions.Default;
 
-            var pdfDocument = new PdfDocument();
-            var renderer = new PdfRenderer(pdfDocument, renderingOptions);
-            var document = new Document(docx);
-            document.Render(renderer);
-            return pdfDocument;
-        }
+        PdfDocument pdfDocument = new();
+        PdfRenderer renderer = new(pdfDocument, renderingOptions);
+        Document document = new(docx);
+        document.Render(renderer);
+        return pdfDocument;
     }
 }

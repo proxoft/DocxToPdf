@@ -25,7 +25,7 @@ namespace Proxoft.DocxToPdf.Runner
                 if (!close)
                 {
                     Console.Write("$  ");
-                    verb = Console.ReadLine().Split(" ").ToArray();
+                    verb = Console.ReadLine()?.Split(" ") ?? [];
                 }
             } while (!close);
         }
