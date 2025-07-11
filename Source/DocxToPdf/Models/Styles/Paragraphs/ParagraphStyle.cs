@@ -2,7 +2,7 @@
 using System.Linq;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models.Styles;
+namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 
 internal class ParagraphStyle
 {

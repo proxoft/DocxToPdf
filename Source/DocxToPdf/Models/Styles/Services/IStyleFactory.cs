@@ -1,19 +1,18 @@
 ﻿using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 using Word = DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models.Styles
+namespace Proxoft.DocxToPdf.Models.Styles.Services;
+
+internal interface IStyleFactory
 {
-    internal interface IStyleFactory
-    {
-        // IStyleAccessor ForTableCell();
-        // IStyleAccessor ForSection();
+    ParagraphStyle ParagraphStyle { get; }
 
-        ParagraphStyle ParagraphStyle { get; }
-        TextStyle TextStyle { get; }
+    TextStyle TextStyle { get; }
 
-        IStyleFactory ForParagraph(Word.ParagraphProperties paragraphProperties);
-        IStyleFactory ForTable(Word.TableProperties tableProperties);
+    IStyleFactory ForParagraph(Word.ParagraphProperties paragraphProperties);
 
-        TextStyle EffectiveTextStyle(Word.RunProperties runProperties);
-    }
+    IStyleFactory ForTable(Word.TableProperties tableProperties);
+
+    TextStyle EffectiveTextStyle(Word.RunProperties runProperties);
 }

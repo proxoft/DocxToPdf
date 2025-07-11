@@ -13,10 +13,10 @@ internal class Header : HeaderBase
     private readonly PageContextElement[] _childs;
 
     public Header(
-        IEnumerable<PageContextElement> childs,
+        PageContextElement[] childs,
         PageMargin pageMargin) : base(pageMargin)
     {
-        _childs = [.. childs];
+        _childs = childs;
     }
 
     public override void Prepare(IPage page)

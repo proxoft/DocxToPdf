@@ -7,7 +7,7 @@ using Proxoft.DocxToPdf.Models.Footers;
 using Proxoft.DocxToPdf.Models.Footers.Builders;
 using Proxoft.DocxToPdf.Models.Headers;
 using Proxoft.DocxToPdf.Models.Headers.Builders;
-using Proxoft.DocxToPdf.Models.Styles;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 
 namespace Proxoft.DocxToPdf.Models.Sections;
 

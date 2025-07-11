@@ -127,7 +127,7 @@ internal static class Conversions
     }
 
     public static LineAlignment GetLinesAlignment(
-        this Word.Justification justification,
+        this Word.Justification? justification,
         LineAlignment ifNull)
     {
         if (justification?.Val is null)

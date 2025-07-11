@@ -4,7 +4,7 @@ using System.Linq;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Common;
-using Proxoft.DocxToPdf.Models.Styles;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 using Proxoft.DocxToPdf.Models.Tables.Builders;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
 using Word = DocumentFormat.OpenXml.Wordprocessing;
