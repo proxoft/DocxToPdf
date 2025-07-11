@@ -4,7 +4,7 @@
         <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <PackageIcon>Icon.png</PackageIcon>
-        <PackageId>DocxToPdf</PackageId>
+        <PackageId>Proxoft.DocxToPdf</PackageId>
     </PropertyGroup>
 
     <ItemGroup>
