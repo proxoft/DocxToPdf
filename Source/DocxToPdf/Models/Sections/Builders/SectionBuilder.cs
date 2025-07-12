@@ -117,14 +117,14 @@ internal static class SectionBuilder
             {
                 case Word.Paragraph p:
                     {
-                        var (begin, @break, end) = p.SplitByNextBreak();
+                        (Word.Paragraph begin, SectionContentBreak @break, Word.Paragraph? end) = p.SplitByNextBreak();
                         if (@break == SectionContentBreak.None)
                         {
                             contentElements.Add(p);
                         }
                         else
                         {
-                            if (end != null)
+                            if (end is not null)
                             {
                                 stack.Push(end);
                             }
@@ -224,7 +224,7 @@ internal static class SectionBuilder
         return previousHeaderFooterConfiguration.Inherited(mainDocument, hasTitlePage, headerRefs, footerRefs);
     }
 
-    private static (Word.Paragraph, SectionContentBreak, Word.Paragraph) SplitByNextBreak(this Word.Paragraph paragraph)
+    private static (Word.Paragraph, SectionContentBreak, Word.Paragraph?) SplitByNextBreak(this Word.Paragraph paragraph)
     {
         var index = paragraph
             .ChildElements
@@ -241,9 +241,9 @@ internal static class SectionBuilder
             .Select(r => r.CloneNode(true))
             .ToArray();
 
-        var begin = new Word.Paragraph(beginElements)
+        Word.Paragraph begin = new(beginElements)
         {
-            ParagraphProperties = (Word.ParagraphProperties)paragraph.ParagraphProperties.CloneNode(true)
+            ParagraphProperties = paragraph.ParagraphProperties?.CloneNode(true) as Word.ParagraphProperties
         };
 
         var endElements = paragraph
@@ -252,11 +252,11 @@ internal static class SectionBuilder
             .Select(r => r.CloneNode(true))
             .ToArray();
 
-        var end = endElements.Length == 0
+        Word.Paragraph? end = endElements.Length == 0
             ? null
-            : new Word.Paragraph(endElements)
+            : new(endElements)
             {
-                ParagraphProperties = (Word.ParagraphProperties)paragraph.ParagraphProperties.CloneNode(true)
+                ParagraphProperties = paragraph.ParagraphProperties?.CloneNode(true) as Word.ParagraphProperties
             };
 
         var breakRun = (Word.Run)paragraph
@@ -269,8 +269,7 @@ internal static class SectionBuilder
             .Single()
             .Type;
 
-
-        SectionContentBreak @break = breakType.Value.ToSectionBreak();
+        SectionContentBreak @break = breakType?.Value.ToSectionBreak() ?? SectionContentBreak.None;
 
         //var @break = SectionContentBreak.None;
         //switch (breakType.Value)

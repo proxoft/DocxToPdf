@@ -1,6 +1,8 @@
 ﻿using System.Linq;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Styles.Services;
+using Proxoft.DocxToPdf.Models.Tables.Grids;
+using Proxoft.DocxToPdf.Models.Tables.Elements;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Builders;
 
@@ -8,15 +10,16 @@ internal static class TableFactory
 {
     public static Table Create(Word.Table wordTable, IImageAccessor imageAccessor, IStyleFactory styleFactory)
     {
-        var grid = wordTable.InitializeGrid();
+        Grid grid = wordTable.InitializeGrid();
 
-        var cells = wordTable
-            .InitializeCells(imageAccessor, styleFactory.ForTable(wordTable.Properties()))
-            .OrderBy(c => c.GridPosition.Row)
-            .ThenBy(c => c.GridPosition.Column)
-            .ToArray();
+        Cell[] cells = [
+            ..wordTable
+                .InitializeCells(imageAccessor, styleFactory.ForTable(wordTable.Properties()))
+                .OrderBy(c => c.GridPosition.Row)
+                .ThenBy(c => c.GridPosition.Column)
+        ];
 
-        var tableBorder = wordTable
+        TableBorderStyle tableBorder = wordTable
             .Properties()
             .TableBorders
             .GetBorder();

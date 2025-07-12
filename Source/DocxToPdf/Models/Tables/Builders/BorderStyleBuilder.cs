@@ -6,9 +6,9 @@ namespace Proxoft.DocxToPdf.Models.Tables.Builders;
 
 internal static class BorderStyleBuilder
 {
-    public static TableBorderStyle GetBorder(this Word.TableBorders borders)
+    public static TableBorderStyle GetBorder(this Word.TableBorders? borders)
     {
-        if (borders == null)
+        if (borders is null)
         {
             return TableBorderStyle.Default;
         }

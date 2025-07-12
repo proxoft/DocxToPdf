@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Proxoft.DocxToPdf.Models.Tables.Grids;
+﻿namespace Proxoft.DocxToPdf.Models.Tables.Grids;
 
 internal class CellBorder(
     BorderLine top,
