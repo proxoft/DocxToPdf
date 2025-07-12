@@ -7,19 +7,13 @@ using Proxoft.DocxToPdf.Models.Common;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Grids;
 
-internal class Grid
+internal class Grid(
+    double[] columnWidths,
+    GridRow[] rowHeights)
 {
-    private readonly double[] _columnWidths;
-    private readonly GridRow[] _gridRows;
-    private readonly List<PageContext> _pageContexts = new List<PageContext>();
-
-    public Grid(
-        IEnumerable<double> columnWidths,
-        IEnumerable<GridRow> rowHeights)
-    {
-        _columnWidths = columnWidths.ToArray();
-        _gridRows = rowHeights.ToArray();
-    }
+    private readonly double[] _columnWidths = columnWidths;
+    private readonly GridRow[] _gridRows = rowHeights;
+    private readonly List<PageContext> _pageContexts = [];
 
     public Func<PagePosition, PageContext>? PageContextFactory { get; set; }
 
@@ -35,8 +29,8 @@ internal class Grid
             .Range(0, _gridRows.Length)
             .SelectMany(i =>
             {
-                var regs = this.FindPageRegionsOfRow(i);
-                var pageRegions = regs
+                (PagePosition page, Rectangle region)[] regs = this.FindPageRegionsOfRow(i);
+                IEnumerable<PageRegion> pageRegions = regs
                     .Select(pair =>
                     {
                         var rect = new Rectangle(pair.region.TopLeft, new Size(space.Width, pair.region.Height));
@@ -89,7 +83,7 @@ internal class Grid
             return;
         }
 
-        var distribution = Distribute(affectedRows.Select(r => r.Height).ToArray(), totalHeightOfCell - rowsSum);
+        double[] distribution = Distribute([.. affectedRows.Select(r => r.Height)], totalHeightOfCell - rowsSum);
         for (var i = 0; i < distribution.Length; i++)
         {
             affectedRows[i].Expand(distribution[i]);
@@ -119,10 +113,10 @@ internal class Grid
                 topLine = new BorderLine(pagePosition.PageNumber, start, end);
             }
 
-            foreach(var reg in regions)
+            foreach((PagePosition page, Rectangle region) in regions)
             {
-                leftLines.Add(new BorderLine(reg.page.PageNumber, reg.region.TopLeft + lx, reg.region.BottomLeft + lx));
-                rightLines.Add(new BorderLine(reg.page.PageNumber, reg.region.TopLeft + rx, reg.region.BottomLeft + rx));
+                leftLines.Add(new BorderLine(page.PageNumber, region.TopLeft + lx, region.BottomLeft + lx));
+                rightLines.Add(new BorderLine(page.PageNumber, region.TopLeft + rx, region.BottomLeft + rx));
             }
 
             if(i == position.Row + position.RowSpan - 1)
@@ -135,7 +129,7 @@ internal class Grid
             }
         }
 
-        return new CellBorder(topLine, bottomLine, leftLines, rightLines);
+        return new CellBorder(topLine, bottomLine, [..leftLines], [.. rightLines]);
     }
 
     private HorizontalSpace CalculateHorizontalCellSpace(GridPosition position)
@@ -152,41 +146,41 @@ internal class Grid
         return new HorizontalSpace(offset, width);
     }
 
-    private double RowAbsoluteOffset(GridPosition position)
-        => this.RowAbsoluteOffset(position.Row);
+    private double RowAbsoluteOffset(GridPosition position) =>
+        this.RowAbsoluteOffset(position.Row);
 
-    private double RowAbsoluteOffset(int rowIndex)
-            => _gridRows
-                .Take(rowIndex)
-                .Sum(gr => gr.Height);
+    private double RowAbsoluteOffset(int rowIndex) =>
+        _gridRows
+            .Take(rowIndex)
+            .Sum(gr => gr.Height);
 
-    private static double[] Distribute(IReadOnlyCollection<double> currentValues, double totalValueToDistribute)
+    private static double[] Distribute(double[] currentValues, double totalValueToDistribute)
     {
         if (totalValueToDistribute <= 0)
         {
-            return currentValues.ToArray();
+            return currentValues;
         }
 
-        var perItem = totalValueToDistribute / currentValues.Count;
-        var copy = currentValues
-            .Select((v, i) =>
-            {
-                var newValue = i < currentValues.Count - 1
-                    ? v + perItem
-                    : v + (totalValueToDistribute - (i * perItem));
+        double perItem = totalValueToDistribute / currentValues.Length;
+        double[] copy = [
+            ..currentValues
+                .Select((v, i) =>
+                {
+                    var newValue = i < currentValues.Length - 1
+                        ? v + perItem
+                        : v + (totalValueToDistribute - (i * perItem));
 
-                return newValue;
-            });
+                    return newValue;
+                })
+        ];
 
-        return copy.ToArray();
+        return copy;
     }
 
-    private IEnumerable<GridRow> GetRowsInPosition(GridPosition position)
-    {
-        return _gridRows
+    private IEnumerable<GridRow> GetRowsInPosition(GridPosition position) =>
+        _gridRows
             .Skip(position.Row)
             .Take(position.RowSpan);
-    }
 
     private PageContext GetOrCreateRowPageContext(GridPosition position)
     {
@@ -217,7 +211,7 @@ internal class Grid
         return nextPageContext;
     }
 
-    private IEnumerable<(PagePosition page, Rectangle region)> FindPageRegionsOfRow(int rowIndex)
+    private (PagePosition page, Rectangle region)[] FindPageRegionsOfRow(int rowIndex)
     {
         var offset = this.RowAbsoluteOffset(rowIndex);
         var remainingHeight = _gridRows[rowIndex].Height;
@@ -245,6 +239,6 @@ internal class Grid
             }
         }
 
-        return regions;
+        return [.. regions];
     }
 }

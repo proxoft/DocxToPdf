@@ -2,7 +2,7 @@
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Structs;
 
-namespace Proxoft.DocxToPdf.Rendering;
+namespace Proxoft.DocxToPdf.Rendering.Helpers;
 
 internal static class GeometriesConversions
 {

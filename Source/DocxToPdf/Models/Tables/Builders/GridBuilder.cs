@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
 
@@ -9,23 +8,25 @@ internal static class GridBuilder
 {
     public static Grid InitializeGrid(this Word.Table table)
     {
-        var columnWidths = table
+        double[] columnWidths = table
            .GetGridColumnWidths();
 
-        var rowHeights = table
-            .ChildsOfType<Word.TableRow>()
-            .Select(r => r.ToGridRow());
+        GridRow[] rowHeights = [
+            ..table
+                .ChildsOfType<Word.TableRow>()
+                .Select(r => r.ToGridRow())
+        ];
 
         return new Grid(columnWidths, rowHeights);
     }
 
-    private static IEnumerable<double> GetGridColumnWidths(this Word.Table table)
+    private static double[] GetGridColumnWidths(this Word.Table table)
     {
         var grid = table.Grid();
         var columns = grid.Columns().ToArray();
         var widths = columns
             .Select(c => c.Width.ToPoint());
-        return widths;
+        return [..widths];
     }
 
     private static GridRow ToGridRow(this Word.TableRow row)

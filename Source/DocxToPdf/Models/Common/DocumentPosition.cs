@@ -2,27 +2,22 @@
 
 namespace Proxoft.DocxToPdf.Models.Common;
 
-internal class DocumentPosition
+internal class DocumentPosition(PagePosition pagePosition, Point offset)
 {
-    public static readonly DocumentPosition None = new DocumentPosition(PagePosition.None, Point.Zero);
+    public static readonly DocumentPosition None = new(PagePosition.None, Point.Zero);
 
-    public DocumentPosition(PagePosition pagePosition, Point offset)
-    {
-        this.Page = pagePosition;
-        this.Offset = offset;
-    }
+    public Point Offset { get; } = offset;
 
-    public Point Offset { get; }
-    public PagePosition Page { get; }
+    public PagePosition Page { get; } = pagePosition;
 
-    public DocumentPosition Move(Point offset)
-        => this + offset;
+    public DocumentPosition Move(Point offset) =>
+        this + offset;
 
-    public DocumentPosition MoveX(double xOffset)
-        => this + new Point(xOffset, 0);
+    public DocumentPosition MoveX(double xOffset)=>
+        this + new Point(xOffset, 0);
 
-    public DocumentPosition MoveY(double yOffset)
-        => this + new Point(0, yOffset);
+    public DocumentPosition MoveY(double yOffset) =>
+        this + new Point(0, yOffset);
 
     public static DocumentPosition operator+(DocumentPosition position, Point offset)
     {

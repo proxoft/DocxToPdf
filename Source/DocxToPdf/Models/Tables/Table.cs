@@ -10,20 +10,13 @@ using Proxoft.DocxToPdf.Models.Tables.Grids;
 
 namespace Proxoft.DocxToPdf.Models.Tables;
 
-internal class Table : PageContextElement
+internal class Table(IEnumerable<Cell> cells, Grid grid, TableBorderStyle tableBorder) : PageContextElement
 {
-    private readonly Cell[] _cells = [];
-    private readonly Grid _grid;
-    private readonly TableBorderStyle _tableBorder;
+    private readonly Cell[] _cells = [.. cells];
+    private readonly Grid _grid = grid;
+    private readonly TableBorderStyle _tableBorder = tableBorder;
 
     private Point _pageOffset = Point.Zero;
-
-    public Table(IEnumerable<Cell> cells, Grid grid, TableBorderStyle tableBorder)
-    {
-        _cells = cells.ToArray();
-        _grid = grid;
-        _tableBorder = tableBorder;
-    }
 
     private IEnumerable<Cell> PreparationOrderedCells => _cells
         .OrderBy(c => c.GridPosition.RowSpan) // start with smalles cells
@@ -33,9 +26,9 @@ internal class Table : PageContextElement
     public override void Prepare(PageContext pageContext, Func<PagePosition, PageContextElement, PageContext> nextPageContextFactory)
     {
         _grid.ResetPageContexts(pageContext);
-        _grid.PageContextFactory = (PagePosition currentPagePosition) => nextPageContextFactory(currentPagePosition, this);
+        _grid.PageContextFactory = currentPagePosition => nextPageContextFactory(currentPagePosition, this);
 
-        Func<PagePosition, PageContextElement, PageContext> onNextPageContext = (currentPagePosition, childElement)
+        PageContext onNextPageContext(PagePosition currentPagePosition, PageContextElement childElement)
             => _grid.CreateNextPageContextForCell(currentPagePosition, ((Cell)childElement).GridPosition);
 
         Rectangle availableRegion = pageContext.Region;

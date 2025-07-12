@@ -4,6 +4,7 @@ using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Pages;
 using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
+using Proxoft.DocxToPdf.Rendering.Helpers;
 using Drawing = System.Drawing;
 
 namespace Proxoft.DocxToPdf.Rendering;
@@ -58,13 +59,12 @@ internal class PdfRendererPage : IRendererPage
             return;
         }
 
-        using (var ms = new MemoryStream())
-        {
-            bmp.Save(ms, bmp.RawFormat);
-            var image = XImage.FromStream(ms);
-            var offsetPosition = position + _offset;
-            _graphics.DrawImage(image, offsetPosition.X, offsetPosition.Y, size.Width, size.Height);
-        }
+        using var ms = new MemoryStream();
+
+        bmp.Save(ms, bmp.RawFormat);
+        XImage image = XImage.FromStream(ms);
+        Point offsetPosition = position + _offset;
+        _graphics.DrawImage(image, offsetPosition.X, offsetPosition.Y, size.Width, size.Height);
     }
 
     private static Drawing.Image? GetImageFromStream(Stream docImageStream)

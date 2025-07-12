@@ -8,18 +8,12 @@ using Drawing = System.Drawing;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Grids;
 
-internal class GridBorder
+internal class GridBorder(
+    TableBorderStyle tableBorderStyle,
+    Grid grid)
 {
-    private readonly TableBorderStyle _tableBorderStyle;
-    private readonly Grid _grid;
-
-    public GridBorder(
-        TableBorderStyle tableBorderStyle,
-        Grid grid)
-    {
-        _tableBorderStyle = tableBorderStyle;
-        _grid = grid;
-    }
+    private readonly TableBorderStyle _tableBorderStyle = tableBorderStyle;
+    private readonly Grid _grid = grid;
 
     public void Render(IEnumerable<Cell> cells, Point pageOffset, IRenderer renderer)
     {
@@ -37,70 +31,70 @@ internal class GridBorder
         CellBorder borders,
         Point pageOffset)
     {
-        var topPen = this.TopPen(borderStyle, gridPosition);
-        this.RenderBorderLine(renderer, borders.Top, topPen, pageOffset);
+        Drawing.Pen? topPen = this.TopPen(borderStyle, gridPosition);
+        RenderBorderLine(renderer, borders.Top, topPen, pageOffset);
 
-        var bottomPen = this.BottomPen(borderStyle, gridPosition);
-        this.RenderBorderLine(renderer, borders.Bottom, bottomPen, pageOffset);
+        Drawing.Pen? bottomPen = this.BottomPen(borderStyle, gridPosition);
+        RenderBorderLine(renderer, borders.Bottom, bottomPen, pageOffset);
 
-        var leftPen = this.LeftPen(borderStyle, gridPosition);
+        Drawing.Pen? leftPen = this.LeftPen(borderStyle, gridPosition);
         foreach(var lb in borders.Left)
         {
-            this.RenderBorderLine(renderer, lb, leftPen, pageOffset);
+            RenderBorderLine(renderer, lb, leftPen, pageOffset);
         }
 
-        var rightPen = this.RightPen(borderStyle, gridPosition);
+        Drawing.Pen? rightPen = this.RightPen(borderStyle, gridPosition);
         foreach (var rb in borders.Right)
         {
-            this.RenderBorderLine(renderer, rb, rightPen, pageOffset);
+            RenderBorderLine(renderer, rb, rightPen, pageOffset);
         }
     }
 
-    private void RenderBorderLine(
+    private static void RenderBorderLine(
         IRenderer renderer,
         BorderLine borderLine,
-        Drawing.Pen pen,
+        Drawing.Pen? pen,
         Point pageOffset)
     {
-        var page = renderer.GetPage(borderLine.PageNumber).Offset(pageOffset);
-        var line = borderLine.ToLine(pen);
+        IRendererPage page = renderer.GetPage(borderLine.PageNumber).Offset(pageOffset);
+        Line line = borderLine.ToLine(pen);
         page.RenderLine(line);
     }
 
-    private Drawing.Pen TopPen(BorderStyle border, GridPosition position)
+    private Drawing.Pen? TopPen(BorderStyle border, GridPosition position)
         => border.Top ?? this.DefaultTopPen(position);
 
-    private Drawing.Pen LeftPen(BorderStyle border, GridPosition position)
+    private Drawing.Pen? LeftPen(BorderStyle border, GridPosition position)
         => border.Left ?? this.DefaultLeftPen(position);
 
-    private Drawing.Pen RightPen(BorderStyle border, GridPosition position)
+    private Drawing.Pen? RightPen(BorderStyle border, GridPosition position)
         => border.Right ?? this.DefaultRightPen(position);
 
-    private Drawing.Pen BottomPen(BorderStyle border, GridPosition position)
+    private Drawing.Pen? BottomPen(BorderStyle border, GridPosition position)
         => border.Bottom ?? this.DefaultBottomPen(position);
 
-    private Drawing.Pen DefaultTopPen(GridPosition position)
+    private Drawing.Pen? DefaultTopPen(GridPosition position)
     {
         return position.Row == 0
             ? _tableBorderStyle.Top
             : _tableBorderStyle.InsideHorizontal;
     }
 
-    private Drawing.Pen DefaultLeftPen(GridPosition position)
+    private Drawing.Pen? DefaultLeftPen(GridPosition position)
     {
         return position.Column == 0
             ? _tableBorderStyle.Left
             : _tableBorderStyle.InsideVertical;
     }
 
-    private Drawing.Pen DefaultRightPen(GridPosition position)
+    private Drawing.Pen? DefaultRightPen(GridPosition position)
     {
         return position.Column + position.ColumnSpan == _grid.ColumnCount
             ? _tableBorderStyle.Right
             : _tableBorderStyle.InsideVertical;
     }
 
-    private Drawing.Pen DefaultBottomPen(GridPosition position)
+    private Drawing.Pen? DefaultBottomPen(GridPosition position)
     {
         return position.Row + position.RowSpan == _grid.RowCount
             ? _tableBorderStyle.Bottom

@@ -4,21 +4,14 @@ using Drawing = System.Drawing;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Grids;
 
-internal class BorderLine
+internal class BorderLine(PageNumber pageNumber, Point start, Point end)
 {
-    public BorderLine(PageNumber pageNumber, Point start, Point end)
-    {
-        this.PageNumber = pageNumber;
-        this.Start = start;
-        this.End = end;
-    }
+    public PageNumber PageNumber { get; } = pageNumber;
 
-    public PageNumber PageNumber { get; }
+    public Point Start { get; } = start;
 
-    public Point Start { get; }
+    public Point End { get; } = end;
 
-    public Point End { get; }
-
-    public Line ToLine(Drawing.Pen pen) =>
+    public Line ToLine(Drawing.Pen? pen) =>
         new(this.Start, this.End, pen ?? new Drawing.Pen(Drawing.Brushes.Transparent));
 }
