@@ -1,25 +1,27 @@
 ﻿using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Pages;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models
+namespace Proxoft.DocxToPdf.Models;
+
+internal interface IPage
 {
-    internal interface IPage
-    {
-        PageNumber PageNumber { get; }
+    PageNumber PageNumber { get; }
 
-        DocumentVariables DocumentVariables { get; }
+    DocumentVariables DocumentVariables { get; }
 
-        PageConfiguration Configuration { get; }
+    PageConfiguration Configuration { get; }
 
-        PageMargin Margin { get; }
+    PageMargin Margin { get; }
 
-        Rectangle GetPageRegion();
+    Rectangle GetPageRegion();
 
-        Rectangle GetContentRegion();
+    Rectangle GetContentRegion();
 
-        void SetHorizontalMargins(double left, double right);
-        void SetTopMargins(double header, double top);
-        void SetBottomMargins(double footer, double bottom);
-    }
+    void SetHorizontalMargins(double left, double right);
+
+    void SetTopMargins(double header, double top);
+
+    void SetBottomMargins(double footer, double bottom);
 }

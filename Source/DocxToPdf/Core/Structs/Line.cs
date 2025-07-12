@@ -1,21 +1,20 @@
-﻿using System.Drawing;
+﻿using D = System.Drawing;
 
-namespace Proxoft.DocxToPdf.Core
+namespace Proxoft.DocxToPdf.Core.Structs;
+
+internal class Line
 {
-    internal class Line
+    public Line(
+        Point start,
+        Point end,
+        D.Pen? pen = null)
     {
-        public Line(
-            Point start,
-            Point end,
-            Pen? pen = null)
-        {
-            this.Start = start;
-            this.End = end;
-            this.Pen = pen;
-        }
-
-        public Point Start { get; }
-        public Point End { get; }
-        public Pen? Pen { get; }
+        this.Start = start;
+        this.End = end;
+        this.Pen = pen;
     }
+
+    public Point Start { get; }
+    public Point End { get; }
+    public D.Pen? Pen { get; }
 }

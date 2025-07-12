@@ -6,6 +6,8 @@ using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Extensions.Units;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
+using Proxoft.DocxToPdf.Core.Structs;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
 
@@ -115,23 +117,23 @@ internal static class ParagraphElementsBuilder
 
     private static InilineDrawing ToInilineDrawing(this WDrawing.Inline inline, IImageAccessor imageAccessor)
     {
-        var size = inline.Extent.ToSize();
-        var blipElement = inline.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
+        Size size = inline.Extent.ToSize();
+        DocumentFormat.OpenXml.Drawing.Blip blipElement = inline.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
 
-        return new InilineDrawing(blipElement.Embed.Value, size, imageAccessor);
+        return new InilineDrawing(blipElement.Embed?.Value ?? "", size, imageAccessor);
     }
 
     private static FixedDrawing ToFixedDrawing(this WDrawing.Anchor anchor, IImageAccessor imageAccessor)
     {
-        var size = anchor.Extent.ToSize();
-        var blipElement = anchor.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
+        Size size = anchor.Extent.ToSize();
+        DocumentFormat.OpenXml.Drawing.Blip blipElement = anchor.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
 
-        var margin = anchor.ToAnchorMargin();
-        var position = anchor.SimplePos.Value
-            ? new Point(anchor.SimplePosition.X.Value, anchor.SimplePosition.Y.Value)
-            : new Point(anchor.HorizontalPosition.PositionOffset.ToPoint(), anchor.VerticalPosition.PositionOffset.ToPoint());
+        Margin margin = anchor.ToAnchorMargin();
+        Point position = (anchor.SimplePos?.Value ?? false)
+            ? new Point(anchor.SimplePosition?.X?.Value ?? 0, anchor.SimplePosition?.Y?.Value ?? 0)
+            : new Point(anchor.HorizontalPosition?.PositionOffset.ToDouble() ?? 0, anchor.VerticalPosition?.PositionOffset.ToDouble() ?? 0);
 
-        return new FixedDrawing(blipElement.Embed.Value, position, size, margin, imageAccessor);
+        return new FixedDrawing(blipElement.Embed?.Value ?? "", position, size, margin, imageAccessor);
     }
 
     private static Margin ToAnchorMargin(this WDrawing.Anchor anchor)

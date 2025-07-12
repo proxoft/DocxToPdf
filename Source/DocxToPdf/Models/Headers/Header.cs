@@ -1,23 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Paragraphs;
 
 namespace Proxoft.DocxToPdf.Models.Headers;
 
-internal class Header : HeaderBase
+internal class Header(
+    PageContextElement[] childs,
+    PageMargin pageMargin) : HeaderBase(pageMargin)
 {
-    private readonly PageContextElement[] _childs;
-
-    public Header(
-        PageContextElement[] childs,
-        PageMargin pageMargin) : base(pageMargin)
-    {
-        _childs = childs;
-    }
+    private readonly PageContextElement[] _childs = childs;
 
     public override void Prepare(IPage page)
     {

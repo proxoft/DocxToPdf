@@ -1,15 +1,15 @@
 ﻿using Proxoft.DocxToPdf.Core.Pages;
+using Proxoft.DocxToPdf.Core.Structs;
 
-namespace Proxoft.DocxToPdf.Core
+namespace Proxoft.DocxToPdf.Core;
+
+internal interface IRenderer
 {
-    internal interface IRenderer
-    {
-        RenderingOptions Options { get; }
+    RenderingOptions Options { get; }
 
-        void CreatePage(PageNumber pageNumber, PageConfiguration configuration);
+    void CreatePage(PageNumber pageNumber, PageConfiguration configuration);
 
-        IRendererPage GetPage(PageNumber pageNumber);
+    IRendererPage GetPage(PageNumber pageNumber);
 
-        IRendererPage GetPage(PageNumber pageNumber, Point offsetRendering);
-    }
+    IRendererPage GetPage(PageNumber pageNumber, Point offsetRendering);
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
 namespace Proxoft.DocxToPdf.Models.Core;

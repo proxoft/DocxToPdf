@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Styles;
 using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
@@ -14,7 +15,7 @@ internal class Line: ParagraphElementBase
 
     public Line(IEnumerable<LineSegment> segments, LineSpacing lineSpacing)
     {
-        _segments = segments.ToArray();
+        _segments = [.. segments];
 
         var boundingRectangle = Rectangle.Union(segments.Select(s => s.PageRegion));
         this.Size = boundingRectangle.Size;
@@ -52,12 +53,12 @@ internal class Line: ParagraphElementBase
         _segments.Render(page);
     }
 
-    public IEnumerable<LineElement> GetAllElements()
-        => _segments.SelectMany(s => s.GetAllElements());
+    public IEnumerable<LineElement> GetAllElements() =>
+        _segments.SelectMany(s => s.GetAllElements());
 
-    public FieldUpdateResult UpdateFields()
-    {
-        // var updateResult = _segments.UpdateFields();
-        return NoChange;
-    }
+    //public FieldUpdateResult UpdateFields()
+    //{
+    //    // var updateResult = _segments.UpdateFields();
+    //    return NoChange;
+    //}
 }

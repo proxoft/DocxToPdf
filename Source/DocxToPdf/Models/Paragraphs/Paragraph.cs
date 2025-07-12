@@ -9,27 +9,25 @@ using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 using Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 
-using C = Proxoft.DocxToPdf.Core;
+using C = Proxoft.DocxToPdf.Core.Structs;
 
 using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
+using Proxoft.DocxToPdf.Core;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs;
 
-internal class Paragraph : PageContextElement
+internal class Paragraph(
+    IEnumerable<LineElement> elements,
+    IEnumerable<FixedDrawing> fixedDrawings,
+    IStyleFactory styleFactory) : PageContextElement
 {
-    private readonly IStyleFactory _styleFactory;
+    private readonly IStyleFactory _styleFactory = styleFactory;
 
     private Line[] _lines = [];
-    private readonly FixedDrawing[] _fixedDrawings = [];
-    private readonly Stack<LineElement> _unprocessedElements = [];
+    private readonly FixedDrawing[] _fixedDrawings = [.. fixedDrawings];
+    private readonly Stack<LineElement> _unprocessedElements = elements.ToStack();
     private C.Point _pageOffset = C.Point.Zero;
-
-    public Paragraph(IEnumerable<LineElement> elements, IEnumerable<FixedDrawing> fixedDrawings, IStyleFactory styleFactory)
-    {
-        _unprocessedElements = elements.ToStack();
-        _fixedDrawings = fixedDrawings.ToArray();
-        _styleFactory = styleFactory;
-    }
 
     private ParagraphStyle ParagraphStyle => _styleFactory.ParagraphStyle;
 
@@ -154,7 +152,7 @@ internal class Paragraph : PageContextElement
         return (ExecuteResult.Done, 0);
     }
 
-    public override void Render(C.IRenderer renderer)
+    public override void Render(IRenderer renderer)
     {
         foreach(var fixedDrawing in _fixedDrawings)
         {

@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
 using Proxoft.DocxToPdf.Models.Styles;
 
-using C = Proxoft.DocxToPdf.Core;
+using C = Proxoft.DocxToPdf.Core.Structs;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
 

@@ -1,18 +1,15 @@
 ﻿using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
 namespace Proxoft.DocxToPdf.Models.Headers;
 
-internal class NoHeader : HeaderBase
+internal class NoHeader(PageMargin pageMargin) : HeaderBase(pageMargin)
 {
-    public NoHeader(PageMargin pageMargin) : base(pageMargin)
-    {
-    }
-
     public override void Prepare(IPage page)
     {
-        var pagePosition = new PagePosition(page.PageNumber);
-        var headerRegion = new Rectangle(
+        PagePosition pagePosition = new(page.PageNumber);
+        Rectangle headerRegion = new(
             this.PageMargin.Left,
             this.PageMargin.Header,
             page.Configuration.Width - this.PageMargin.HorizontalMargins,

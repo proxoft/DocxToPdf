@@ -1,42 +1,42 @@
 ﻿using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
 using Drawing = System.Drawing;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs
+namespace Proxoft.DocxToPdf.Models.Paragraphs;
+
+internal abstract class ParagraphElementBase : IPageRenderable
 {
-    internal abstract class ParagraphElementBase : IPageRenderable
+    public DocumentPosition Position { get; private set; } = DocumentPosition.None;
+
+    public Size Size { get; protected set; } = Size.Zero;
+
+    public double Width => this.Size.Width;
+
+    public double Height => this.Size.Height;
+
+    public Rectangle PageRegion => new Rectangle(this.Position.Offset, this.Size);
+
+    public virtual void SetPosition(DocumentPosition position)
     {
-        public DocumentPosition Position { get; private set; } = DocumentPosition.None;
+        this.Position = position;
+    }
 
-        public Size Size { get; protected set; } = Size.Zero;
+    public abstract void Render(IRendererPage page);
 
-        public double Width => this.Size.Width;
-
-        public double Height => this.Size.Height;
-
-        public Rectangle PageRegion => new Rectangle(this.Position.Offset, this.Size);
-
-        public virtual void SetPosition(DocumentPosition position)
+    protected void RenderBorder(IRendererPage page, Drawing.Pen pen)
+    {
+        if (pen == null)
         {
-            this.Position = position;
+            return;
         }
 
-        public abstract void Render(IRendererPage page);
+        var region = this.PageRegion;
 
-        protected void RenderBorder(IRendererPage page, Drawing.Pen pen)
-        {
-            if (pen == null)
-            {
-                return;
-            }
-
-            var region = this.PageRegion;
-
-            page.RenderLine(region.TopLine(pen));
-            page.RenderLine(region.RightLine(pen));
-            page.RenderLine(region.BottomLine(pen));
-            page.RenderLine(region.LeftLine(pen));
-        }
+        page.RenderLine(region.TopLine(pen));
+        page.RenderLine(region.RightLine(pen));
+        page.RenderLine(region.BottomLine(pen));
+        page.RenderLine(region.LeftLine(pen));
     }
 }

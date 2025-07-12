@@ -1,28 +1,23 @@
-﻿using Proxoft.DocxToPdf.Core;
+﻿using Proxoft.DocxToPdf.Core.Structs;
 
-namespace Proxoft.DocxToPdf.Models.Common
+namespace Proxoft.DocxToPdf.Models.Common;
+
+public class Margin(double top, double right, double bottom, double left)
 {
-    public class Margin
-    {
-        public static readonly Margin None = new Margin(0, 0, 0, 0);
+    public static readonly Margin None = new(0, 0, 0, 0);
 
-        public Margin(double top, double right, double bottom, double left)
-        {
-            this.Top = top;
-            this.Right = right;
-            this.Bottom = bottom;
-            this.Left = left;
-        }
+    public double Top { get; } = top;
 
-        public double Top { get; }
-        public double Right { get; }
-        public double Bottom { get; }
-        public double Left { get; }
+    public double Right { get; } = right;
 
-        public double HorizontalMargins => this.Left + this.Right;
-        public double VerticalMargins => this.Top + this.Bottom;
+    public double Bottom { get; } = bottom;
 
-        public Point TopLeftReverseOffset()
-            => new Point(-this.Left, -this.Top);
-    }
+    public double Left { get; } = left;
+
+    public double HorizontalMargins => this.Left + this.Right;
+
+    public double VerticalMargins => this.Top + this.Bottom;
+
+    public Point TopLeftReverseOffset() =>
+        new(-this.Left, -this.Top);
 }
