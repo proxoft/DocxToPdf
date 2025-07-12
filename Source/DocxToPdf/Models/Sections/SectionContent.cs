@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Pages;
+using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Core;
@@ -11,22 +9,15 @@ using Proxoft.DocxToPdf.Models.Sections.Columns;
 
 namespace Proxoft.DocxToPdf.Models.Sections;
 
-internal class SectionContent : PageElement
+internal class SectionContent(
+    PageContextElement[] childs,
+    ColumnsConfiguration columnsConfiguration,
+    SectionContentBreak sectionBreak) : PageElement
 {
-    private readonly PageContextElement[] _childs;
-    private readonly ColumnsConfiguration _columnsConfiguration;
+    private readonly PageContextElement[] _childs = childs;
+    private readonly ColumnsConfiguration _columnsConfiguration = columnsConfiguration;
 
-    public SectionContent(
-        IEnumerable<PageContextElement> childs,
-        ColumnsConfiguration columnsConfiguration,
-        SectionContentBreak sectionBreak)
-    {
-        _childs = childs.ToArray();
-        _columnsConfiguration = columnsConfiguration;
-        this.SectionBreak = sectionBreak;
-    }
-
-    public SectionContentBreak SectionBreak { get; }
+    public SectionContentBreak SectionBreak { get; } = sectionBreak;
 
     public void Prepare(
         PageRegion previousSection,
@@ -36,8 +27,8 @@ internal class SectionContent : PageElement
     {
         var context = this.CreateInitialPageContext(previousSection, previousContent, previousBreak, pageFactory);
 
-        Func<PagePosition, PageContextElement, PageContext> childContextRequest = (pagePosition, child)
-            => this.OnChildPageContextRequest(pagePosition, pageFactory);
+        PageContext childContextRequest(PagePosition pagePosition, PageContextElement child) =>
+            this.OnChildPageContextRequest(pagePosition, pageFactory);
 
         var spaceAfterPrevious = 0.0;
         foreach(var child in _childs)

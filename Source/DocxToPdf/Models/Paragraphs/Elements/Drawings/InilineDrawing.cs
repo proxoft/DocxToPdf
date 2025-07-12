@@ -1,4 +1,5 @@
 ﻿using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Models.Common;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs;

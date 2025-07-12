@@ -23,11 +23,9 @@ internal static class HeaderFactory
             return new NoHeader(pageMargin);
         }
 
-        PageContextElement[] childElements = [
-            ..wordHeader
+        PageContextElement[] childElements = wordHeader
                 .RenderableChildren()
-                .CreatePageElements(imageAccessor, styleFactory)
-        ];
+                .CreatePageElements(imageAccessor, styleFactory);
 
         return new Header(childElements, pageMargin);
     }

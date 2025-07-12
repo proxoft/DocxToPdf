@@ -23,7 +23,7 @@ internal static class FooterFactory
             return new NoFooter(pageMargin);
         }
 
-        var childElements = wordFooter.RenderableChildren().CreatePageElements(imageAccessor, styleFactory);
+        PageContextElement[] childElements = wordFooter.RenderableChildren().CreatePageElements(imageAccessor, styleFactory);
         return new Footer(childElements, pageMargin);
     }
 }

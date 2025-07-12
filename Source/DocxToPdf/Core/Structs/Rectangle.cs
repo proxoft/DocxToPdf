@@ -9,7 +9,7 @@ namespace Proxoft.DocxToPdf.Core.Structs;
 [DebuggerDisplay("{TopLeft}: {Width}x{Height}")]
 internal readonly record struct Rectangle
 {
-    public static readonly Rectangle Empty = new Rectangle(0, 0, 0, 0);
+    public static readonly Rectangle Empty = new(0, 0, 0, 0);
 
     public Rectangle(double x, double y, double width, double height)
     {
@@ -94,20 +94,20 @@ internal readonly record struct Rectangle
     public Rectangle ExpandHeight(double height) =>
         this.Expand(0, height);
 
-    public Rectangle Expand(double width, double height)
-        => new(this.X, this.Y, this.Width + width, this.Height + height);
+    public Rectangle Expand(double width, double height)=>
+        new(this.X, this.Y, this.Width + width, this.Height + height);
 
-    public Rectangle Inflate(double top, double right, double bottom, double left)
-        => new(this.X - left, this.Y - top, this.Width + left + right, this.Height + top + bottom);
+    public Rectangle Inflate(double top, double right, double bottom, double left) =>
+        new(this.X - left, this.Y - top, this.Width + left + right, this.Height + top + bottom);
 
-    public Rectangle Crop(double top, double right, double bottom, double left)
-        => new Rectangle(this.X + left, this.Y + top, this.Width - left - right, this.Height - top - bottom);
+    public Rectangle Crop(double top, double right, double bottom, double left) =>
+        new(this.X + left, this.Y + top, this.Width - left - right, this.Height - top - bottom);
 
-    public Rectangle CropHorizontal(double left, double width)
-        => new Rectangle(this.X + left, this.Y, width, this.Height);
+    public Rectangle CropHorizontal(double left, double width) =>
+        new(this.X + left, this.Y, width, this.Height);
 
     public Rectangle Clip(Point topLeft)
-    { 
+    {
         var width = this.Width - (topLeft.X - this.X);
         var height = this.Height - (topLeft.Y - this.Y);
 
@@ -126,16 +126,16 @@ internal readonly record struct Rectangle
             return this;
         }
 
-        return Union(rectangles.Union(new[] { this }));
+        return Union(rectangles.Union([ this ]));
     }
 
     public static Rectangle Union(IEnumerable<Rectangle> rectangles)
     {
-        var x = double.MaxValue;
-        var y = double.MaxValue;
-        var rx = double.MinValue;
-        var ry = double.MinValue;
-        var count = 0;
+        double x = double.MaxValue;
+        double y = double.MaxValue;
+        double rx = double.MinValue;
+        double ry = double.MinValue;
+        int count = 0;
         foreach (var r in rectangles)
         {
             count++;

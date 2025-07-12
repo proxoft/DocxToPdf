@@ -13,7 +13,7 @@ using C = Proxoft.DocxToPdf.Core.Structs;
 
 using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Rendering;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs;
 

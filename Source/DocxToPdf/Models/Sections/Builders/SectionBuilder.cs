@@ -130,7 +130,7 @@ internal static class SectionBuilder
                             }
 
                             contentElements.Add(begin);
-                            var childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
+                            PageContextElement[] childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
                             sectionContents.Add(new SectionContent(childElements, columnsConfiguration, @break));
                             contentElements.Clear();
                         }
@@ -144,7 +144,7 @@ internal static class SectionBuilder
 
         if (contentElements.Count > 0)
         {
-            var childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
+            PageContextElement[] childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
             sectionContents.Add(new SectionContent(childElements, columnsConfiguration, SectionContentBreak.None));
         }
 

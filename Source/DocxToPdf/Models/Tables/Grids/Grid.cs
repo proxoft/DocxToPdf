@@ -222,7 +222,7 @@ internal class Grid
         var offset = this.RowAbsoluteOffset(rowIndex);
         var remainingHeight = _gridRows[rowIndex].Height;
 
-        var regions = new List<(PagePosition, Rectangle)>();
+        List<(PagePosition, Rectangle)> regions = [];
 
         foreach (var pg in _pageContexts)
         {

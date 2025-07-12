@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Common;
@@ -8,6 +6,7 @@ using Proxoft.DocxToPdf.Models.Styles.Services;
 using Proxoft.DocxToPdf.Models.Tables.Builders;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
 using Proxoft.DocxToPdf.Core.Structs;
+using Proxoft.DocxToPdf.Core.Rendering;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Elements;
 
@@ -16,10 +15,10 @@ internal class Cell : PageContextElement
     private readonly Margin _contentMargin;
     private readonly PageContextElement[] _childs = [];
 
-    private Cell(IEnumerable<PageContextElement> childs, GridPosition gridPosition, BorderStyle borderStyle)
+    private Cell(PageContextElement[] childs, GridPosition gridPosition, BorderStyle borderStyle)
     {
         _contentMargin = new Margin(0.5, 4, 0.5, 4);
-        _childs = childs.ToArray();
+        _childs = childs;
 
         this.GridPosition = gridPosition;
         this.BorderStyle = borderStyle;
@@ -34,11 +33,11 @@ internal class Cell : PageContextElement
         var currentPageContext = pageContext
                .Crop(_contentMargin.Top, _contentMargin.Right, 0, _contentMargin.Left);
 
-        Func<PagePosition, PageContextElement, PageContext> onNewPage = (pagePosition, childElement) =>
+        PageContext onNewPage(PagePosition pagePosition, PageContextElement childElement)
         {
             currentPageContext = nextPageContextFactory(pagePosition, this);
             return currentPageContext.Crop(0, _contentMargin.Right, 0, _contentMargin.Left);
-        };
+        }
 
         Rectangle availableRegion = currentPageContext.Region;
 
@@ -69,12 +68,11 @@ internal class Cell : PageContextElement
         IImageAccessor imageAccessor,
         IStyleFactory styleFactory)
     {
-        var childs = wordCell
+        PageContextElement[] childs = [.. wordCell
             .RenderableChildren()
-            .CreatePageElements(imageAccessor, styleFactory)
-            .ToArray();
+            .CreatePageElements(imageAccessor, styleFactory)];
 
-        var borderStyle = wordCell.GetBorderStyle();
+        BorderStyle borderStyle = wordCell.GetBorderStyle();
 
         return new Cell(childs, gridPosition, borderStyle);
     }

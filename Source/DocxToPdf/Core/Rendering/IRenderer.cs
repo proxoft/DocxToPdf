@@ -1,7 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Core.Pages;
 using Proxoft.DocxToPdf.Core.Structs;
 
-namespace Proxoft.DocxToPdf.Core;
+namespace Proxoft.DocxToPdf.Core.Rendering;
 
 internal interface IRenderer
 {

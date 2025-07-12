@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Core;
@@ -58,7 +58,7 @@ internal class Header(
                 boundingRegion.PagePosition, resized);
         }
 
-        this.ResetPageRegions(new[] { boundingRegion });
+        this.ResetPageRegions([ boundingRegion ]);
     }
 
     public override void Render(IRenderer renderer)

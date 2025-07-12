@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Models.Common;
@@ -21,18 +22,19 @@ internal class LineSegment : ParagraphElementBase
     private double _lineHeight = 0;
 
     public LineSegment(
-        IEnumerable<LineElement> elements,
+        LineElement[] elements,
         LineAlignment lineAlignment,
         HorizontalSpace space,
         double defaultLineHeight)
     {
-        _elements = elements.ToArray();
-        _trimmedElements = _elements
+        _elements = elements;
+        _trimmedElements = [
+            .._elements
                 .SkipWhile(e => e is SpaceElement) // skip leading spaces
                 .Reverse()
                 .SkipWhile(e => e is SpaceElement) // skip trailing spaces
                 .Reverse()
-                .ToArray();
+        ];
 
         _lineAlignment = lineAlignment;
         _space = space;

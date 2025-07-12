@@ -43,14 +43,14 @@ internal static class LineBuilder
         double defaultLineHeight,
         PageVariables variables)
     {
-        var reserveSpaceHelper = new LineReservedSpaceHelper(fixedDrawings, relativeYOffset, availableWidth);
+        LineReservedSpaceHelper reserveSpaceHelper = new (fixedDrawings, relativeYOffset, availableWidth);
 
-        var expectedLineHeight = 0.0;
-        var finished = false;
+        double expectedLineHeight = 0.0;
+        bool finished = false;
 
         do
         {
-            var segmentSpaces = reserveSpaceHelper
+            HorizontalSpace[] segmentSpaces = reserveSpaceHelper
                 .GetLineSegments()
                 .ToArray();
 
@@ -75,6 +75,6 @@ internal static class LineBuilder
             }
         } while (!finished);
 
-        return (new LineSegment[0], expectedLineHeight);
+        return ([], expectedLineHeight);
     }
 }

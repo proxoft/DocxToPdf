@@ -8,18 +8,17 @@ namespace Proxoft.DocxToPdf.Models.Core;
 
 internal static class Factory
 {
-    public static IEnumerable<PageContextElement> CreatePageElements(
+    public static PageContextElement[] CreatePageElements(
         this IEnumerable<OpenXmlCompositeElement> openXmlComposites,
         IImageAccessor imageAccessor,
-        IStyleFactory styleFactory)
-    {
-        return openXmlComposites
+        IStyleFactory styleFactory) =>
+        [..openXmlComposites
             .Select(xml =>
             {
                 var e = xml.CreateElement(imageAccessor, styleFactory);
                 return e;
-            });
-    }
+            })
+        ];
 
     public static PageContextElement CreateElement(
         this OpenXmlCompositeElement openXmlComposite,

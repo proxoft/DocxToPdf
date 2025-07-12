@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
-using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Pages;
+using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Sections;
 using Proxoft.DocxToPdf.Models.Sections.Builders;
