@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Images;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Common;
@@ -89,12 +90,12 @@ internal static class SectionBuilder
         bool isFirst,
         IStyleFactory styleFactory)
     {
-        var imageAccessor = new ImageAccessor(mainDocumentPart);
+        ImageAccessor imageAccessor = new(mainDocumentPart);
 
-        var sectionProperties = wordSectionProperties.CreateSectionProperties(mainDocumentPart, isFirst, headerFooterConfiguration);
-        var columnsConfiguration = wordSectionProperties.CreateColumnsConfiguration(sectionProperties.PageConfiguration, sectionProperties.Margin);
-        var sectionContents = xmlElements.SplitToSectionContents(columnsConfiguration, imageAccessor, styleFactory);
-        var sd = new Section(sectionProperties, sectionContents, imageAccessor, styleFactory);
+        SectionProperties sectionProperties = wordSectionProperties.CreateSectionProperties(mainDocumentPart, isFirst, headerFooterConfiguration);
+        ColumnsConfiguration columnsConfiguration = wordSectionProperties.CreateColumnsConfiguration(sectionProperties.PageConfiguration, sectionProperties.Margin);
+        SectionContent[] sectionContents = xmlElements.SplitToSectionContents(columnsConfiguration, imageAccessor, styleFactory);
+        Section sd = new(sectionProperties, sectionContents, imageAccessor, styleFactory);
 
         return sd;
     }

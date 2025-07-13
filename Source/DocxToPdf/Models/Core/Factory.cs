@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DocumentFormat.OpenXml;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Images;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 
 namespace Proxoft.DocxToPdf.Models.Core;

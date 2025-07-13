@@ -1,5 +1,4 @@
 ﻿using System;
-using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Styles.Services;
@@ -7,6 +6,7 @@ using Proxoft.DocxToPdf.Models.Tables.Builders;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Core.Rendering;
+using Proxoft.DocxToPdf.Core.Images;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Elements;
 
@@ -59,7 +59,6 @@ internal class Cell : PageContextElement
     public override void Render(IRenderer renderer)
     {
         _childs.Render(renderer);
-        // this.RenderBordersIf(renderer, true);
     }
 
     public static Cell From(

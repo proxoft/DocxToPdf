@@ -1,9 +1,8 @@
 ﻿using System.IO;
 
-namespace Proxoft.DocxToPdf.Core
+namespace Proxoft.DocxToPdf.Core.Images;
+
+internal interface IImageAccessor
 {
-    internal interface IImageAccessor
-    {
-        Stream GetImageStream(string imageId);
-    }
+    Stream GetImageStream(string imageId);
 }

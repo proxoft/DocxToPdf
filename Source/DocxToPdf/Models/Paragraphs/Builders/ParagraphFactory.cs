@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Images;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
