@@ -107,7 +107,7 @@ internal static class SectionBuilder
     {
         List<SectionContent> sectionContents = [];
 
-        var stack = xmlElements.ToStack();
+        var stack = xmlElements.ToStackReversed();
         var contentElements = new List<OpenXml.OpenXmlCompositeElement>();
 
         while (stack.Count > 0)

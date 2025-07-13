@@ -26,7 +26,7 @@ internal class Paragraph(
 
     private Line[] _lines = [];
     private readonly FixedDrawing[] _fixedDrawings = [.. fixedDrawings];
-    private readonly Stack<LineElement> _unprocessedElements = elements.ToStack();
+    private readonly Stack<LineElement> _unprocessedElements = elements.ToStackReversed();
     private C.Point _pageOffset = C.Point.Zero;
 
     private ParagraphStyle ParagraphStyle => _styleFactory.ParagraphStyle;

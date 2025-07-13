@@ -12,7 +12,7 @@ internal partial class LineReservedSpaceHelper
     private readonly double _lineWidth;
 
     private double _expectedLineHeight = 0;
-    private Dictionary<int, HorizontalSpace> _reservedSpaces = new Dictionary<int, HorizontalSpace>();
+    private Dictionary<int, HorizontalSpace> _reservedSpaces = [];
 
     public LineReservedSpaceHelper(
         IEnumerable<Rectangle> fixedDrawings,
@@ -31,7 +31,7 @@ internal partial class LineReservedSpaceHelper
 
     public IReadOnlyCollection<HorizontalSpace> ReservedSpaces => _reservedSpaces.Values;
 
-    public IEnumerable<HorizontalSpace> GetLineSegments()
+    public HorizontalSpace[] GetLineSegments()
     {
         List<HorizontalSpace> lineSegments = [];
         double offset = 0.0;
@@ -55,7 +55,7 @@ internal partial class LineReservedSpaceHelper
             lineSegments.Add(new HorizontalSpace(offset, _lineWidth - offset));
         }
 
-        return lineSegments;
+        return [..lineSegments];
     }
 
     public bool UpdateLineHeight(double expectedLineHeight)
@@ -73,9 +73,7 @@ internal partial class LineReservedSpaceHelper
 
     private bool UpdateReservedSpaces()
     {
-        KeyValuePair<int, Rectangle>[] boxes = _fixedDrawings
-            .Where(r => this.HasOverlapWithLine(r.Value))
-            .ToArray();
+        KeyValuePair<int, Rectangle>[] boxes = [.. _fixedDrawings.Where(r => this.HasOverlapWithLine(r.Value))];
 
         if(boxes.All(i => _reservedSpaces.ContainsKey(i.Key)))
         {

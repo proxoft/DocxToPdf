@@ -18,30 +18,30 @@ internal static class ParagraphElementsBuilder
         IImageAccessor imageAccessor,
         IStyleFactory styleFactory)
     {
-        var runs = paragraph
+        Stack<Word.Run> runs = paragraph
             .SelectRuns()
-            .ToStack();
+            .ToStackReversed();
 
-        var elements = new List<LineElement>();
+        List<LineElement> elements = [];
 
         while (runs.Count > 0)
         {
-            var run = runs.Pop();
+            Word.Run run = runs.Pop();
             if (run.IsFieldStart())
             {
-                var fieldRuns = new List<Word.Run> { run };
+                List<Word.Run> fieldRuns = [ run ];
                 do
                 {
                     run = runs.Pop();
                     fieldRuns.Add(run);
                 } while (!run.IsFieldEnd());
 
-                var field = fieldRuns.CreateField(styleFactory);
+                LineElement field = fieldRuns.CreateField(styleFactory);
                 elements.Add(field);
             }
             else
             {
-                var runElements = run.CreateParagraphElements(imageAccessor, styleFactory);
+                LineElement[] runElements = run.CreateParagraphElements(imageAccessor, styleFactory);
                 elements.AddRange(runElements);
             }
         }
@@ -51,11 +51,12 @@ internal static class ParagraphElementsBuilder
 
     public static IEnumerable<FixedDrawing> CreateFixedDrawingElements(this Word.Paragraph paragraph, IImageAccessor imageAccessor)
     {
-        var drawings = paragraph
-            .Descendants<Word.Drawing>()
-            .Where(d => d.Anchor != null)
-            .Select(d => d.Anchor!.ToFixedDrawing(imageAccessor))
-            .ToArray();
+        FixedDrawing[] drawings = [
+            ..paragraph
+                .Descendants<Word.Drawing>()
+                .Where(d => d.Anchor != null)
+                .Select(d => d.Anchor!.ToFixedDrawing(imageAccessor))
+        ];
 
         return drawings;
     }
@@ -65,23 +66,24 @@ internal static class ParagraphElementsBuilder
         IImageAccessor imageAccessor,
         IStyleFactory styleAccessor)
     {
-        var textStyle = styleAccessor.EffectiveTextStyle(run.RunProperties);
+        TextStyle textStyle = styleAccessor.EffectiveTextStyle(run.RunProperties);
 
-        var elements = run
-            .ChildElements
-            .Where(c => c is Word.Text || c is Word.TabChar || c is Word.Drawing || c is Word.Break || c is Word.CarriageReturn)
-            .SelectMany(c => {
-                return c switch
-                {
-                    Word.Text t => t.SplitTextToElements(textStyle),
-                    Word.TabChar t => [new TabElement(textStyle)],
-                    Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
-                    Word.CarriageReturn _ => [new NewLineElement(textStyle)],
-                    Word.Break b => b.CreateBreakElement(textStyle),
-                    _ => throw new RendererException("unprocessed child")
-                };
-            })
-            .ToArray();
+        LineElement[] elements = [
+            ..run
+                .ChildElements
+                .Where(c => c is Word.Text || c is Word.TabChar || c is Word.Drawing || c is Word.Break || c is Word.CarriageReturn)
+                .SelectMany(c => {
+                    return c switch
+                    {
+                        Word.Text t => t.SplitTextToElements(textStyle),
+                        Word.TabChar t => [new TabElement(textStyle)],
+                        Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
+                        Word.CarriageReturn _ => [new NewLineElement(textStyle)],
+                        Word.Break b => b.CreateBreakElement(textStyle),
+                        _ => throw new RendererException("unprocessed child")
+                    };
+                })
+        ];
 
         return elements;
     }
@@ -138,10 +140,10 @@ internal static class ParagraphElementsBuilder
 
     private static Margin ToAnchorMargin(this WDrawing.Anchor anchor)
     {
-        var top = anchor.DistanceFromTop.EmuToPoint();
-        var right = anchor.DistanceFromRight.EmuToPoint();
-        var bottom = anchor.DistanceFromBottom.EmuToPoint();
-        var left = anchor.DistanceFromLeft.EmuToPoint();
+        double top = anchor.DistanceFromTop.EmuToPoint();
+        double right = anchor.DistanceFromRight.EmuToPoint();
+        double bottom = anchor.DistanceFromBottom.EmuToPoint();
+        double left = anchor.DistanceFromLeft.EmuToPoint();
 
         return new Margin(top, right, bottom, left);
     }

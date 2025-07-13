@@ -9,17 +9,11 @@ using Proxoft.DocxToPdf.Models.Styles.Services;
 
 namespace Proxoft.DocxToPdf.Models;
 
-internal class Document
+internal class Document(WordprocessingDocument docx)
 {
     private Section[] _sections = [];
-    private readonly WordprocessingDocument _docx;
-    private readonly IStyleFactory _styleAccessor;
-
-    public Document(WordprocessingDocument docx)
-    {
-        _docx = docx;
-        _styleAccessor = StyleFactory.Default(docx.MainDocumentPart);
-    }
+    private readonly WordprocessingDocument _docx = docx;
+    private readonly IStyleFactory _styleAccessor = StyleFactory.Default(docx.MainDocumentPart);
 
     public void Render(IRenderer renderer)
     {

@@ -50,9 +50,7 @@ internal static class LineBuilder
 
         do
         {
-            HorizontalSpace[] segmentSpaces = reserveSpaceHelper
-                .GetLineSegments()
-                .ToArray();
+            HorizontalSpace[] segmentSpaces = reserveSpaceHelper.GetLineSegments();
 
             var lineSegments = segmentSpaces
                 .Select((space, i) => fromElements.CreateLineSegment(space, lineAlignment, defaultLineHeight, variables))

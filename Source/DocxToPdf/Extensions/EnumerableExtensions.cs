@@ -24,14 +24,17 @@ internal static class EnumerableExtensions
             .Concat(otherValues)
             .Where(v => predicate(v));
 
-    public static Stack<T> ToStack<T>(this IEnumerable<T> source, bool reverseOrder = true)
-    {
-        var content = reverseOrder
-            ? source.Reverse()
-            : source;
+    public static Stack<T> ToStackReversed<T>(this IEnumerable<T> source) =>
+        new(source.Reverse());
 
-        return new Stack<T>(content);
-    }
+    //public static Stack<T> ToStack<T>(this IEnumerable<T> source, bool reverseOrder = true)
+    //{
+    //    var content = reverseOrder
+    //        ? source.Reverse()
+    //        : source;
+
+    //    return new Stack<T>(content);
+    //}
 
     public static void Push<T>(this Stack<T> stack, IEnumerable<T> items, bool reverseOrder = true)
     {
