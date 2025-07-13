@@ -147,10 +147,10 @@ internal class Grid(
         return new HorizontalSpace(offset, width);
     }
 
-    private double RowAbsoluteOffset(GridPosition position) =>
-        this.RowAbsoluteOffset(position.Row);
+    private double RowAbsoluteYOffset(GridPosition position) =>
+        this.RowAbsoluteYOffset(position.Row);
 
-    private double RowAbsoluteOffset(int rowIndex) =>
+    private double RowAbsoluteYOffset(int rowIndex) =>
         _gridRows
             .Take(rowIndex)
             .Sum(gr => gr.Height);
@@ -185,23 +185,23 @@ internal class Grid(
 
     private PageContext GetOrCreateRowPageContext(GridPosition position)
     {
-        var rowOffset = this.RowAbsoluteOffset(position);
-        var pc = _pageContexts.First();
+        double rowOffset = this.RowAbsoluteYOffset(position);
+        PageContext pageContext = _pageContexts.First();
         do
         {
-            if (pc.Region.Height > rowOffset)
+            if (pageContext.Region.Height > rowOffset)
             {
-                return pc.Crop(rowOffset, 0, 0, 0);
+                return pageContext.Crop(rowOffset, 0, 0, 0);
             }
 
-            rowOffset -= pc.Region.Height;
-            pc = this.GetOrCreateNextPageContext(pc.PagePosition);
+            rowOffset -= pageContext.Region.Height;
+            pageContext = this.GetOrCreateNextPageContext(pageContext.PagePosition);
         } while (true);
     }
 
     private PageContext GetOrCreateNextPageContext(PagePosition currentPagePosition)
     {
-        var nextPageContext = _pageContexts.FirstOrDefault(pc => pc.PagePosition == currentPagePosition.Next());
+        PageContext? nextPageContext = _pageContexts.FirstOrDefault(pc => pc.PagePosition == currentPagePosition.Next());
         if(nextPageContext != null)
         {
             return nextPageContext;
@@ -214,7 +214,7 @@ internal class Grid(
 
     private (PagePosition page, Rectangle region)[] FindPageRegionsOfRow(int rowIndex)
     {
-        var offset = this.RowAbsoluteOffset(rowIndex);
+        var offset = this.RowAbsoluteYOffset(rowIndex);
         var remainingHeight = _gridRows[rowIndex].Height;
 
         List<(PagePosition, Rectangle)> regions = [];

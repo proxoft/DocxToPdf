@@ -215,11 +215,13 @@ internal static class SectionBuilder
 
         HeaderFooterRef[] headerRefs = [.. wordSectionProperties
             .ChildsOfType<Word.HeaderReference>()
-            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type))];
+            .Where(fr => fr.Id is not null && fr.Type is not null)
+            .Select(fr => new HeaderFooterRef(fr.Id!, fr.Type!))];
 
         HeaderFooterRef[] footerRefs = [.. wordSectionProperties
             .ChildsOfType<Word.FooterReference>()
-            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type))];
+            .Where(fr => fr.Id is not null && fr.Type is not null)
+            .Select(fr => new HeaderFooterRef(fr.Id!, fr.Type!))];
 
         return previousHeaderFooterConfiguration.Inherited(mainDocument, hasTitlePage, headerRefs, footerRefs);
     }
