@@ -20,9 +20,9 @@ internal static class HeaderFooterXmlExtensions
 
     public static Footer? FindFooter(
         this MainDocumentPart mainDocumentPart,
-        string footerReferenceId)
+        string? footerReferenceId)
     {
-        if (footerReferenceId == null)
+        if (string.IsNullOrWhiteSpace(footerReferenceId))
         {
             return null;
         }

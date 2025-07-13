@@ -93,23 +93,23 @@ internal class Grid(
 
     public CellBorder GetBorder(GridPosition position)
     {
-        var space = this.CalculateHorizontalCellSpace(position);
-        var lx = new Point(space.X, 0);
-        var rx = new Point(space.RightX, 0);
+        HorizontalSpace space = this.CalculateHorizontalCellSpace(position);
+        Point lx = new(space.X, 0);
+        Point rx = new(space.RightX, 0);
 
         BorderLine? topLine = null;
         BorderLine? bottomLine = null;
-        var leftLines = new List<BorderLine>();
-        var rightLines = new List<BorderLine>();
+        List<BorderLine> leftLines = [];
+        List<BorderLine> rightLines = [];
 
-        for (var i = position.Row; i < position.Row + position.RowSpan; i++)
+        for (int i = position.Row; i < position.Row + position.RowSpan; i++)
         {
-            var regions = this.FindPageRegionsOfRow(i);
+            (PagePosition page, Rectangle region)[] regions = this.FindPageRegionsOfRow(i);
             if(i == position.Row)
             {
-                var (pagePosition, region) = regions.First();
-                var start = region.TopLeft + lx;
-                var end = region.TopLeft + rx;
+                (PagePosition pagePosition, Rectangle region) = regions.First();
+                Point start = region.TopLeft + lx;
+                Point end = region.TopLeft + rx;
 
                 topLine = new BorderLine(pagePosition.PageNumber, start, end);
             }
@@ -122,9 +122,9 @@ internal class Grid(
 
             if(i == position.Row + position.RowSpan - 1)
             {
-                var (pagePosition, region) = regions.Last();
-                var start = new Point(region.X + space.X, region.BottomY);
-                var end = new Point(region.X + space.RightX, region.BottomY);
+                (PagePosition pagePosition, Rectangle region) = regions.Last();
+                Point start = new(region.X + space.X, region.BottomY);
+                Point end = new(region.X + space.RightX, region.BottomY);
 
                 bottomLine = new BorderLine(pagePosition.PageNumber, start, end);
             }

@@ -38,8 +38,8 @@ internal class HeaderFooterConfiguration
 
     public Word.Footer? FindFooter(PageNumber pageNumber)
     {
-        var referenceId = this.GetFooterReferenceId(pageNumber);
-        var footer = _mainDocument?.FindFooter(referenceId);
+        string? referenceId = this.GetFooterReferenceId(pageNumber);
+        Word.Footer? footer = _mainDocument?.FindFooter(referenceId);
         return footer;
     }
 

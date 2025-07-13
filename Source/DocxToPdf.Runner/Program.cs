@@ -34,7 +34,7 @@ namespace Proxoft.DocxToPdf.Runner
         {
             try
             {
-                ExecuteConvert(command.DocxPath, command.PdfOutputPath);
+                ExecuteConvert(command.DocxPath ?? "", command.PdfOutputPath ?? "");
 
                 Console.WriteLine("Done...");
             }

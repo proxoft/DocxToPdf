@@ -52,10 +52,15 @@ internal class GridBorder(
 
     private static void RenderBorderLine(
         IRenderer renderer,
-        BorderLine borderLine,
+        BorderLine? borderLine,
         Drawing.Pen? pen,
         Point pageOffset)
     {
+        if(borderLine is null)
+        {
+            return;
+        }
+
         IRendererPage page = renderer.GetPage(borderLine.PageNumber).Offset(pageOffset);
         Line line = borderLine.ToLine(pen);
         page.RenderLine(line);
