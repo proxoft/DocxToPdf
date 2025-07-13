@@ -3,7 +3,7 @@ using Proxoft.DocxToPdf.Core.Images;
 using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs;
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
 
 internal class InilineDrawing : LineElement
 {

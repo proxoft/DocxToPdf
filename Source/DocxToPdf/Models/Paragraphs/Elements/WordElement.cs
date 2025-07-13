@@ -1,11 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Core;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
+
+internal class WordElement(string content, TextStyle textStyle) : TextElement(content, string.Empty, textStyle)
 {
-    internal class WordElement : TextElement
-    {
-        public WordElement(string content, TextStyle textStyle) : base(content, string.Empty, textStyle)
-        {
-        }
-    }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;

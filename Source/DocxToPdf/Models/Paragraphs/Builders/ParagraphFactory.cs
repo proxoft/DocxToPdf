@@ -8,13 +8,13 @@ internal static class ParagraphFactory
 {
     public static Paragraph Create(Word.Paragraph paragraph, IImageAccessor imageAccessor, IStyleFactory styleFactory)
     {
-        var paragraphStyleFactory = styleFactory.ForParagraph(paragraph.ParagraphProperties);
-        var fixedDrawings = paragraph
+        IStyleFactory paragraphStyleFactory = styleFactory.ForParagraph(paragraph.ParagraphProperties);
+        Elements.Drawings.FixedDrawing[] fixedDrawings = [.. paragraph
             .CreateFixedDrawingElements(imageAccessor)
             .OrderBy(d => d.OffsetFromParent.Y)
-            .ToArray();
+        ];
 
-        var elements = paragraph
+        System.Collections.Generic.IEnumerable<Elements.LineElement> elements = paragraph
             .CreateParagraphElements(imageAccessor, paragraphStyleFactory);
 
         return new Paragraph(elements, fixedDrawings, paragraphStyleFactory);

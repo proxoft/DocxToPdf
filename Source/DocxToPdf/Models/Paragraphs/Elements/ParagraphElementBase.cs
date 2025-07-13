@@ -5,7 +5,7 @@ using Proxoft.DocxToPdf.Models.Common;
 
 using Drawing = System.Drawing;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs;
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
 internal abstract class ParagraphElementBase : IPageRenderable
 {
@@ -17,7 +17,7 @@ internal abstract class ParagraphElementBase : IPageRenderable
 
     public double Height => this.Size.Height;
 
-    public Rectangle PageRegion => new Rectangle(this.Position.Offset, this.Size);
+    public Rectangle PageRegion => new(this.Position.Offset, this.Size);
 
     public virtual void SetPosition(DocumentPosition position)
     {

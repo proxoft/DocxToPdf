@@ -1,11 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Core;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
+
+internal class NewLineElement(TextStyle textStyle) : TextElement(string.Empty, "↵", textStyle)
 {
-    internal class NewLineElement : TextElement
-    {
-        public NewLineElement(TextStyle textStyle) : base(string.Empty, "↵", textStyle)
-        {
-        }
-    }
 }

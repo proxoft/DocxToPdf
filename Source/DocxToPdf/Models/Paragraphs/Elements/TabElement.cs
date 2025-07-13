@@ -1,11 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Core;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
+
+internal class TabElement(TextStyle textStyle) : TextElement("    ", "····", textStyle)
 {
-    internal class TabElement : TextElement
-    {
-        public TabElement(TextStyle textStyle) : base("    ", "····", textStyle)
-        {
-        }
-    }
 }

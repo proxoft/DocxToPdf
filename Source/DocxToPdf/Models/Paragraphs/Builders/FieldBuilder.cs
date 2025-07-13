@@ -2,6 +2,7 @@
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
 using Proxoft.DocxToPdf.Models.Styles.Services;
 
@@ -13,18 +14,18 @@ internal static class FieldBuilder
         this ICollection<Word.Run> runs,
         IStyleFactory styleFactory)
     {
-        var style = styleFactory.EffectiveTextStyle(runs.First().RunProperties);
+        TextStyle style = styleFactory.EffectiveTextStyle(runs.First().RunProperties);
 
-        var run = runs
+        Word.Run run = runs
             .Skip(1)
             .First();
 
-        var fieldCode = run
+        Word.FieldCode fieldCode = run
             .ChildsOfType<Word.FieldCode>()
             .Single();
 
-        var text = fieldCode.Text;
-        var field = text.CreateField(style);
+        string text = fieldCode.Text;
+        Field field = text.CreateField(style);
         field.Update(PageVariables.Empty);
         return field;
     }
@@ -33,15 +34,17 @@ internal static class FieldBuilder
         this string text,
         TextStyle style)
     {
-        var items = text.Split("\\");
-        switch (items[0].Trim())
+        string[] items = text.Split("\\");
+        if (items.Length == 0)
         {
-            case "PAGE":
-                return new PageNumberField(style);
-            case "NUMPAGES":
-                return new TotalPagesField(style);
-            default:
-                return new EmptyField(style);
+            return new EmptyField(style);
         }
+
+        return items[0].Trim() switch
+        {
+            "PAGE" => new PageNumberField(style),
+            "NUMPAGES" => new TotalPagesField(style),
+            _ => new EmptyField(style),
+        };
     }
 }

@@ -9,6 +9,7 @@ using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
 

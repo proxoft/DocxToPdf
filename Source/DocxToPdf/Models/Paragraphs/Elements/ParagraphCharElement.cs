@@ -1,6 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Core;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs;
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
 internal class ParagraphCharElement(TextStyle textStyle) : TextElement(string.Empty, _hiddenText, textStyle)
 {

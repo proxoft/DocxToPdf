@@ -4,23 +4,18 @@ using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs;
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
 
 [DebuggerDisplay("{GetType().Name}:{_content}")]
-internal abstract class Field : LineElement
+internal abstract class Field(TextStyle textStyle) : LineElement
 {
-    private readonly TextStyle _textStyle;
+    private readonly TextStyle _textStyle = textStyle;
     private string _content = string.Empty;
 
     private Rectangle _lineRegion = Rectangle.Empty;
 
-    protected Field(TextStyle textStyle)
-    {
-        _textStyle = textStyle;
-    }
-
-    public override double GetBaseLineOffset()
-        => _textStyle.CellAscent;
+    public override double GetBaseLineOffset() =>
+        _textStyle.CellAscent;
 
     public override sealed void Justify(DocumentPosition position, double baseLineOffset, Size lineSpace)
     {

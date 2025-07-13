@@ -6,6 +6,7 @@ using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
 using Proxoft.DocxToPdf.Models.Styles;
 
 using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
@@ -80,10 +81,10 @@ internal class LineSegment : ParagraphElementBase
 
     public FieldUpdateResult Update(PageVariables pageVariables)
     {
-        var justifyIsNecessary = false;
+        bool justifyIsNecessary = false;
         foreach (var e in _elements.OfType<Field>())
         {
-            var resized = e.Update(pageVariables) == Resized;
+            bool resized = e.Update(pageVariables) == Resized;
             justifyIsNecessary = justifyIsNecessary || resized;
         }
 
@@ -92,7 +93,7 @@ internal class LineSegment : ParagraphElementBase
             return NoChange;
         }
 
-        var result = _space.Width < this.CalculateTotalWidthOfElements()
+        FieldUpdateResult result = _space.Width < this.CalculateTotalWidthOfElements()
             ? ReconstructionNecessary
             : NoChange;
 
@@ -113,7 +114,7 @@ internal class LineSegment : ParagraphElementBase
 
     private void JustifyElementsToBaseLineAndLineHeight()
     {
-        var totalWidth = this.CalculateTotalWidthOfElements();
+        double totalWidth = this.CalculateTotalWidthOfElements();
         switch (_lineAlignment)
         {
             case LineAlignment.Left:
@@ -136,7 +137,7 @@ internal class LineSegment : ParagraphElementBase
         double lineHeight,
         double baselineOffset)
     {
-        var x = startX;
+        double x = startX;
         foreach (var element in _trimmedElements)
         {
             element.Justify(this.Position + new Point(x, 0), baselineOffset, new Size(element.Width, lineHeight));
@@ -150,12 +151,12 @@ internal class LineSegment : ParagraphElementBase
         double freeSpaceWidth)
     {
         // TODO: improve justify algorithm from this naive to a better one.
-        var sw = CalculateSpaceExpansion(_trimmedElements, freeSpaceWidth);
-        var x = 0.0;
+        double sw = CalculateSpaceExpansion(_trimmedElements, freeSpaceWidth);
+        double x = 0.0;
 
         foreach (var element in _trimmedElements)
         {
-            var width = element is SpaceElement
+            double width = element is SpaceElement
                 ? sw + element.Size.Width
                 : element.Size.Width;
 
@@ -166,7 +167,7 @@ internal class LineSegment : ParagraphElementBase
 
     private static double CalculateSpaceExpansion(IReadOnlyCollection<LineElement> elements, double freeSpace)
     {
-        var spaceElements = elements
+        int spaceElements = elements
             .OfType<SpaceElement>()
             .Count();
 
@@ -175,12 +176,12 @@ internal class LineSegment : ParagraphElementBase
             return 0;
         }
 
-        var sw = elements
+        double sw = elements
             .OfType<SpaceElement>()
             .First()
             .Size.Width;
 
-        var result = Math.Min(sw, freeSpace / spaceElements);
+        double result = Math.Min(sw, freeSpace / spaceElements);
         return result;
     }
 }

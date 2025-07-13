@@ -2,6 +2,7 @@
 using System.Linq;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
 using Proxoft.DocxToPdf.Models.Styles;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
@@ -15,26 +16,25 @@ internal static class LineSegmentBuilder
         double defaultLineHeight,
         PageVariables variables)
     {
-        var overflow = lineAlignment == LineAlignment.Justify ? 2 : 0;
-        var elements = fromElements
-            .GetElementsToFitMaxWidth(space.Width + overflow, variables)
-            .ToArray();
+        int overflow = lineAlignment == LineAlignment.Justify ? 2 : 0;
+        LineElement[] elements = fromElements
+            .GetElementsToFitMaxWidth(space.Width + overflow, variables);
 
         return new LineSegment(elements, lineAlignment, space, defaultLineHeight);
     }
 
-    private static IEnumerable<LineElement> GetElementsToFitMaxWidth(
+    private static LineElement[] GetElementsToFitMaxWidth(
         this Stack<LineElement> fromElements,
         double maxWidth,
         PageVariables variables)
     {
-        var aggregatedWidth = 0.0;
-        var elements = new List<LineElement>();
-        var spaces = new List<SpaceElement>();
+        double aggregatedWidth = 0.0;
+        List<LineElement> elements = [];
+        List<SpaceElement> spaces = [];
 
         while (fromElements.Count > 0 && aggregatedWidth <= maxWidth)
         {
-            var element = fromElements.Pop();
+            LineElement element = fromElements.Pop();
             if(element is Field field)
             {
                 field.Update(variables);
@@ -64,12 +64,12 @@ internal static class LineSegmentBuilder
             }
         }
 
-        return elements.Union(spaces);
+        return [..elements.Union(spaces)];
     }
 
     private static double TotalWidth(this IEnumerable<LineElement> elements)
     {
-        var w = elements.Sum(e => e.Size.Width);
+        double w = elements.Sum(e => e.Size.Width);
         return w;
     }
 }

@@ -4,7 +4,7 @@ using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs;
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
 [DebuggerDisplay("{GetType().Name}:{_content}")]
 internal abstract class TextElement : LineElement
