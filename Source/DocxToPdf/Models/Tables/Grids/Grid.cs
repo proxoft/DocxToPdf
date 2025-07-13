@@ -207,6 +207,11 @@ internal class Grid(
             return nextPageContext;
         }
 
+        if(this.PageContextFactory is null)
+        {
+            throw new Exception("PageContext factory is null");
+        }
+
         nextPageContext = this.PageContextFactory(currentPagePosition);
         _pageContexts.Add(nextPageContext);
         return nextPageContext;
