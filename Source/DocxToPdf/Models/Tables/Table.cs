@@ -32,9 +32,9 @@ internal class Table(IEnumerable<Cell> cells, Grid grid, TableBorderStyle tableB
             => _grid.CreateNextPageContextForCell(currentPagePosition, ((Cell)childElement).GridPosition);
 
         Rectangle availableRegion = pageContext.Region;
-        foreach (var cell in this.PreparationOrderedCells)
+        foreach (Cell cell in this.PreparationOrderedCells)
         {
-            var cellPageContext = _grid.CreateStartPageContextForCell(cell.GridPosition);
+            PageContext cellPageContext = _grid.CreateStartPageContextForCell(cell.GridPosition);
             cell.Prepare(cellPageContext, onNextPageContext);
 
             _grid.JustifyGridRows(cell.GridPosition, cell.PageRegions);
@@ -53,7 +53,7 @@ internal class Table(IEnumerable<Cell> cells, Grid grid, TableBorderStyle tableB
     public override void SetPageOffset(Point pageOffset)
     {
         _pageOffset = pageOffset;
-        foreach(var cell in _cells)
+        foreach (Cell cell in _cells)
         {
             cell.SetPageOffset(pageOffset);
         }

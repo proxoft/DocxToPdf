@@ -25,16 +25,16 @@ internal class SectionContent(
         SectionContentBreak previousBreak,
         Func<PageNumber, IPage> pageFactory)
     {
-        var context = this.CreateInitialPageContext(previousSection, previousContent, previousBreak, pageFactory);
+        PageContext context = this.CreateInitialPageContext(previousSection, previousContent, previousBreak, pageFactory);
 
         PageContext childContextRequest(PagePosition pagePosition, PageContextElement child) =>
             this.OnChildPageContextRequest(pagePosition, pageFactory);
 
-        var spaceAfterPrevious = 0.0;
-        foreach(var child in _childs)
+        double spaceAfterPrevious = 0.0;
+        foreach(PageContextElement child in _childs)
         {
             child.Prepare(context, childContextRequest);
-            var lastRegion = child.LastPageRegion;
+            PageRegion lastRegion = child.LastPageRegion;
             spaceAfterPrevious = child.CalculateSpaceAfter(_childs);
             context = this.CreateContextForPagePosition(lastRegion.PagePosition, lastRegion.Region, spaceAfterPrevious, pageFactory);
         }
@@ -54,18 +54,18 @@ internal class SectionContent(
         SectionContentBreak previousBreak,
         Func<PageNumber, IPage> pageFactory)
     {
-        var spaceAfterPrevious = 0;
+        int spaceAfterPrevious = 0;
         switch (previousBreak)
         {
             case SectionContentBreak.None:
                 {
-                    var pp = previousSection.PagePosition.SamePage(PageColumn.First, _columnsConfiguration.ColumnsCount);
+                    PagePosition pp = previousSection.PagePosition.SamePage(PageColumn.First, _columnsConfiguration.ColumnsCount);
                     return this.CreateContextForPagePosition(pp, previousSection.Region, spaceAfterPrevious, pageFactory);
                 }
             case SectionContentBreak.Column:
                 {
-                    var pp = previousContent.PagePosition.Next();
-                    var occupiedRegion = pp.PageNumber == previousSection.PagePosition.PageNumber
+                    PagePosition pp = previousContent.PagePosition.Next();
+                    Rectangle occupiedRegion = pp.PageNumber == previousSection.PagePosition.PageNumber
                         ? previousSection.Region
                         : Rectangle.Empty;
 
@@ -73,7 +73,7 @@ internal class SectionContent(
                 }
             case SectionContentBreak.Page:
                 {
-                    var pp = previousContent.PagePosition.NextPage(PageColumn.First, _columnsConfiguration.ColumnsCount);
+                    PagePosition pp = previousContent.PagePosition.NextPage(PageColumn.First, _columnsConfiguration.ColumnsCount);
                     return this.CreateContextForPagePosition(pp, Rectangle.Empty, spaceAfterPrevious, pageFactory);
                 }
             default:
@@ -85,8 +85,8 @@ internal class SectionContent(
         PagePosition pagePosition,
         Func<PageNumber, IPage> pageFactory)
     {
-        var nextPosition = pagePosition.Next();
-        var context = this.CreateContextForPagePosition(nextPosition, Rectangle.Empty, 0, pageFactory);
+        PagePosition nextPosition = pagePosition.Next();
+        PageContext context = this.CreateContextForPagePosition(nextPosition, Rectangle.Empty, 0, pageFactory);
         return context;
     }
 
@@ -96,18 +96,18 @@ internal class SectionContent(
         double spaceAfterPrevious,
         Func<PageNumber, IPage> pageFactory)
     {
-        var page = pageFactory(pagePosition.PageNumber);
-        var columnSpace = _columnsConfiguration.CalculateColumnSpace(pagePosition.PageColumnIndex);
-        var region = page
+        IPage page = pageFactory(pagePosition.PageNumber);
+        HorizontalSpace columnSpace = _columnsConfiguration.CalculateColumnSpace(pagePosition.PageColumnIndex);
+        Rectangle region = page
             .GetContentRegion()
             .CropHorizontal(columnSpace.X, columnSpace.Width);
 
-        var context = new PageContext(
+        PageContext context = new(
             pagePosition,
             region,
             page.DocumentVariables);
 
-        var cropTop = occupiedRegion.BottomY == 0
+        double cropTop = occupiedRegion.BottomY == 0
             ? spaceAfterPrevious
             : occupiedRegion.BottomY + spaceAfterPrevious - page.Margin.Top;
 

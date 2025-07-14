@@ -13,7 +13,7 @@ internal static class ColumnsConfigurationBuilder
         PageConfiguration pageConfiguration,
         PageMargin pageMargin)
     {
-        var columns = sectionProperties.GetSectionColumnConfigs(pageConfiguration, pageMargin);
+        ColumnConfig[] columns = sectionProperties.GetSectionColumnConfigs(pageConfiguration, pageMargin);
         return new ColumnsConfiguration(columns);
     }
 

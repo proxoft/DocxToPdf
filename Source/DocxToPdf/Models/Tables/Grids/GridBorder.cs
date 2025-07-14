@@ -17,9 +17,9 @@ internal class GridBorder(
 
     public void Render(IEnumerable<Cell> cells, Point pageOffset, IRenderer renderer)
     {
-        foreach(var cell in cells)
+        foreach (Cell cell in cells)
         {
-            var border = _grid.GetBorder(cell.GridPosition);
+            CellBorder border = _grid.GetBorder(cell.GridPosition);
             this.RenderBorders(renderer, cell.GridPosition, cell.BorderStyle, border, pageOffset);
         }
     }
@@ -38,13 +38,13 @@ internal class GridBorder(
         RenderBorderLine(renderer, borders.Bottom, bottomPen, pageOffset);
 
         Drawing.Pen? leftPen = this.LeftPen(borderStyle, gridPosition);
-        foreach(var lb in borders.Left)
+        foreach (BorderLine lb in borders.Left)
         {
             RenderBorderLine(renderer, lb, leftPen, pageOffset);
         }
 
         Drawing.Pen? rightPen = this.RightPen(borderStyle, gridPosition);
-        foreach (var rb in borders.Right)
+        foreach (BorderLine rb in borders.Right)
         {
             RenderBorderLine(renderer, rb, rightPen, pageOffset);
         }

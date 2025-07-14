@@ -4,23 +4,13 @@ using Proxoft.DocxToPdf.Models.Common;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Elements;
 
-internal class TableBorderStyle : BorderStyle
+internal class TableBorderStyle(Pen? top, Pen? right, Pen? bottom, Pen? left, Pen? insideHorizontal, Pen? insideVertical) : BorderStyle(top, right, bottom, left)
 {
     private static readonly Pen _defaultPen = new(Color.Black, 4.EpToPoint());
 
-    public static readonly TableBorderStyle Default = new(_defaultPen);
+    public static readonly TableBorderStyle Default = new(_defaultPen, _defaultPen, _defaultPen, _defaultPen, _defaultPen, _defaultPen);
 
-    public TableBorderStyle(Pen? all) : this(all, all, all, all, all, all)
-    {
-    }
+    public Pen? InsideHorizontal { get; } = insideHorizontal;
 
-    public TableBorderStyle(Pen? top, Pen? right, Pen? bottom, Pen? left, Pen? insideHorizontal, Pen? insideVertical) : base(top, right, bottom, left)
-    {
-        this.InsideHorizontal = insideHorizontal;
-        this.InsideVertical = insideVertical;
-    }
-
-    public Pen? InsideHorizontal { get; }
-
-    public Pen? InsideVertical { get; }
+    public Pen? InsideVertical { get; } = insideVertical;
 }

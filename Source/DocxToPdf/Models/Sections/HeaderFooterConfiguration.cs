@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using Proxoft.DocxToPdf.Core.Pages;
 using Proxoft.DocxToPdf.Extensions;
@@ -32,7 +31,7 @@ internal class HeaderFooterConfiguration
     public Word.Header? FindHeader(PageNumber pageNumber)
     {
         string? referenceId = this.GetHeaderReferenceId(pageNumber);
-        var header = _mainDocument?.FindHeader(referenceId);
+        Word.Header? header = _mainDocument?.FindHeader(referenceId);
         return header;
     }
 

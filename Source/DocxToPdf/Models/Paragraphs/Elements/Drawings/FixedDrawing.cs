@@ -1,4 +1,5 @@
-﻿using Proxoft.DocxToPdf.Core;
+﻿using System.IO;
+using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Images;
 using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
@@ -33,7 +34,7 @@ internal class FixedDrawing : ParagraphElementBase
 
     public override void Render(IRendererPage page)
     {
-        var stream = _imageAccessor.GetImageStream(_imageId);
+        Stream stream = _imageAccessor.GetImageStream(_imageId);
         page.RenderImage(stream, this.Position.Offset, this.Size);
     }
 }

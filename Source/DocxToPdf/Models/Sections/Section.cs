@@ -45,7 +45,7 @@ internal class Section(
             this.OnPageRequest(pageNumber, previousSection.PagePosition.PageNumber, previousSectionMargin, documentVariables);
 
         PageRegion contentLastPosition = previousSection;
-        foreach (var content in _contents)
+        foreach (SectionContent content in _contents)
         {
             content.Prepare(previousSection, contentLastPosition, sectionBreak, contentPageRequest);
             contentLastPosition = content.LastPageRegion;

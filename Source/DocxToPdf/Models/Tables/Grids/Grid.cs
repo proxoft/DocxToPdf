@@ -24,23 +24,23 @@ internal class Grid(
 
     public IEnumerable<PageRegion> GetPageRegions()
     {
-        var space = this.CalculateHorizontalCellSpace(new GridPosition(0, _columnWidths.Length, 0, 0));
-        
-        var pageRegions = Enumerable
-            .Range(0, _gridRows.Length)
-            .SelectMany(i =>
-            {
-                (PagePosition page, Rectangle region)[] regs = this.FindPageRegionsOfRow(i);
-                IEnumerable<PageRegion> pageRegions = regs
-                    .Select(pair =>
-                    {
-                        var rect = new Rectangle(pair.region.TopLeft, new Size(space.Width, pair.region.Height));
-                        return new PageRegion(pair.page, rect);
-                    });
+        HorizontalSpace space = this.CalculateHorizontalCellSpace(new GridPosition(0, _columnWidths.Length, 0, 0));
 
-                return pageRegions;
-            })
-            .ToArray();
+        PageRegion[] pageRegions = [
+            ..Enumerable.Range(0, _gridRows.Length)
+                .SelectMany(i =>
+                {
+                    (PagePosition page, Rectangle region)[] regs = this.FindPageRegionsOfRow(i);
+                    IEnumerable<PageRegion> pageRegions = regs
+                        .Select(pair =>
+                        {
+                            Rectangle rect = new(pair.region.TopLeft, new Size(space.Width, pair.region.Height));
+                            return new PageRegion(pair.page, rect);
+                        });
+
+                    return pageRegions;
+                })
+        ];
 
         return pageRegions;
     }
@@ -53,21 +53,21 @@ internal class Grid(
 
     public PageContext CreateStartPageContextForCell(GridPosition position)
     {
-        var rowPageContext = this.GetOrCreateRowPageContext(position);
-        var horizontalSpace = this.CalculateHorizontalCellSpace(position);
+        PageContext rowPageContext = this.GetOrCreateRowPageContext(position);
+        HorizontalSpace horizontalSpace = this.CalculateHorizontalCellSpace(position);
         return rowPageContext.Crop(horizontalSpace);
     }
 
     public PageContext CreateNextPageContextForCell(PagePosition currentPagePosition, GridPosition position)
     {
-        var rowPageContext = this.GetOrCreateNextPageContext(currentPagePosition);
-        var horizontalSpace = this.CalculateHorizontalCellSpace(position);
+        PageContext rowPageContext = this.GetOrCreateNextPageContext(currentPagePosition);
+        HorizontalSpace horizontalSpace = this.CalculateHorizontalCellSpace(position);
         return rowPageContext.Crop(horizontalSpace);
     }
 
     public void JustifyGridRows(GridPosition position, IReadOnlyCollection<PageRegion> pageRegions)
     {
-        var totalHeightOfCell = pageRegions.Sum(pr => pr.Region.Height);
+        double totalHeightOfCell = pageRegions.Sum(pr => pr.Region.Height);
 
         if (position.RowSpan == 1)
         {
@@ -75,17 +75,16 @@ internal class Grid(
             return;
         }
 
-        var affectedRows = this.GetRowsInPosition(position)
-            .ToArray();
+        GridRow[] affectedRows = [..this.GetRowsInPosition(position)];
 
-        var rowsSum = affectedRows.Sum(r => r.Height);
+        double rowsSum = affectedRows.Sum(r => r.Height);
         if (rowsSum > totalHeightOfCell)
         {
             return;
         }
 
         double[] distribution = Distribute([.. affectedRows.Select(r => r.Height)], totalHeightOfCell - rowsSum);
-        for (var i = 0; i < distribution.Length; i++)
+        for (int i = 0; i < distribution.Length; i++)
         {
             affectedRows[i].Expand(distribution[i]);
         }
@@ -135,11 +134,11 @@ internal class Grid(
 
     private HorizontalSpace CalculateHorizontalCellSpace(GridPosition position)
     {
-        var offset = _columnWidths
+        double offset = _columnWidths
            .Take(position.Column)
            .Aggregate(0d, (col, acc) => acc + col);
 
-        var width = _columnWidths
+        double width = _columnWidths
           .Skip(position.Column)
           .Take(position.ColumnSpan)
           .Aggregate(0.0, (col, acc) => acc + col);
@@ -167,7 +166,7 @@ internal class Grid(
             ..currentValues
                 .Select((v, i) =>
                 {
-                    var newValue = i < currentValues.Length - 1
+                    double newValue = i < currentValues.Length - 1
                         ? v + perItem
                         : v + (totalValueToDistribute - (i * perItem));
 
@@ -219,12 +218,12 @@ internal class Grid(
 
     private (PagePosition page, Rectangle region)[] FindPageRegionsOfRow(int rowIndex)
     {
-        var offset = this.RowAbsoluteYOffset(rowIndex);
-        var remainingHeight = _gridRows[rowIndex].Height;
+        double offset = this.RowAbsoluteYOffset(rowIndex);
+        double remainingHeight = _gridRows[rowIndex].Height;
 
         List<(PagePosition, Rectangle)> regions = [];
 
-        foreach (var pg in _pageContexts)
+        foreach (PageContext pg in _pageContexts)
         {
             if (pg.Region.Height < offset)
             {
@@ -232,10 +231,10 @@ internal class Grid(
                 continue;
             }
 
-            var availableHeight = pg.Region.Height - offset;
+            double availableHeight = pg.Region.Height - offset;
 
-            var h = Math.Min(availableHeight, remainingHeight);
-            var region = pg.Region.Crop(offset, 0, pg.Region.Height - offset - h, 0);
+            double h = Math.Min(availableHeight, remainingHeight);
+            Rectangle region = pg.Region.Crop(offset, 0, pg.Region.Height - offset - h, 0);
             regions.Add((pg.PagePosition, region));
             offset = 0;
             remainingHeight -= h;

@@ -32,21 +32,21 @@ internal class Document(WordprocessingDocument docx)
     private void PrepareSections()
     {
         bool isFinished;
-        var lastPageNumber = PageNumber.None;
+        PageNumber lastPageNumber = PageNumber.None;
 
         do
         {
-            var previousSection = PageRegion.None;
-            var previousSectionMargin = PageMargin.PageNone;
+            PageRegion previousSection = PageRegion.None;
+            PageMargin previousSectionMargin = PageMargin.PageNone;
 
-            foreach (var section in _sections)
+            foreach (Section section in _sections)
             {
                 section.Prepare(previousSection, previousSectionMargin, new DocumentVariables(lastPageNumber));
                 previousSection = section.PageRegions.Last();
                 previousSectionMargin = section.Pages.Last().Margin;
             }
 
-            var secionLastPage = _sections.Last()
+            IPage secionLastPage = _sections.Last()
                 .Pages
                 .Last();
 
@@ -57,9 +57,9 @@ internal class Document(WordprocessingDocument docx)
 
     private void RenderSections(IRenderer renderer)
     {
-        foreach(var section in _sections)
+        foreach (Section section in _sections)
         {
-            foreach(var page in section.Pages)
+            foreach (IPage page in section.Pages)
             {
                 renderer.CreatePage(page.PageNumber, page.Configuration);
             }

@@ -2,7 +2,7 @@
 using System.Linq;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf;
+namespace Proxoft.DocxToPdf.Extensions;
 
 internal static class TableXmlExtensions
 {
@@ -44,32 +44,32 @@ internal static class TableXmlExtensions
 
     public static int GetColSpan(this TableCell cell)
     {
-        var span = cell.GetFirstChild<TableCellProperties>()?.GetFirstChild<GridSpan>()?.Val?.Value;
-        return span.HasValue ? span.Value : 1;
+        int? span = cell.GetFirstChild<TableCellProperties>()?.GetFirstChild<GridSpan>()?.Val?.Value;
+        return span ?? 1;
     }
 
     public static int GetVerticalSpan(this Table table, int rowIndex, int cellIndex)
     {
-        var rows = table.Elements<TableRow>().ToList();
+        TableRow[] rows = [..table.Elements<TableRow>()];
 
         // Get the starting cell
-        var startCell = rows[rowIndex].Elements<TableCell>().ElementAt(cellIndex);
+        TableCell startCell = rows[rowIndex].Elements<TableCell>().ElementAt(cellIndex);
 
-        var vMerge = startCell.GetFirstChild<TableCellProperties>()?.GetFirstChild<VerticalMerge>();
+        VerticalMerge? vMerge = startCell.GetFirstChild<TableCellProperties>()?.GetFirstChild<VerticalMerge>();
         if (vMerge == null || vMerge.Val?.Value != MergedCellValues.Restart)
             return 1; // Not the start of a vertical merge
 
         int span = 1;
 
-        for (int i = rowIndex + 1; i < rows.Count; i++)
+        for (int i = rowIndex + 1; i < rows.Length; i++)
         {
-            var cells = rows[i].Elements<TableCell>().ToList();
-            if (cellIndex >= cells.Count)
+            TableCell[] cells = [..rows[i].Elements<TableCell>()];
+            if (cellIndex >= cells.Length)
                 break;
 
-            var cell = cells[cellIndex];
-            var props = cell.GetFirstChild<TableCellProperties>();
-            var merge = props?.GetFirstChild<VerticalMerge>();
+            TableCell cell = cells[cellIndex];
+            TableCellProperties? props = cell.GetFirstChild<TableCellProperties>();
+            VerticalMerge? merge = props?.GetFirstChild<VerticalMerge>();
 
             if (merge != null && (merge.Val == null || merge.Val.Value == MergedCellValues.Continue))
             {

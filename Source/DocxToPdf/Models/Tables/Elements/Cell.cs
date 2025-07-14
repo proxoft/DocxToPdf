@@ -30,7 +30,7 @@ internal class Cell : PageContextElement
 
     public override void Prepare(PageContext pageContext, Func<PagePosition, PageContextElement, PageContext> nextPageContextFactory)
     {
-        var currentPageContext = pageContext
+        PageContext currentPageContext = pageContext
                .Crop(_contentMargin.Top, _contentMargin.Right, 0, _contentMargin.Left);
 
         PageContext onNewPage(PagePosition pagePosition, PageContextElement childElement)
@@ -41,12 +41,12 @@ internal class Cell : PageContextElement
 
         Rectangle availableRegion = currentPageContext.Region;
 
-        foreach (var child in _childs)
+        foreach (PageContextElement child in _childs)
         {
-            var context = new PageContext(currentPageContext.PagePosition, availableRegion, currentPageContext.PageVariables);
+            PageContext context = new(currentPageContext.PagePosition, availableRegion, currentPageContext.PageVariables);
             child.Prepare(context, onNewPage);
 
-            var lastPage = child.LastPageRegion.Region;
+            Rectangle lastPage = child.LastPageRegion.Region;
 
             availableRegion = currentPageContext
                 .Region
@@ -78,7 +78,7 @@ internal class Cell : PageContextElement
 
     public override void SetPageOffset(Point pageOffset)
     {
-        foreach(var child in _childs)
+        foreach (PageContextElement child in _childs)
         {
             child.SetPageOffset(pageOffset);
         }

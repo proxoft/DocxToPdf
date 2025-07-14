@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
 
@@ -22,22 +23,22 @@ internal static class GridBuilder
 
     private static double[] GetGridColumnWidths(this Word.Table table)
     {
-        var grid = table.Grid();
-        var columns = grid.Columns().ToArray();
-        var widths = columns
+        Word.TableGrid grid = table.Grid();
+        Word.GridColumn[] columns = [..grid.Columns()];
+        System.Collections.Generic.IEnumerable<double> widths = columns
             .Select(c => c.Width.ToPoint());
         return [..widths];
     }
 
     private static GridRow ToGridRow(this Word.TableRow row)
     {
-        var trh = row
+        Word.TableRowHeight? trh = row
             .TableRowProperties?
             .ChildsOfType<Word.TableRowHeight>()
             .FirstOrDefault();
 
-        var rowHeight = trh?.Val?.DxaToPoint() ?? 10;
-        var rule = trh?.HeightType?.Value ?? Word.HeightRuleValues.Auto;
+        double rowHeight = trh?.Val?.DxaToPoint() ?? 10;
+        Word.HeightRuleValues rule = trh?.HeightType?.Value ?? Word.HeightRuleValues.Auto;
 
         return new GridRow(rowHeight, rule);
     }

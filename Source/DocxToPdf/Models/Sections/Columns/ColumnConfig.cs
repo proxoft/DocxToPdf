@@ -1,14 +1,8 @@
-﻿namespace Proxoft.DocxToPdf.Models.Sections.Columns
-{
-    internal class ColumnConfig
-    {
-        public ColumnConfig(double width, double space)
-        {
-            this.Width = width;
-            this.Space = space;
-        }
+﻿namespace Proxoft.DocxToPdf.Models.Sections.Columns;
 
-        public double Width { get; }
-        public double Space { get; }
-    }
+internal class ColumnConfig(double width, double space)
+{
+    public double Width { get; } = width;
+
+    public double Space { get; } = space;
 }

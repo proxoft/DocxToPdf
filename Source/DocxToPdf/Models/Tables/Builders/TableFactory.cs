@@ -3,6 +3,7 @@ using Proxoft.DocxToPdf.Models.Styles.Services;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
 using Proxoft.DocxToPdf.Models.Tables.Elements;
 using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Extensions;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Builders;
 

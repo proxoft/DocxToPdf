@@ -1,9 +1,8 @@
-﻿namespace Proxoft.DocxToPdf.Models.Sections
+﻿namespace Proxoft.DocxToPdf.Models.Sections;
+
+internal enum SectionContentBreak
 {
-    internal enum SectionContentBreak
-    {
-        None,
-        Column,
-        Page
-    }
+    None,
+    Column,
+    Page
 }
