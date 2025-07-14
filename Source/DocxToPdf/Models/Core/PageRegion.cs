@@ -1,7 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models;
+namespace Proxoft.DocxToPdf.Models.Core;
 
 internal class PageRegion(PagePosition pagePosition, Rectangle region)
 {

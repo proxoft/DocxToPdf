@@ -19,8 +19,6 @@ internal class DocumentPosition(PagePosition pagePosition, Point offset)
     public DocumentPosition MoveY(double yOffset) =>
         this + new Point(0, yOffset);
 
-    public static DocumentPosition operator+(DocumentPosition position, Point offset)
-    {
-        return new DocumentPosition(position.Page, position.Offset + offset);
-    }
+    public static DocumentPosition operator+(DocumentPosition position, Point offset) =>
+        new(position.Page, position.Offset + offset);
 }

@@ -52,7 +52,7 @@ internal class PagePosition(PageNumber pageNumber, PageColumn column, PageColumn
             return 1;
         }
 
-        var pnSign = this.PageNumber.CompareTo(other.PageNumber);
+        int pnSign = this.PageNumber.CompareTo(other.PageNumber);
         if (pnSign != 0)
         {
             return pnSign;

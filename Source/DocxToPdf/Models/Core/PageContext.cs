@@ -33,7 +33,7 @@ internal class PageContext
 
     public PageContext Crop(double top, double right, double bottom, double left)
     {
-        var region = this.Region.Crop(top, right, bottom, left);
+        Rectangle region = this.Region.Crop(top, right, bottom, left);
         return this.WithRegion(region);
     }
 

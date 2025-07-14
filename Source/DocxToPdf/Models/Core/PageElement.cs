@@ -42,11 +42,11 @@ internal abstract class PageElement : IRenderable
             return;
         }
 
-        var index = -1;
-        foreach (var pageRegion in this.PageRegions)
+        int index = -1;
+        foreach (PageRegion pageRegion in this.PageRegions)
         {
             index++;
-            var page = renderer.GetPage(pageRegion.PagePosition.PageNumber, pageOffset ?? Point.Zero);
+            IRendererPage page = renderer.GetPage(pageRegion.PagePosition.PageNumber, pageOffset ?? Point.Zero);
             this.RenderBorder(page, pageRegion.Region, index == 0, index == this.PageRegions.Count - 1, pen);
         }
     }
