@@ -1,25 +1,16 @@
 ﻿using System.Drawing;
+using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Tables.Elements
+namespace Proxoft.DocxToPdf.Models.Tables.Elements;
+
+internal class TableBorderStyle(Pen? top, Pen? right, Pen? bottom, Pen? left, Pen? insideHorizontal, Pen? insideVertical) : BorderStyle(top, right, bottom, left)
 {
-    internal class TableBorderStyle : BorderStyle
-    {
-        private static readonly Pen _defaultPen = new Pen(Color.Black, 4.EpToPoint());
+    private static readonly Pen _defaultPen = new(Color.Black, 4.EpToPoint());
 
-        public static readonly TableBorderStyle Default = new TableBorderStyle(_defaultPen);
+    public static readonly TableBorderStyle Default = new(_defaultPen, _defaultPen, _defaultPen, _defaultPen, _defaultPen, _defaultPen);
 
-        public TableBorderStyle(Pen all) : this(all, all, all, all, all, all)
-        {
-        }
+    public Pen? InsideHorizontal { get; } = insideHorizontal;
 
-        public TableBorderStyle(Pen top, Pen right, Pen bottom, Pen left, Pen insideHorizontal, Pen insideVertical) : base(top, right, bottom, left)
-        {
-            this.InsideHorizontal = insideHorizontal;
-            this.InsideVertical = insideVertical;
-        }
-
-        public Pen InsideHorizontal { get; }
-        public Pen InsideVertical { get; }
-    }
+    public Pen? InsideVertical { get; } = insideVertical;
 }

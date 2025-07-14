@@ -35,3 +35,6 @@ Supported features:
 - images
     - text wrapping
 - layout
+
+## Known issues
+- having a table with 2 columns and in each cell an image, where the cumulative width of the images is more than the available space for the table, the converter will fail to create the pdf.

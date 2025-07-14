@@ -1,125 +1,118 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Pages;
+using Proxoft.DocxToPdf.Core.Rendering;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Paragraphs;
 using Proxoft.DocxToPdf.Models.Sections.Columns;
 
-namespace Proxoft.DocxToPdf.Models.Sections
+namespace Proxoft.DocxToPdf.Models.Sections;
+
+internal class SectionContent(
+    PageContextElement[] childs,
+    ColumnsConfiguration columnsConfiguration,
+    SectionContentBreak sectionBreak) : PageElement
 {
-    internal class SectionContent : PageElement
+    private readonly PageContextElement[] _childs = childs;
+    private readonly ColumnsConfiguration _columnsConfiguration = columnsConfiguration;
+
+    public SectionContentBreak SectionBreak { get; } = sectionBreak;
+
+    public void Prepare(
+        PageRegion previousSection,
+        PageRegion previousContent,
+        SectionContentBreak previousBreak,
+        Func<PageNumber, IPage> pageFactory)
     {
-        private readonly PageContextElement[] _childs;
-        private readonly ColumnsConfiguration _columnsConfiguration;
+        PageContext context = this.CreateInitialPageContext(previousSection, previousContent, previousBreak, pageFactory);
 
-        public SectionContent(
-            IEnumerable<PageContextElement> childs,
-            ColumnsConfiguration columnsConfiguration,
-            SectionContentBreak sectionBreak)
+        PageContext childContextRequest(PagePosition pagePosition, PageContextElement child) =>
+            this.OnChildPageContextRequest(pagePosition, pageFactory);
+
+        double spaceAfterPrevious = 0.0;
+        foreach(PageContextElement child in _childs)
         {
-            _childs = childs.ToArray();
-            _columnsConfiguration = columnsConfiguration;
-            this.SectionBreak = sectionBreak;
+            child.Prepare(context, childContextRequest);
+            PageRegion lastRegion = child.LastPageRegion;
+            spaceAfterPrevious = child.CalculateSpaceAfter(_childs);
+            context = this.CreateContextForPagePosition(lastRegion.PagePosition, lastRegion.Region, spaceAfterPrevious, pageFactory);
         }
 
-        public SectionContentBreak SectionBreak { get; }
+        this.ResetPageRegionsFrom(_childs);
+    }
 
-        public void Prepare(
-            PageRegion previousSection,
-            PageRegion previousContent,
-            SectionContentBreak previousBreak,
-            Func<PageNumber, IPage> pageFactory)
+    public override void Render(IRenderer renderer)
+    {
+        _childs.Render(renderer);
+        this.RenderBorders(renderer, renderer.Options.SectionBorders);
+    }
+
+    private PageContext CreateInitialPageContext(
+        PageRegion previousSection,
+        PageRegion previousContent,
+        SectionContentBreak previousBreak,
+        Func<PageNumber, IPage> pageFactory)
+    {
+        int spaceAfterPrevious = 0;
+        switch (previousBreak)
         {
-            var context = this.CreateInitialPageContext(previousSection, previousContent, previousBreak, pageFactory);
+            case SectionContentBreak.None:
+                {
+                    PagePosition pp = previousSection.PagePosition.SamePage(PageColumn.First, _columnsConfiguration.ColumnsCount);
+                    return this.CreateContextForPagePosition(pp, previousSection.Region, spaceAfterPrevious, pageFactory);
+                }
+            case SectionContentBreak.Column:
+                {
+                    PagePosition pp = previousContent.PagePosition.Next();
+                    Rectangle occupiedRegion = pp.PageNumber == previousSection.PagePosition.PageNumber
+                        ? previousSection.Region
+                        : Rectangle.Empty;
 
-            Func<PagePosition, PageContextElement, PageContext> childContextRequest = (pagePosition, child)
-                => this.OnChildPageContextRequest(pagePosition, pageFactory);
-
-            var spaceAfterPrevious = 0.0;
-            foreach(var child in _childs)
-            {
-                child.Prepare(context, childContextRequest);
-                var lastRegion = child.LastPageRegion;
-                spaceAfterPrevious = child.CalculateSpaceAfter(_childs);
-                context = this.CreateContextForPagePosition(lastRegion.PagePosition, lastRegion.Region, spaceAfterPrevious, pageFactory);
-            }
-
-            this.ResetPageRegionsFrom(_childs);
+                    return this.CreateContextForPagePosition(pp, occupiedRegion, spaceAfterPrevious, pageFactory);
+                }
+            case SectionContentBreak.Page:
+                {
+                    PagePosition pp = previousContent.PagePosition.NextPage(PageColumn.First, _columnsConfiguration.ColumnsCount);
+                    return this.CreateContextForPagePosition(pp, Rectangle.Empty, spaceAfterPrevious, pageFactory);
+                }
+            default:
+                throw new RendererException("unhandled section break;");
         }
+    }
 
-        public override void Render(IRenderer renderer)
-        {
-            _childs.Render(renderer);
-            this.RenderBorders(renderer, renderer.Options.SectionBorders);
-        }
+    private PageContext OnChildPageContextRequest(
+        PagePosition pagePosition,
+        Func<PageNumber, IPage> pageFactory)
+    {
+        PagePosition nextPosition = pagePosition.Next();
+        PageContext context = this.CreateContextForPagePosition(nextPosition, Rectangle.Empty, 0, pageFactory);
+        return context;
+    }
 
-        private PageContext CreateInitialPageContext(
-            PageRegion previousSection,
-            PageRegion previousContent,
-            SectionContentBreak previousBreak,
-            Func<PageNumber, IPage> pageFactory)
-        {
-            var spaceAfterPrevious = 0;
-            switch (previousBreak)
-            {
-                case SectionContentBreak.None:
-                    {
-                        var pp = previousSection.PagePosition.SamePage(PageColumn.First, _columnsConfiguration.ColumnsCount);
-                        return this.CreateContextForPagePosition(pp, previousSection.Region, spaceAfterPrevious, pageFactory);
-                    }
-                case SectionContentBreak.Column:
-                    {
-                        var pp = previousContent.PagePosition.Next();
-                        var occupiedRegion = pp.PageNumber == previousSection.PagePosition.PageNumber
-                            ? previousSection.Region
-                            : Rectangle.Empty;
+    private PageContext CreateContextForPagePosition(
+        PagePosition pagePosition,
+        Rectangle occupiedRegion,
+        double spaceAfterPrevious,
+        Func<PageNumber, IPage> pageFactory)
+    {
+        IPage page = pageFactory(pagePosition.PageNumber);
+        HorizontalSpace columnSpace = _columnsConfiguration.CalculateColumnSpace(pagePosition.PageColumnIndex);
+        Rectangle region = page
+            .GetContentRegion()
+            .CropHorizontal(columnSpace.X, columnSpace.Width);
 
-                        return this.CreateContextForPagePosition(pp, occupiedRegion, spaceAfterPrevious, pageFactory);
-                    }
-                case SectionContentBreak.Page:
-                    {
-                        var pp = previousContent.PagePosition.NextPage(PageColumn.First, _columnsConfiguration.ColumnsCount);
-                        return this.CreateContextForPagePosition(pp, Rectangle.Empty, spaceAfterPrevious, pageFactory);
-                    }
-                default:
-                    throw new RendererException("unhandled section break;");
-            }
-        }
+        PageContext context = new(
+            pagePosition,
+            region,
+            page.DocumentVariables);
 
-        private PageContext OnChildPageContextRequest(
-            PagePosition pagePosition,
-            Func<PageNumber, IPage> pageFactory)
-        {
-            var nextPosition = pagePosition.Next();
-            var context = this.CreateContextForPagePosition(nextPosition, Rectangle.Empty, 0, pageFactory);
-            return context;
-        }
+        double cropTop = occupiedRegion.BottomY == 0
+            ? spaceAfterPrevious
+            : occupiedRegion.BottomY + spaceAfterPrevious - page.Margin.Top;
 
-        private PageContext CreateContextForPagePosition(
-            PagePosition pagePosition,
-            Rectangle occupiedRegion,
-            double spaceAfterPrevious,
-            Func<PageNumber, IPage> pageFactory)
-        {
-            var page = pageFactory(pagePosition.PageNumber);
-            var columnSpace = _columnsConfiguration.CalculateColumnSpace(pagePosition.PageColumnIndex);
-            var region = page
-                .GetContentRegion()
-                .CropHorizontal(columnSpace.X, columnSpace.Width);
-
-            var context = new PageContext(
-                pagePosition,
-                region,
-                page.DocumentVariables);
-
-            var cropTop = occupiedRegion.BottomY == 0
-                ? spaceAfterPrevious
-                : occupiedRegion.BottomY + spaceAfterPrevious - page.Margin.Top;
-
-            // TODO: check -0.001
-            context = context.CropFromTop(Math.Min(cropTop, context.Region.Height - 0.001));
-            return context;
-        }
+        // TODO: check -0.001
+        context = context.CropFromTop(Math.Min(cropTop, context.Region.Height - 0.001));
+        return context;
     }
 }

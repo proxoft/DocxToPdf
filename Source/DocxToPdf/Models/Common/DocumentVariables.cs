@@ -1,12 +1,6 @@
-﻿namespace Proxoft.DocxToPdf.Models.Common
-{
-    internal class DocumentVariables
-    {
-        public DocumentVariables(int totalPages)
-        {
-            this.TotalPages = totalPages;
-        }
+﻿namespace Proxoft.DocxToPdf.Models.Common;
 
-        public int TotalPages { get; }
-    }
+internal class DocumentVariables(int totalPages)
+{
+    public int TotalPages { get; } = totalPages;
 }

@@ -1,102 +1,94 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
+
+internal partial class LineReservedSpaceHelper
 {
-    internal partial class LineReservedSpaceHelper
+    private readonly Dictionary<int, Rectangle> _fixedDrawings;
+    private readonly double _lineParagraphYOffset;
+    private readonly double _lineWidth;
+
+    private double _expectedLineHeight = 0;
+    private Dictionary<int, HorizontalSpace> _reservedSpaces = [];
+
+    public LineReservedSpaceHelper(
+        IEnumerable<Rectangle> fixedDrawings,
+        double lineParagraphYOffset,
+        double lineWidth)
     {
-        private readonly Dictionary<int, Rectangle> _fixedDrawings;
-        private readonly double _lineParagraphYOffset;
-        private readonly double _lineWidth;
+        _fixedDrawings = fixedDrawings
+            .Select((r, i) => new { i, r })
+            .ToDictionary(x => x.i, x => x.r);
 
-        private double _expectedLineHeight = 0;
-        private Dictionary<int, HorizontalSpace> _reservedSpaces = new Dictionary<int, HorizontalSpace>();
+        _lineParagraphYOffset = lineParagraphYOffset;
+        _lineWidth = lineWidth;
 
-        public LineReservedSpaceHelper(
-            IEnumerable<Rectangle> fixedDrawings,
-            double lineParagraphYOffset,
-            double lineWidth)
+        this.UpdateReservedSpaces();
+    }
+
+    public IReadOnlyCollection<HorizontalSpace> ReservedSpaces => _reservedSpaces.Values;
+
+    public HorizontalSpace[] GetLineSegments()
+    {
+        List<HorizontalSpace> lineSegments = [];
+        double offset = 0.0;
+
+        foreach (var rs in _reservedSpaces.Values.OrderBy(r => r.X))
         {
-            _fixedDrawings = fixedDrawings
-                .Select((r, i) => new { i, r })
-                .ToDictionary(x => x.i, x => x.r);
-
-            _lineParagraphYOffset = lineParagraphYOffset;
-            _lineWidth = lineWidth;
-
-            this.UpdateReservedSpaces();
-        }
-
-        public IReadOnlyCollection<HorizontalSpace> ReservedSpaces => _reservedSpaces.Values;
-
-        public IEnumerable<HorizontalSpace> GetLineSegments()
-        {
-            var lineSegments = new List<HorizontalSpace>();
-            var offset = 0.0;
-
-            foreach (var rs in _reservedSpaces.Values.OrderBy(r => r.X))
+            if(rs.X >= offset)
             {
-                if(rs.X >= offset)
-                {
-                    lineSegments.Add(new HorizontalSpace(offset, rs.X - offset));
-                }
-
-                offset += rs.RightX;
-                if (offset > _lineWidth)
-                {
-                    break;
-                }
+                lineSegments.Add(new HorizontalSpace(offset, rs.X - offset));
             }
 
-            if(offset < _lineWidth)
+            offset += rs.RightX;
+            if (offset > _lineWidth)
             {
-                lineSegments.Add(new HorizontalSpace(offset, _lineWidth - offset));
+                break;
             }
-
-            return lineSegments;
         }
 
-        public bool UpdateLineHeight(double expectedLineHeight)
+        if(offset < _lineWidth)
         {
-            if(expectedLineHeight <= _expectedLineHeight)
-            {
-                return false;
-            }
-
-            _expectedLineHeight = expectedLineHeight;
-
-            var addedNew = this.UpdateReservedSpaces();
-            return addedNew;
+            lineSegments.Add(new HorizontalSpace(offset, _lineWidth - offset));
         }
 
-        private bool UpdateReservedSpaces()
+        return [..lineSegments];
+    }
+
+    public bool UpdateLineHeight(double expectedLineHeight)
+    {
+        if(expectedLineHeight <= _expectedLineHeight)
         {
-            var boxes = _fixedDrawings
-                .Where(r => this.HasOverlapWithLine(r.Value))
-                .ToArray();
-
-            if(boxes.All(i => _reservedSpaces.ContainsKey(i.Key)))
-            {
-                return false;
-            }
-
-            _reservedSpaces = boxes
-                .ToDictionary(box => box.Key, box => this.CreateLineReservedSpaceRectangle(box.Value));
-
-            return true;
+            return false;
         }
 
-        private bool HasOverlapWithLine(Rectangle rectangle)
+        _expectedLineHeight = expectedLineHeight;
+
+        bool addedNew = this.UpdateReservedSpaces();
+        return addedNew;
+    }
+
+    private bool UpdateReservedSpaces()
+    {
+        KeyValuePair<int, Rectangle>[] boxes = [.. _fixedDrawings.Where(r => this.HasOverlapWithLine(r.Value))];
+
+        if(boxes.All(i => _reservedSpaces.ContainsKey(i.Key)))
         {
-            return rectangle.Y <= _lineParagraphYOffset + _expectedLineHeight
-                && rectangle.BottomY >= _lineParagraphYOffset;
+            return false;
         }
 
-        private HorizontalSpace CreateLineReservedSpaceRectangle(Rectangle box)
-        {
-            return new HorizontalSpace(box.X, box.Width);
-        }
+        _reservedSpaces = boxes
+            .ToDictionary(box => box.Key, box => new HorizontalSpace(box.Value.X, box.Value.Width));
+
+        return true;
+    }
+
+    private bool HasOverlapWithLine(Rectangle rectangle)
+    {
+        return rectangle.Y <= _lineParagraphYOffset + _expectedLineHeight
+            && rectangle.BottomY >= _lineParagraphYOffset;
     }
 }

@@ -1,24 +1,22 @@
 ﻿using System.Linq;
-using Proxoft.DocxToPdf.Core;
-using Proxoft.DocxToPdf.Models.Styles;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
+
+internal static class ParagraphFactory
 {
-    internal static class ParagraphFactory
+    public static Paragraph Create(Word.Paragraph paragraph, IImageAccessor imageAccessor, IStyleFactory styleFactory)
     {
-        public static Paragraph Create(Word.Paragraph paragraph, IImageAccessor imageAccessor, IStyleFactory styleFactory)
-        {
-            var paragraphStyleFactory = styleFactory.ForParagraph(paragraph.ParagraphProperties);
-            var fixedDrawings = paragraph
-                .CreateFixedDrawingElements(imageAccessor)
-                .OrderBy(d => d.OffsetFromParent.Y)
-                .ToArray();
+        IStyleFactory paragraphStyleFactory = styleFactory.ForParagraph(paragraph.ParagraphProperties);
+        Elements.Drawings.FixedDrawing[] fixedDrawings = [.. paragraph
+            .CreateFixedDrawingElements(imageAccessor)
+            .OrderBy(d => d.OffsetFromParent.Y)
+        ];
 
-            var elements = paragraph
-                .CreateParagraphElements(imageAccessor, paragraphStyleFactory);
+        System.Collections.Generic.IEnumerable<Elements.LineElement> elements = paragraph
+            .CreateParagraphElements(imageAccessor, paragraphStyleFactory);
 
-            return new Paragraph(elements, fixedDrawings, paragraphStyleFactory);
-        }
+        return new Paragraph(elements, fixedDrawings, paragraphStyleFactory);
     }
 }

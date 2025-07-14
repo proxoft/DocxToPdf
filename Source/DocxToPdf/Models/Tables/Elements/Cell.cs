@@ -1,88 +1,86 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Common;
-using Proxoft.DocxToPdf.Models.Styles;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 using Proxoft.DocxToPdf.Models.Tables.Builders;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Core.Structs;
+using Proxoft.DocxToPdf.Core.Rendering;
+using Proxoft.DocxToPdf.Core.Images;
 
-namespace Proxoft.DocxToPdf.Models.Tables.Elements
+namespace Proxoft.DocxToPdf.Models.Tables.Elements;
+
+internal class Cell : PageContextElement
 {
-    internal class Cell : PageContextElement
+    private readonly Margin _contentMargin;
+    private readonly PageContextElement[] _childs = [];
+
+    private Cell(PageContextElement[] childs, GridPosition gridPosition, BorderStyle borderStyle)
     {
-        private readonly Margin _contentMargin;
-        private PageContextElement[] _childs = new PageContextElement[0];
+        _contentMargin = new Margin(0.5, 4, 0.5, 4);
+        _childs = childs;
 
-        private Cell(IEnumerable<PageContextElement> childs, GridPosition gridPosition, BorderStyle borderStyle)
+        this.GridPosition = gridPosition;
+        this.BorderStyle = borderStyle;
+    }
+
+    public GridPosition GridPosition { get; }
+
+    public BorderStyle BorderStyle { get; }
+
+    public override void Prepare(PageContext pageContext, Func<PagePosition, PageContextElement, PageContext> nextPageContextFactory)
+    {
+        PageContext currentPageContext = pageContext
+               .Crop(_contentMargin.Top, _contentMargin.Right, 0, _contentMargin.Left);
+
+        PageContext onNewPage(PagePosition pagePosition, PageContextElement childElement)
         {
-            _contentMargin = new Margin(0.5, 4, 0.5, 4);
-            _childs = childs.ToArray();
-
-            this.GridPosition = gridPosition;
-            this.BorderStyle = borderStyle;
+            currentPageContext = nextPageContextFactory(pagePosition, this);
+            return currentPageContext.Crop(0, _contentMargin.Right, 0, _contentMargin.Left);
         }
 
-        public GridPosition GridPosition { get; }
-        public BorderStyle BorderStyle { get; }
+        Rectangle availableRegion = currentPageContext.Region;
 
-        public override void Prepare(PageContext pageContext, Func<PagePosition, PageContextElement, PageContext> nextPageContextFactory)
+        foreach (PageContextElement child in _childs)
         {
-            var currentPageContext = pageContext
-                   .Crop(_contentMargin.Top, _contentMargin.Right, 0, _contentMargin.Left);
+            PageContext context = new(currentPageContext.PagePosition, availableRegion, currentPageContext.PageVariables);
+            child.Prepare(context, onNewPage);
 
-            Func<PagePosition, PageContextElement, PageContext> onNewPage = (pagePosition, childElement) =>
-            {
-                currentPageContext = nextPageContextFactory(pagePosition, this);
-                return currentPageContext.Crop(0, _contentMargin.Right, 0, _contentMargin.Left);
-            };
+            Rectangle lastPage = child.LastPageRegion.Region;
 
-            Rectangle availableRegion = currentPageContext.Region;
-
-            foreach (var child in _childs)
-            {
-                var context = new PageContext(currentPageContext.PagePosition, availableRegion, currentPageContext.PageVariables);
-                child.Prepare(context, onNewPage);
-
-                var lastPage = child.LastPageRegion.Region;
-
-                availableRegion = currentPageContext
-                    .Region
-                    .Clip(lastPage.BottomLeft);
-            }
-
-            this.ResetPageRegionsFrom(_childs, _contentMargin);
+            availableRegion = currentPageContext
+                .Region
+                .Clip(lastPage.BottomLeft);
         }
 
-        public override void Render(IRenderer renderer)
+        this.ResetPageRegionsFrom(_childs, _contentMargin);
+    }
+
+    public override void Render(IRenderer renderer)
+    {
+        _childs.Render(renderer);
+    }
+
+    public static Cell From(
+        Word.TableCell wordCell,
+        GridPosition gridPosition,
+        IImageAccessor imageAccessor,
+        IStyleFactory styleFactory)
+    {
+        PageContextElement[] childs = [.. wordCell
+            .RenderableChildren()
+            .CreatePageElements(imageAccessor, styleFactory)];
+
+        BorderStyle borderStyle = wordCell.GetBorderStyle();
+
+        return new Cell(childs, gridPosition, borderStyle);
+    }
+
+    public override void SetPageOffset(Point pageOffset)
+    {
+        foreach (PageContextElement child in _childs)
         {
-            _childs.Render(renderer);
-            // this.RenderBordersIf(renderer, true);
-        }
-
-        public static Cell From(
-            Word.TableCell wordCell,
-            GridPosition gridPosition,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleFactory)
-        {
-            var childs = wordCell
-                .RenderableChildren()
-                .CreatePageElements(imageAccessor, styleFactory)
-                .ToArray();
-
-            var borderStyle = wordCell.GetBorderStyle();
-
-            return new Cell(childs, gridPosition, borderStyle);
-        }
-
-        public override void SetPageOffset(Point pageOffset)
-        {
-            foreach(var child in _childs)
-            {
-                child.SetPageOffset(pageOffset);
-            }
+            child.SetPageOffset(pageOffset);
         }
     }
 }

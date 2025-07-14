@@ -1,9 +1,8 @@
-﻿using Proxoft.DocxToPdf.Core;
+﻿using Proxoft.DocxToPdf.Core.Rendering;
 
-namespace Proxoft.DocxToPdf.Models
+namespace Proxoft.DocxToPdf.Models.Core;
+
+internal interface IRenderable
 {
-    internal interface IRenderable
-    {
-        void Render(IRenderer renderer);
-    }
+    void Render(IRenderer renderer);
 }

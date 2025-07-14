@@ -2,47 +2,58 @@
 using System.Linq;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace Proxoft.DocxToPdf.Models.Styles
+namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
+
+internal class ParagraphStyle
 {
-    internal class ParagraphStyle
+    public static readonly ParagraphStyle Default = new(LineAlignment.Left, ParagraphSpacing.Default);
+
+    public ParagraphStyle(
+        LineAlignment lineAlignment,
+        ParagraphSpacing spacing)
     {
-        public static readonly ParagraphStyle Default = new ParagraphStyle(LineAlignment.Left, ParagraphSpacing.Default);
+        this.LineAlignment = lineAlignment;
+        this.Spacing = spacing;
+    }
 
-        public ParagraphStyle(
-            LineAlignment lineAlignment,
-            ParagraphSpacing spacing)
+    public LineAlignment LineAlignment { get; }
+
+    public ParagraphSpacing Spacing { get; }
+
+    public ParagraphStyle Override(
+        ParagraphProperties? paragraphProperties,
+        IReadOnlyCollection<StyleParagraphProperties> styleParagraphs)
+    {
+        if(paragraphProperties is null && styleParagraphs.Count == 0)
         {
-            this.LineAlignment = lineAlignment;
-            this.Spacing = spacing;
+            return this;
         }
 
-        public LineAlignment LineAlignment { get; }
+        LineAlignment lineAlignment =paragraphProperties?.Justification.GetLinesAlignment(this.LineAlignment) ?? this.LineAlignment;
 
-        public ParagraphSpacing Spacing { get; }
+        SpacingBetweenLines?[] temp = [
+            paragraphProperties?.SpacingBetweenLines,
+            ..styleParagraphs.Select(sp => sp.SpacingBetweenLines)
+        ];
 
-        public ParagraphStyle Override(
-            ParagraphProperties paragraphProperties,
-            IReadOnlyCollection<StyleParagraphProperties> styleParagraphs)
-        {
-            if(paragraphProperties == null && styleParagraphs.Count == 0)
-            {
-                return this;
-            }
+        SpacingBetweenLines[] spacings = [
+            ..temp
+                .Where(sbl => sbl is not null)
+                .Select(sbl => sbl!)
+        ];
 
-            var lineAlignment = paragraphProperties == null
-                ? this.LineAlignment
-                : paragraphProperties.Justification.GetLinesAlignment(this.LineAlignment);
+        ParagraphSpacing spacing = this.Spacing.Override(
+            spacings
+        );
 
-            var spacing = this.Spacing.Override(paragraphProperties?.SpacingBetweenLines, styleParagraphs.Select(sp => sp.SpacingBetweenLines).ToArray());
-            return new ParagraphStyle(lineAlignment, spacing);
-        }
+        return new ParagraphStyle(lineAlignment, spacing);
+    }
 
-        public static ParagraphStyle From(ParagraphPropertiesBaseStyle style)
-        {
-            var spacing = style?.SpacingBetweenLines?.ToParagraphSpacing(ParagraphSpacing.Default) ?? ParagraphSpacing.Default;
-            var lineAlignment = style?.Justification?.GetLinesAlignment(LineAlignment.Left) ?? LineAlignment.Left;
+    public static ParagraphStyle From(ParagraphPropertiesBaseStyle? style)
+    {
+        var spacing = style?.SpacingBetweenLines?.ToParagraphSpacing(ParagraphSpacing.Default) ?? ParagraphSpacing.Default;
+        var lineAlignment = style?.Justification?.GetLinesAlignment(LineAlignment.Left) ?? LineAlignment.Left;
 
-            return new ParagraphStyle(lineAlignment, spacing);
-        }
+        return new ParagraphStyle(lineAlignment, spacing);
     }
 }

@@ -1,35 +1,34 @@
 ﻿using System;
 using DocumentFormat.OpenXml;
 
-namespace Proxoft.DocxToPdf
+namespace Proxoft.DocxToPdf.Extensions.Units;
+
+internal static class EightPoint
 {
-    internal static class EightPoint
+    private const float _factor = 8;
+
+    public static float EpToPoint(this StringValue? value, float ifNull = 0)
     {
-        private const float _factor = 8;
-
-        public static float EpToPoint(this StringValue? value, float ifNull = 0)
+        if (value?.Value is null)
         {
-            if (value?.Value is null)
-            {
-                return ifNull;
-            }
-
-            var v = Convert.ToInt32(value.Value);
-            return v.EpToPoint();
+            return ifNull;
         }
 
-        public static float EpToPoint(this UInt32Value? value, float ifNull = 0)
-        {
-            if (value?.Value is null)
-            {
-                return ifNull;
-            }
-
-            var v = Convert.ToInt32(value.Value);
-            return v.EpToPoint();
-        }
-
-        public static float EpToPoint(this int value)
-            => value.ToFloat(_factor);
+        var v = Convert.ToInt32(value.Value);
+        return v.EpToPoint();
     }
+
+    public static float EpToPoint(this UInt32Value? value, float ifNull = 0)
+    {
+        if (value?.Value is null)
+        {
+            return ifNull;
+        }
+
+        var v = Convert.ToInt32(value.Value);
+        return v.EpToPoint();
+    }
+
+    public static float EpToPoint(this int value)
+        => value.ToFloat(_factor);
 }

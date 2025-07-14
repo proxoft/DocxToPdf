@@ -1,24 +1,16 @@
 ﻿using System.Drawing;
 
-namespace Proxoft.DocxToPdf.Models.Common
+namespace Proxoft.DocxToPdf.Models.Common;
+
+internal class BorderStyle(Pen? top, Pen? right, Pen? bottom, Pen? left)
 {
-    internal class BorderStyle
-    {
-        public BorderStyle(Pen all) : this(all, all, all, all)
-        {
-        }
+    public static readonly BorderStyle NoBorder = new(null, null, null, null);
 
-        public BorderStyle(Pen top,Pen right, Pen bottom, Pen left)
-        {
-            this.Top = top;
-            this.Right = right;
-            this.Bottom = bottom;
-            this.Left = left;
-        }
+    public Pen? Top { get; } = top;
 
-        public Pen Top { get; }
-        public Pen Right { get; }
-        public Pen Bottom { get; }
-        public Pen Left { get; }
-    }
+    public Pen? Right { get; } = right;
+
+    public Pen? Bottom { get; } = bottom;
+
+    public Pen? Left { get; } = left;
 }

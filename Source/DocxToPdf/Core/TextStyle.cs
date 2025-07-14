@@ -2,16 +2,16 @@
 
 namespace Proxoft.DocxToPdf.Core;
 
-internal class TextStyle
+internal class TextStyle(Font font, Color brush, Color background)
 {
-    private static object _lock = new object();
+    private static readonly object _lock = new();
 
     private static readonly Graphics _graphics;
-    private static StringFormat _stringFormat;
+    private static readonly StringFormat _stringFormat;
 
     static TextStyle()
     {
-        var b = new Bitmap(1, 1);
+        Bitmap b = new(1, 1);
         _graphics = Graphics.FromImage(b);
         _graphics.PageUnit = GraphicsUnit.Point;
 
@@ -21,16 +21,9 @@ internal class TextStyle
         _stringFormat.FormatFlags = StringFormatFlags.MeasureTrailingSpaces;
     }
 
-    public TextStyle(Font font, Color brush, Color background)
-    {
-        this.Font = font;
-        this.Brush = brush;
-        this.Background = background;
-    }
-
-    public Font Font { get; }
-    public Color Brush { get; }
-    public Color Background { get; }
+    public Font Font { get; } = font;
+    public Color Brush { get; } = brush;
+    public Color Background { get; } = background;
 
     public double CellAscent
     {
@@ -60,4 +53,7 @@ internal class TextStyle
             brush ?? this.Brush,
             background ?? this.Background);
     }
+
+    public static TextStyle Default() =>
+        new(new Font("Arial", 11, FontStyle.Regular), Color.Black, Color.Empty);
 }

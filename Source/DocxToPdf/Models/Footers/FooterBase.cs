@@ -1,20 +1,17 @@
 ﻿using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 
-namespace Proxoft.DocxToPdf.Models.Footers
+namespace Proxoft.DocxToPdf.Models.Footers;
+
+internal abstract class FooterBase(PageMargin pageMargin) : PageElement
 {
-    internal abstract class FooterBase : PageElement
-    {
-        protected FooterBase(PageMargin pageMargin)
-        {
-            this.PageMargin = pageMargin;
-        }
+    public double Height => this.LastPageRegion.Region.Height;
 
-        public double Height => this.LastPageRegion.Region.Height;
-        public double FooterMargin => this.PageMargin.Footer;
-        public double HeightWithFooterMargin => this.Height + this.PageMargin.Footer;
+    public double FooterMargin => this.PageMargin.Footer;
 
-        protected PageMargin PageMargin { get; }
+    public double HeightWithFooterMargin => this.Height + this.PageMargin.Footer;
 
-        public abstract void Prepare(IPage page);
-    }
+    protected PageMargin PageMargin { get; } = pageMargin;
+
+    public abstract void Prepare(IPage page);
 }

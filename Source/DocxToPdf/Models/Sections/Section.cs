@@ -1,158 +1,138 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Core.Pages;
+using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Footers;
 using Proxoft.DocxToPdf.Models.Footers.Builders;
 using Proxoft.DocxToPdf.Models.Headers;
 using Proxoft.DocxToPdf.Models.Headers.Builders;
-using Proxoft.DocxToPdf.Models.Styles;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 
-namespace Proxoft.DocxToPdf.Models.Sections
+namespace Proxoft.DocxToPdf.Models.Sections;
+
+internal class Section(
+    SectionProperties properties,
+    SectionContent[] sectionContents,
+    IImageAccessor imageAccessor,
+    IStyleFactory styleFactory) : PageElement
 {
-    internal class Section : PageElement
+    private readonly List<Page> _pages = [];
+    private readonly Dictionary<PageNumber, HeaderBase> _headers = [];
+    private readonly Dictionary<PageNumber, FooterBase> _footers = [];
+
+    private readonly SectionProperties _properties = properties;
+    private readonly IImageAccessor _imageAccessor = imageAccessor;
+    private readonly SectionContent[] _contents = sectionContents;
+    private readonly IStyleFactory _styleFactory = styleFactory;
+
+    public IReadOnlyCollection<IPage> Pages => _pages;
+
+    public HeaderFooterConfiguration HeaderFooterConfiguration => _properties.HeaderFooterConfiguration;
+
+    public void Prepare(
+        PageRegion previousSection,
+        PageMargin previousSectionMargin,
+        DocumentVariables documentVariables)
     {
-        private List<Page> _pages = new List<Page>();
-        private Dictionary<PageNumber, HeaderBase> _headers = new Dictionary<PageNumber, HeaderBase>();
-        private Dictionary<PageNumber, FooterBase> _footers = new Dictionary<PageNumber, FooterBase>();
+        SectionContentBreak sectionBreak = _properties.StartOnNextPage
+            ? SectionContentBreak.Page
+            : SectionContentBreak.None;
 
-        private readonly SectionProperties _properties;
-        private readonly IImageAccessor _imageAccessor;
-        private readonly SectionContent[] _contents;
-        private readonly IStyleFactory _styleFactory;
+        IPage contentPageRequest(PageNumber pageNumber) =>
+            this.OnPageRequest(pageNumber, previousSection.PagePosition.PageNumber, previousSectionMargin, documentVariables);
 
-        public Section(
-            SectionProperties properties,
-            IEnumerable<SectionContent> sectionContents,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleFactory)
+        PageRegion contentLastPosition = previousSection;
+        foreach (SectionContent content in _contents)
         {
-            _properties = properties;
-            _imageAccessor = imageAccessor;
-            _contents = sectionContents.ToArray();
-            _styleFactory = styleFactory;
+            content.Prepare(previousSection, contentLastPosition, sectionBreak, contentPageRequest);
+            contentLastPosition = content.LastPageRegion;
+            sectionBreak = content.SectionBreak;
         }
 
-        public IReadOnlyCollection<IPage> Pages => _pages;
-        public HeaderFooterConfiguration HeaderFooterConfiguration => _properties.HeaderFooterConfiguration;
+        PageRegion[] pr = [.. _contents
+            .SelectMany(c => c.PageRegions)
+            .UnionThroughColumns()];
 
-        public void Prepare(
-            PageRegion previousSection,
-            PageMargin previousSectionMargin,
-            DocumentVariables documentVariables)
+        this.ResetPageRegions(pr);
+    }
+
+    public override void Render(IRenderer renderer)
+    {
+        foreach (HeaderBase header in _headers.Values)
         {
-            var sectionBreak = _properties.StartOnNextPage
-                ? SectionContentBreak.Page
-                : SectionContentBreak.None;
-
-            IPage contentPageRequest(PageNumber pageNumber) =>
-                this.OnPageRequest(pageNumber, previousSection.PagePosition.PageNumber, previousSectionMargin, documentVariables);
-
-            var contentLastPosition = previousSection;
-            foreach (var content in _contents)
-            {
-                content.Prepare(previousSection, contentLastPosition, sectionBreak, contentPageRequest);
-                contentLastPosition = content.LastPageRegion;
-                sectionBreak = content.SectionBreak;
-            }
-
-            var pr = _contents
-                .SelectMany(c => c.PageRegions)
-                .UnionThroughColumns()
-                .ToArray();
-            this.ResetPageRegions(pr);
+            header.Render(renderer);
         }
 
-        public override void Render(IRenderer renderer)
+        foreach (FooterBase footer in _footers.Values)
         {
-            //// page content borders
-            //foreach (var p in _pages)
-            //{
-            //    var r = p.GetContentRegion();
-            //    var rp = renderer.Get(p.PageNumber);
-            //    var pen = new System.Drawing.Pen(System.Drawing.Color.Orange, 0.5f);
-
-            //    rp.RenderLine(r.TopLine(pen));
-            //    rp.RenderLine(r.RightLine(pen));
-            //    rp.RenderLine(r.BottomLine(pen));
-            //    rp.RenderLine(r.LeftLine(pen));
-            //}
-
-            foreach(var header in _headers.Values)
-            {
-                header.Render(renderer);
-            }
-
-            foreach (var footer in _footers.Values)
-            {
-                footer.Render(renderer);
-            }
-
-            foreach (var content in _contents)
-            {
-                content.Render(renderer);
-            }
-
-            // this.RenderBordersIf(renderer, renderer.Options.SectionRegionBoundaries);
+            footer.Render(renderer);
         }
 
-        private IPage OnPageRequest(
-            PageNumber pageNumber,
-            PageNumber previousSectionLastPage,
-            PageMargin previousSectionMargin,
-            DocumentVariables documentVariables)
+        foreach (SectionContent content in _contents)
         {
-            var page = _pages.SingleOrDefault(p => p.PageNumber == pageNumber);
-            if (page == null)
-            {
-                page = new Page(pageNumber, _properties.PageConfiguration);
-                page.SetHorizontalMargins(_properties.Margin.Left, _properties.Margin.Right);
-                _pages.Add(page);
-            }
+            content.Render(renderer);
+        }
+    }
 
-            page.DocumentVariables = documentVariables;
-
-            this.CreateOrUpdateHeader(page, previousSectionLastPage, previousSectionMargin);
-            var header = _headers[pageNumber];
-            page.SetTopMargins(header.TopY, header.BottomY);
-
-            this.CreateOrUpdateFooter(page, previousSectionLastPage, previousSectionMargin);
-            var footer = _footers[pageNumber];
-            page.SetBottomMargins(footer.FooterMargin, footer.HeightWithFooterMargin);
-
-            return page;
+    private Page OnPageRequest(
+        PageNumber pageNumber,
+        PageNumber previousSectionLastPage,
+        PageMargin previousSectionMargin,
+        DocumentVariables documentVariables)
+    {
+        Page? page = _pages.SingleOrDefault(p => p.PageNumber == pageNumber);
+        if (page is null)
+        {
+            page = new Page(pageNumber, _properties.PageConfiguration);
+            page.SetHorizontalMargins(_properties.Margin.Left, _properties.Margin.Right);
+            _pages.Add(page);
         }
 
-        private void CreateOrUpdateHeader(IPage page, PageNumber previousSectionLastPage, PageMargin previousSectionMargin)
+        page.DocumentVariables = documentVariables;
+
+        this.CreateOrUpdateHeader(page, previousSectionLastPage, previousSectionMargin);
+        HeaderBase header = _headers[pageNumber];
+        page.SetTopMargins(header.TopY, header.BottomY);
+
+        this.CreateOrUpdateFooter(page, previousSectionLastPage, previousSectionMargin);
+        FooterBase footer = _footers[pageNumber];
+        page.SetBottomMargins(footer.FooterMargin, footer.HeightWithFooterMargin);
+
+        return page;
+    }
+
+    private void CreateOrUpdateHeader(Page page, PageNumber previousSectionLastPage, PageMargin previousSectionMargin)
+    {
+        if (!_headers.ContainsKey(page.PageNumber))
         {
-            if (!_headers.ContainsKey(page.PageNumber))
-            {
-                var header = previousSectionLastPage == page.PageNumber
-                    ? HeaderFactory.CreateInheritedHeader(previousSectionMargin)
-                    : _properties.HeaderFooterConfiguration
-                        .FindHeader(page.PageNumber)
-                        .CreateHeader(_properties.Margin, _imageAccessor, _styleFactory);
+            HeaderBase header = previousSectionLastPage == page.PageNumber
+                ? HeaderFactory.CreateInheritedHeader(previousSectionMargin)
+                : _properties.HeaderFooterConfiguration
+                    .FindHeader(page.PageNumber)
+                    .CreateHeader(_properties.Margin, _imageAccessor, _styleFactory);
 
-                _headers.Add(page.PageNumber, header);
-            }
-
-            _headers[page.PageNumber].Prepare(page);
+            _headers.Add(page.PageNumber, header);
         }
 
-        private void CreateOrUpdateFooter(IPage page, PageNumber previousSectionLastPage, PageMargin previousSectionMargin)
+        _headers[page.PageNumber].Prepare(page);
+    }
+
+    private void CreateOrUpdateFooter(Page page, PageNumber previousSectionLastPage, PageMargin previousSectionMargin)
+    {
+        if (!_footers.ContainsKey(page.PageNumber))
         {
-            if (!_footers.ContainsKey(page.PageNumber))
-            {
-                var footer = previousSectionLastPage == page.PageNumber
-                    ? FooterFactory.CreateInheritedFooter(previousSectionMargin)
-                    : _properties.HeaderFooterConfiguration
-                         .FindFooter(page.PageNumber)
-                         .CreateFooter(_properties.Margin, _imageAccessor, _styleFactory);
+            FooterBase footer = previousSectionLastPage == page.PageNumber
+                ? FooterFactory.CreateInheritedFooter(previousSectionMargin)
+                : _properties.HeaderFooterConfiguration
+                     .FindFooter(page.PageNumber)
+                     .CreateFooter(_properties.Margin, _imageAccessor, _styleFactory);
 
-                _footers.Add(page.PageNumber, footer);
-            }
-
-            _footers[page.PageNumber].Prepare(page);
+            _footers.Add(page.PageNumber, footer);
         }
+
+        _footers[page.PageNumber].Prepare(page);
     }
 }

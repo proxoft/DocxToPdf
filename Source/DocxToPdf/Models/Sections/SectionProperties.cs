@@ -1,32 +1,23 @@
 ﻿using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Sections
+namespace Proxoft.DocxToPdf.Models.Sections;
+
+internal class SectionProperties(
+    PageConfiguration pageConfiguration,
+    HeaderFooterConfiguration headerFooterConfiguration,
+    PageMargin margin,
+    bool StartOnNextPage)
 {
-    internal class SectionProperties
-    {
-        public static readonly SectionProperties Empty = new SectionProperties(
-            PageConfiguration.Empty,
-            HeaderFooterConfiguration.Empty,
-            PageMargin.PageNone,
-            false);
+    public static readonly SectionProperties Empty = new(
+        PageConfiguration.Empty,
+        HeaderFooterConfiguration.Empty,
+        PageMargin.PageNone,
+        false);
 
-        public SectionProperties(
-            PageConfiguration pageConfiguration,
-            HeaderFooterConfiguration headerFooterConfiguration,
-            PageMargin margin,
-            bool StartOnNextPage)
-        {
-            this.PageConfiguration = pageConfiguration;
-            this.HeaderFooterConfiguration = headerFooterConfiguration;
-            this.Margin = margin;
-            this.StartOnNextPage = StartOnNextPage;
-        }
-
-        public PageConfiguration PageConfiguration { get; }
-        public HeaderFooterConfiguration HeaderFooterConfiguration { get; }
-        public PageMargin Margin { get; }
-        public bool StartOnNextPage { get; }
-        public bool HasTitlePage { get; }
-    }
+    public PageConfiguration PageConfiguration { get; } = pageConfiguration;
+    public HeaderFooterConfiguration HeaderFooterConfiguration { get; } = headerFooterConfiguration;
+    public PageMargin Margin { get; } = margin;
+    public bool StartOnNextPage { get; } = StartOnNextPage;
+    public bool HasTitlePage { get; }
 }

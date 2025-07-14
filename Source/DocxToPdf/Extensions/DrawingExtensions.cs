@@ -1,22 +1,27 @@
 ﻿using System;
 using DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Extensions.Units;
 
-namespace Proxoft.DocxToPdf
+namespace Proxoft.DocxToPdf.Extensions;
+
+internal static class DrawingExtensions
 {
-    internal static class DrawingExtensions
+    public static Size ToSize(this Extent? extent)
     {
-        public static Size ToSize(this Extent extent)
+        double width = extent?.Cx.EmuToPoint() ?? 0;
+        double height = extent?.Cy.EmuToPoint() ?? 0;
+        return new Size(width, height);
+    }
+
+    public static double ToDouble(this PositionOffset? positionOffset)
+    {
+        if (positionOffset is null)
         {
-            var width = extent.Cx.EmuToPoint();
-            var height = extent.Cy.EmuToPoint();
-            return new Size(width, height);
+            return 0;
         }
 
-        public static double ToPoint(this PositionOffset positionOffset)
-        {
-            var offset = Convert.ToInt64(positionOffset.Text);
-            return offset.EmuToPoint();
-        }
+        var offset = Convert.ToInt64(positionOffset.Text);
+        return offset.EmuToPoint();
     }
 }

@@ -1,24 +1,13 @@
-﻿using System.Collections.Generic;
+﻿namespace Proxoft.DocxToPdf.Models.Tables.Grids;
 
-namespace Proxoft.DocxToPdf.Models.Tables.Grids
+internal class CellBorder(
+    BorderLine? top,
+    BorderLine? bottom,
+    BorderLine[] left,
+    BorderLine[] right)
 {
-    internal class CellBorder
-    {
-        public CellBorder(
-            BorderLine top,
-            BorderLine bottom,
-            IEnumerable<BorderLine> left,
-            IEnumerable<BorderLine> right)
-        {
-            this.Top = top;
-            this.Bottom = bottom;
-            this.Left = left;
-            this.Right = right;
-        }
-
-        public BorderLine Top { get; }
-        public BorderLine Bottom { get; }
-        public IEnumerable<BorderLine> Left { get; }
-        public IEnumerable<BorderLine> Right { get; }
-    }
+    public BorderLine? Top { get; } = top;
+    public BorderLine? Bottom { get; } = bottom;
+    public BorderLine[] Left { get; } = left;
+    public BorderLine[] Right { get; } = right;
 }

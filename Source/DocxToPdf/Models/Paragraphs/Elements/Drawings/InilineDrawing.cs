@@ -1,33 +1,35 @@
-﻿using Proxoft.DocxToPdf.Core;
+﻿using System.IO;
+using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
+
+internal class InilineDrawing : LineElement
 {
-    internal class InilineDrawing : LineElement
+    private readonly string _imageId;
+    private readonly IImageAccessor _imageAccessor;
+
+    // size defined in document
+    public InilineDrawing(string imageId, Size size, IImageAccessor imageAccessor)
     {
-        private readonly string _imageId;
-        private readonly IImageAccessor _imageAccessor;
+        _imageId = imageId;
+        _imageAccessor = imageAccessor;
+        this.Size = size;
+    }
 
-        // size defined in document
-        public InilineDrawing(string imageId, Size size, IImageAccessor imageAccessor)
-        {
-            _imageId = imageId;
-            _imageAccessor = imageAccessor;
-            this.Size = size;
-        }
+    public override double GetBaseLineOffset()
+        => this.Size.Height;
 
-        public override double GetBaseLineOffset()
-            => this.Size.Height;
+    public override void Justify(DocumentPosition position, double baseLineOffset, Size lineSpace)
+    {
+        this.SetPosition(position);
+    }
 
-        public override void Justify(DocumentPosition position, double baseLineOffset, Size lineSpace)
-        {
-            this.SetPosition(position);
-        }
-
-        public override void Render(IRendererPage page)
-        {
-            var stream = _imageAccessor.GetImageStream(_imageId);
-            page.RenderImage(stream, this.Position.Offset, this.Size);
-        }
+    public override void Render(IRendererPage page)
+    {
+        Stream stream = _imageAccessor.GetImageStream(_imageId);
+        page.RenderImage(stream, this.Position.Offset, this.Size);
     }
 }

@@ -1,44 +1,55 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Extensions;
+using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Sections.Columns;
-using Proxoft.DocxToPdf.Models.Styles;
-
+using Proxoft.DocxToPdf.Models.Styles.Services;
 using OpenXml = DocumentFormat.OpenXml;
 using Pack = DocumentFormat.OpenXml.Packaging;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Models.Sections.Builders;
 
 internal static class SectionBuilder
 {
-    public static IEnumerable<Section> SplitToSections(
-        this Pack.MainDocumentPart mainDocument,
+    public static Section[] SplitToSections(
+        this Pack.MainDocumentPart? mainDocument,
         IStyleFactory styleFactory)
     {
-        var sections = mainDocument.Document.Body
-            .SplitToSectionsCore(mainDocument, styleFactory)
-            .ToArray();
+        if (mainDocument?.Document.Body is null)
+        {
+            return [];
+        }
+
+        Section[] sections = mainDocument.Document.Body
+            .SplitToSectionsCore(mainDocument, styleFactory);
 
         return sections;
     }
 
-    private static IEnumerable<Section> SplitToSectionsCore(
+    private static Section[] SplitToSectionsCore(
         this Word.Body body,
         Pack.MainDocumentPart mainDocumentPart,
         IStyleFactory styleFactory)
     {
-        var sections = new List<Section>();
+        if (body is null)
+        {
+            return [];
+        }
 
-        var sectionElements = new List<OpenXml.OpenXmlCompositeElement>();
-        var headerFooterConfiguration = HeaderFooterConfiguration.Empty;
-        Word.SectionProperties wordSectionProperties;
+        Section[] sections = [];
 
-        foreach (var e in body.RenderableChildren())
+        List<OpenXml.OpenXmlCompositeElement> sectionElements = [];
+        HeaderFooterConfiguration headerFooterConfiguration = HeaderFooterConfiguration.Empty;
+        Word.SectionProperties? wordSectionProperties;
+
+        foreach (OpenXml.OpenXmlCompositeElement e in body.RenderableChildren())
         {
             sectionElements.Add(e);
-            if (!(e is Word.Paragraph paragraph))
+            if (e is not Word.Paragraph paragraph)
             {
                 continue;
             }
@@ -49,9 +60,13 @@ internal static class SectionBuilder
                 continue;
             }
 
-            var section = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Count == 0, styleFactory);
+            Section section = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Length == 0, styleFactory);
             headerFooterConfiguration = section.HeaderFooterConfiguration;
-            sections.Add(section);
+            sections = [
+                ..sections,
+                section
+            ];
+
             sectionElements.Clear();
         }
 
@@ -59,8 +74,11 @@ internal static class SectionBuilder
            .ChildsOfType<Word.SectionProperties>()
            .Single();
 
-        var lastSection = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Count == 0, styleFactory);
-        sections.Add(lastSection);
+        Section lastSection = sectionElements.CreateSection(wordSectionProperties, mainDocumentPart, headerFooterConfiguration, sections.Length == 0, styleFactory);
+        sections = [
+            ..sections,
+            lastSection
+        ];
         return sections;
     }
 
@@ -72,48 +90,48 @@ internal static class SectionBuilder
         bool isFirst,
         IStyleFactory styleFactory)
     {
-        var imageAccessor = new ImageAccessor(mainDocumentPart);
+        ImageAccessor imageAccessor = new(mainDocumentPart);
 
-        var sectionProperties = wordSectionProperties.CreateSectionProperties(mainDocumentPart, isFirst, headerFooterConfiguration);
-        var columnsConfiguration = wordSectionProperties.CreateColumnsConfiguration(sectionProperties.PageConfiguration, sectionProperties.Margin);
-        var sectionContents = xmlElements.SplitToSectionContents(columnsConfiguration, imageAccessor, styleFactory);
-        var sd = new Section(sectionProperties, sectionContents, imageAccessor, styleFactory);
+        SectionProperties sectionProperties = wordSectionProperties.CreateSectionProperties(mainDocumentPart, isFirst, headerFooterConfiguration);
+        ColumnsConfiguration columnsConfiguration = wordSectionProperties.CreateColumnsConfiguration(sectionProperties.PageConfiguration, sectionProperties.Margin);
+        SectionContent[] sectionContents = xmlElements.SplitToSectionContents(columnsConfiguration, imageAccessor, styleFactory);
+        Section sd = new(sectionProperties, sectionContents, imageAccessor, styleFactory);
 
         return sd;
     }
 
-    private static IEnumerable<SectionContent> SplitToSectionContents(
+    private static SectionContent[] SplitToSectionContents(
         this IEnumerable<OpenXml.OpenXmlCompositeElement> xmlElements,
         ColumnsConfiguration columnsConfiguration,
         IImageAccessor imageAccessor,
         IStyleFactory styleFactory)
     {
-        var sectionContents = new List<SectionContent>();
+        List<SectionContent> sectionContents = [];
 
-        var stack = xmlElements.ToStack();
-        var contentElements = new List<OpenXml.OpenXmlCompositeElement>();
+        Stack<OpenXml.OpenXmlCompositeElement> stack = xmlElements.ToStackReversed();
+        List<OpenXml.OpenXmlCompositeElement> contentElements = [];
 
         while (stack.Count > 0)
         {
-            var e = stack.Pop();
+            OpenXml.OpenXmlCompositeElement e = stack.Pop();
             switch (e)
             {
                 case Word.Paragraph p:
                     {
-                        var (begin, @break, end) = p.SplitByNextBreak();
+                        (Word.Paragraph begin, SectionContentBreak @break, Word.Paragraph? end) = p.SplitByNextBreak();
                         if (@break == SectionContentBreak.None)
                         {
                             contentElements.Add(p);
                         }
                         else
                         {
-                            if (end != null)
+                            if (end is not null)
                             {
                                 stack.Push(end);
                             }
 
                             contentElements.Add(begin);
-                            var childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
+                            PageContextElement[] childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
                             sectionContents.Add(new SectionContent(childElements, columnsConfiguration, @break));
                             contentElements.Clear();
                         }
@@ -127,17 +145,15 @@ internal static class SectionBuilder
 
         if (contentElements.Count > 0)
         {
-            var childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
+            PageContextElement[] childElements = contentElements.CreatePageElements(imageAccessor, styleFactory);
             sectionContents.Add(new SectionContent(childElements, columnsConfiguration, SectionContentBreak.None));
         }
 
-        return sectionContents;
+        return [.. sectionContents];
     }
 
-    private static Word.SectionProperties GetSectionProperties(this Word.Paragraph paragraph)
-    {
-        return paragraph.ParagraphProperties?.SectionProperties;
-    }
+    private static Word.SectionProperties? GetSectionProperties(this Word.Paragraph paragraph) =>
+        paragraph.ParagraphProperties?.SectionProperties;
 
     private static SectionProperties CreateSectionProperties(
         this Word.SectionProperties wordSectionProperties,
@@ -145,14 +161,14 @@ internal static class SectionBuilder
         bool isFirstSection,
         HeaderFooterConfiguration inheritHeaderFooterConfiguration)
     {
-        var pageCongifuration = wordSectionProperties.GetPageConfiguration();
-        var pageMargin = wordSectionProperties.GetPageMargin();
+        PageConfiguration pageCongifuration = wordSectionProperties.GetPageConfiguration();
+        PageMargin pageMargin = wordSectionProperties.GetPageMargin();
 
-        var sectionMark = wordSectionProperties.ChildsOfType<Word.SectionType>().SingleOrDefault()?.Val ?? Word.SectionMarkValues.NextPage;
+        OpenXml.EnumValue<Word.SectionMarkValues> sectionMark = wordSectionProperties.ChildsOfType<Word.SectionType>().SingleOrDefault()?.Val ?? Word.SectionMarkValues.NextPage;
 
-        var requiresNewPage = isFirstSection || sectionMark == Word.SectionMarkValues.NextPage;
+        bool requiresNewPage = isFirstSection || sectionMark == Word.SectionMarkValues.NextPage;
 
-        var headerFooterConfiguration = wordSectionProperties
+        HeaderFooterConfiguration headerFooterConfiguration = wordSectionProperties
             .GetHeaderFooterConfiguration(mainDocument, inheritHeaderFooterConfiguration);
 
         return new SectionProperties(
@@ -165,12 +181,12 @@ internal static class SectionBuilder
     private static PageConfiguration GetPageConfiguration(
         this Word.SectionProperties sectionProperties)
     {
-        var pageSize = sectionProperties.ChildsOfType<Word.PageSize>().Single();
-        var w = pageSize.Width.DxaToPoint();
-        var h = pageSize.Height.DxaToPoint();
+        Word.PageSize pageSize = sectionProperties.ChildsOfType<Word.PageSize>().Single();
+        double w = pageSize.Width.DxaToPoint();
+        double h = pageSize.Height.DxaToPoint();
 
 
-        var orientation = (pageSize.Orient?.Value ?? Word.PageOrientationValues.Portrait) == Word.PageOrientationValues.Portrait
+        PageOrientation orientation = (pageSize.Orient?.Value ?? Word.PageOrientationValues.Portrait) == Word.PageOrientationValues.Portrait
             ? PageOrientation.Portrait
             : PageOrientation.Landscape;
 
@@ -179,7 +195,8 @@ internal static class SectionBuilder
 
     private static PageMargin GetPageMargin(this Word.SectionProperties sectionProperties)
     {
-        var pageMargin = sectionProperties.ChildsOfType<Word.PageMargin>().Single();
+        Word.PageMargin pageMargin = sectionProperties.ChildsOfType<Word.PageMargin>().Single();
+
         return new PageMargin(
             pageMargin.Top.DxaToPoint(),
             pageMargin.Right.DxaToPoint(),
@@ -194,23 +211,25 @@ internal static class SectionBuilder
         Pack.MainDocumentPart mainDocument,
         HeaderFooterConfiguration previousHeaderFooterConfiguration)
     {
-        var hasTitlePage = wordSectionProperties.ChildsOfType<Word.TitlePage>().SingleOrDefault()
+        bool hasTitlePage = wordSectionProperties.ChildsOfType<Word.TitlePage>().SingleOrDefault()
               .IsOn(ifOnOffTypeNull: false, ifOnOffValueNull: true);
 
-        var headerRefs = wordSectionProperties
+        HeaderFooterRef[] headerRefs = [.. wordSectionProperties
             .ChildsOfType<Word.HeaderReference>()
-            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type));
+            .Where(fr => fr.Id is not null && fr.Type is not null)
+            .Select(fr => new HeaderFooterRef(fr.Id!, fr.Type!))];
 
-        var footerRefs = wordSectionProperties
+        HeaderFooterRef[] footerRefs = [.. wordSectionProperties
             .ChildsOfType<Word.FooterReference>()
-            .Select(fr => new HeaderFooterRef(fr.Id, fr.Type));
+            .Where(fr => fr.Id is not null && fr.Type is not null)
+            .Select(fr => new HeaderFooterRef(fr.Id!, fr.Type!))];
 
         return previousHeaderFooterConfiguration.Inherited(mainDocument, hasTitlePage, headerRefs, footerRefs);
     }
 
-    private static (Word.Paragraph, SectionContentBreak, Word.Paragraph) SplitByNextBreak(this Word.Paragraph paragraph)
+    private static (Word.Paragraph, SectionContentBreak, Word.Paragraph?) SplitByNextBreak(this Word.Paragraph paragraph)
     {
-        var index = paragraph
+        int index = paragraph
             .ChildElements
             .IndexOf(e => e is Word.Run r && r.ChildsOfType<Word.Break>().Any(b => b.Type != null && (b.Type == Word.BreakValues.Page || b.Type == Word.BreakValues.Column)));
 
@@ -219,42 +238,43 @@ internal static class SectionBuilder
             return (paragraph, SectionContentBreak.None, null);
         }
 
-        var beginElements = paragraph
-            .ChildElements
-            .Take(index + 1)
-            .Select(r => r.CloneNode(true))
-            .ToArray();
+        OpenXml.OpenXmlElement[] beginElements = [
+            .. paragraph
+                .ChildElements
+                .Take(index + 1)
+                .Select(r => r.CloneNode(true))
+        ];
 
-        var begin = new Word.Paragraph(beginElements)
+        Word.Paragraph begin = new(beginElements)
         {
-            ParagraphProperties = (Word.ParagraphProperties)paragraph.ParagraphProperties.CloneNode(true)
+            ParagraphProperties = paragraph.ParagraphProperties?.CloneNode(true) as Word.ParagraphProperties
         };
 
-        var endElements = paragraph
-            .ChildElements
-            .Skip(index + 1)
-            .Select(r => r.CloneNode(true))
-            .ToArray();
+        OpenXml.OpenXmlElement[] endElements = [
+            ..paragraph
+                .ChildElements
+                .Skip(index + 1)
+                .Select(r => r.CloneNode(true))
+        ];
 
-        var end = endElements.Length == 0
+        Word.Paragraph? end = endElements.Length == 0
             ? null
-            : new Word.Paragraph(endElements)
+            : new(endElements)
             {
-                ParagraphProperties = (Word.ParagraphProperties)paragraph.ParagraphProperties.CloneNode(true)
+                ParagraphProperties = paragraph.ParagraphProperties?.CloneNode(true) as Word.ParagraphProperties
             };
 
-        var breakRun = (Word.Run)paragraph
+        Word.Run breakRun = (Word.Run)paragraph
             .ChildElements
             .ElementAt(index);
 
-        var breakType = breakRun
+        OpenXml.EnumValue<Word.BreakValues>? breakType = breakRun
             .ChildElements
             .OfType<Word.Break>()
             .Single()
             .Type;
 
-
-        SectionContentBreak @break = breakType.Value.ToSectionBreak();
+        SectionContentBreak @break = breakType?.Value.ToSectionBreak() ?? SectionContentBreak.None;
 
         //var @break = SectionContentBreak.None;
         //switch (breakType.Value)

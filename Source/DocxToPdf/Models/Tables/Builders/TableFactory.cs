@@ -1,28 +1,30 @@
 ﻿using System.Linq;
-using Proxoft.DocxToPdf.Core;
-using Proxoft.DocxToPdf.Models.Styles;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Models.Styles.Services;
+using Proxoft.DocxToPdf.Models.Tables.Grids;
+using Proxoft.DocxToPdf.Models.Tables.Elements;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Extensions;
 
-namespace Proxoft.DocxToPdf.Models.Tables.Builders
+namespace Proxoft.DocxToPdf.Models.Tables.Builders;
+
+internal static class TableFactory
 {
-    internal static class TableFactory
+    public static Table Create(Word.Table wordTable, IImageAccessor imageAccessor, IStyleFactory styleFactory)
     {
-        public static Table Create(Word.Table wordTable, IImageAccessor imageAccessor, IStyleFactory styleFactory)
-        {
-            var grid = wordTable.InitializeGrid();
+        Grid grid = wordTable.InitializeGrid();
 
-            var cells = wordTable
+        Cell[] cells = [
+            ..wordTable
                 .InitializeCells(imageAccessor, styleFactory.ForTable(wordTable.Properties()))
                 .OrderBy(c => c.GridPosition.Row)
                 .ThenBy(c => c.GridPosition.Column)
-                .ToArray();
+        ];
 
-            var tableBorder = wordTable
-                .Properties()
-                .TableBorders
-                .GetBorder();
+        TableBorderStyle tableBorder = wordTable
+            .Properties()
+            .TableBorders
+            .GetBorder();
 
-            return new Table(cells, grid, tableBorder);
-        }
+        return new Table(cells, grid, tableBorder);
     }
 }

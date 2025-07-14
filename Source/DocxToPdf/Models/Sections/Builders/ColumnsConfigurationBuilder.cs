@@ -1,65 +1,66 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Extensions.Units;
 using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Sections.Columns;
 
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+namespace Proxoft.DocxToPdf.Models.Sections.Builders;
 
-namespace Proxoft.DocxToPdf.Models.Sections.Builders
+internal static class ColumnsConfigurationBuilder
 {
-    internal static class ColumnsConfigurationBuilder
+    public static ColumnsConfiguration CreateColumnsConfiguration(
+        this Word.SectionProperties sectionProperties,
+        PageConfiguration pageConfiguration,
+        PageMargin pageMargin)
     {
-        public static ColumnsConfiguration CreateColumnsConfiguration(
-            this Word.SectionProperties sectionProperties,
-            PageConfiguration pageConfiguration,
-            PageMargin pageMargin)
+        ColumnConfig[] columns = sectionProperties.GetSectionColumnConfigs(pageConfiguration, pageMargin);
+        return new ColumnsConfiguration(columns);
+    }
+
+    private static ColumnConfig[] GetSectionColumnConfigs(
+        this Word.SectionProperties wordSectionProperties,
+        PageConfiguration page,
+        PageMargin pageMargin)
+    {
+        Word.Columns? columns = wordSectionProperties
+            .ChildsOfType<Word.Columns>()
+            .SingleOrDefault();
+
+        double totalColumnsWidth = page.Width - pageMargin.HorizontalMargins;
+        int columnsCount = columns?.ColumnCount?.Value ?? 1;
+        if (columnsCount == 1)
         {
-            var columns = sectionProperties.GetSectionColumnConfigs(pageConfiguration, pageMargin);
-            return new ColumnsConfiguration(columns);
+            return [ new ColumnConfig(totalColumnsWidth, 0) ];
         }
 
-        private static IEnumerable<ColumnConfig> GetSectionColumnConfigs(
-            this Word.SectionProperties wordSectionProperties,
-            PageConfiguration page,
-            PageMargin pageMargin)
+        if (columns!.EqualWidth.IsOn(true)) // columns cannot be null
         {
-            var columns = wordSectionProperties
-                .ChildsOfType<Word.Columns>()
-                .SingleOrDefault();
+            double space = columns.Space.ToPoint();
+            double columnWidth = (totalColumnsWidth - space * (columnsCount - 1)) / columnsCount;
 
-            var totalColumnsWidth = page.Width - pageMargin.HorizontalMargins;
-            var columnsCount = columns.ColumnCount?.Value ?? 1;
-            if (columnsCount == 1)
-            {
-                return new[] { new ColumnConfig(totalColumnsWidth, 0) };
-            }
+            return [
+                ..Enumerable.Range(0, columnsCount)
+                .Select(i =>
+                {
+                    double s = i == columnsCount - 1
+                        ? 0
+                        : space;
+                    return new ColumnConfig(columnWidth, s);
+                })
+            ];
+        }
 
-            if (columns.EqualWidth.IsOn(true))
-            {
-                var space = columns.Space.ToPoint();
-                var columnWidth = (totalColumnsWidth - space * (columnsCount - 1)) / columnsCount;
-
-                return Enumerable.Range(0, columnsCount)
-                    .Select(i =>
-                    {
-                        var s = i == columnsCount - 1
-                            ? 0
-                            : space;
-                        return new ColumnConfig(columnWidth, s);
-                    })
-                    .ToArray();
-            }
-
-            var cols = columns
+        ColumnConfig[] cols = [
+            ..columns
                 .ChildsOfType<Word.Column>()
                 .Select(col =>
                 {
-                    var cw = col.Width.ToPoint();
-                    var space = col.Space.ToPoint();
+                    double cw = col.Width.ToPoint();
+                    double space = col.Space.ToPoint();
                     return new ColumnConfig(cw, space);
-                });
-            return cols;
-        }
+                })
+        ];
+
+        return cols;
     }
 }

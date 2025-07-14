@@ -1,18 +1,13 @@
 ﻿using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
+
+internal class EmptyField(TextStyle textStyle) : Field(textStyle)
 {
-    internal class EmptyField : Field
+    protected override string GetContent() => string.Empty;
+
+    protected override void UpdateCore(PageVariables variables)
     {
-        public EmptyField(TextStyle textStyle) : base(textStyle)
-        {
-        }
-
-        protected override string GetContent() => string.Empty;
-
-        protected override void UpdateCore(PageVariables variables)
-        {
-        }
     }
 }

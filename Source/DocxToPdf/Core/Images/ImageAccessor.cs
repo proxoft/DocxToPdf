@@ -1,22 +1,16 @@
 ﻿using System.IO;
 using DocumentFormat.OpenXml.Packaging;
 
-namespace Proxoft.DocxToPdf.Core
+namespace Proxoft.DocxToPdf.Core.Images;
+
+internal class ImageAccessor(MainDocumentPart mainDocumentPart) : IImageAccessor
 {
-    internal class ImageAccessor : IImageAccessor
+    private readonly MainDocumentPart _mainDocumentPart = mainDocumentPart;
+
+    public Stream GetImageStream(string imageId)
     {
-        private readonly MainDocumentPart _mainDocumentPart;
-
-        public ImageAccessor(MainDocumentPart mainDocumentPart)
-        {
-            _mainDocumentPart = mainDocumentPart;
-        }
-
-        public Stream GetImageStream(string imageId)
-        {
-            var imagePart = _mainDocumentPart.GetPartById(imageId);
-            var stream = imagePart.GetStream();
-            return stream;
-        }
+        OpenXmlPart imagePart = _mainDocumentPart.GetPartById(imageId);
+        Stream stream = imagePart.GetStream();
+        return stream;
     }
 }

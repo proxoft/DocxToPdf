@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Core;
-using Proxoft.DocxToPdf.Models.Styles;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Extensions;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 using Proxoft.DocxToPdf.Models.Tables.Elements;
 using Proxoft.DocxToPdf.Models.Tables.Grids;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Models.Tables.Builders;
 

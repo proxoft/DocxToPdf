@@ -1,4 +1,4 @@
-﻿using Proxoft.DocxToPdf.Core;
+﻿using Proxoft.DocxToPdf.Core.Pages;
 
 namespace Proxoft.DocxToPdf.Models.Common
 {

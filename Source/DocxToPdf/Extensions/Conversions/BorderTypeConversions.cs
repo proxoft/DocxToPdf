@@ -1,8 +1,8 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Extensions.Units;
 
-namespace Proxoft.DocxToPdf;
+namespace Proxoft.DocxToPdf.Extensions.Conversions;
 
 internal static class BorderTypeConversions
 {

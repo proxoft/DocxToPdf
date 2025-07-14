@@ -1,24 +1,23 @@
 ﻿using System;
 using DocumentFormat.OpenXml;
 
-namespace Proxoft.DocxToPdf
+namespace Proxoft.DocxToPdf.Extensions.Units;
+
+internal static class HalfPoint
 {
-    internal static class HalfPoint
+    private const double _factor = 2;
+
+    public static double HPToPoint(this StringValue value, double ifNull)
     {
-        private const double _factor = 2;
-
-        public static double HPToPoint(this StringValue value, double ifNull)
+        if(value?.Value == null)
         {
-            if(value?.Value == null)
-            {
-                return ifNull;
-            }
-
-            var v = Convert.ToInt32(value.Value);
-            return v.HPToPoint();
+            return ifNull;
         }
 
-        public static double HPToPoint(this int value)
-            => value.ToDouble(_factor);
+        var v = Convert.ToInt32(value.Value);
+        return v.HPToPoint();
     }
+
+    public static double HPToPoint(this int value)
+        => value.ToDouble(_factor);
 }

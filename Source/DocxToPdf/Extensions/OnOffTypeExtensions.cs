@@ -5,7 +5,7 @@ namespace Proxoft.DocxToPdf
 {
     internal static class OnOffTypeExtensions
     {
-        public static bool IsOn(this OnOffType onOffType, bool ifOnOffTypeNull = false, bool ifOnOffValueNull = false)
+        public static bool IsOn(this OnOffType? onOffType, bool ifOnOffTypeNull = false, bool ifOnOffValueNull = false)
         {
             return onOffType?.Val.IsOn(ifOnOffValueNull) ?? ifOnOffTypeNull;
         }

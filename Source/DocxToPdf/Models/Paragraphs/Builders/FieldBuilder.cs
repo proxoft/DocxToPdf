@@ -2,48 +2,49 @@
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
-using Proxoft.DocxToPdf.Models.Styles;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
+
+internal static class FieldBuilder
 {
-    internal static class FieldBuilder
+    public static LineElement CreateField(
+        this ICollection<Word.Run> runs,
+        IStyleFactory styleFactory)
     {
-        public static LineElement CreateField(
-            this ICollection<Word.Run> runs,
-            IStyleFactory styleFactory)
+        TextStyle style = styleFactory.EffectiveTextStyle(runs.First().RunProperties);
+
+        Word.Run run = runs
+            .Skip(1)
+            .First();
+
+        Word.FieldCode fieldCode = run
+            .ChildsOfType<Word.FieldCode>()
+            .Single();
+
+        string text = fieldCode.Text;
+        Field field = text.CreateField(style);
+        field.Update(PageVariables.Empty);
+        return field;
+    }
+
+    private static Field CreateField(
+        this string text,
+        TextStyle style)
+    {
+        string[] items = text.Split("\\");
+        if (items.Length == 0)
         {
-            var style = styleFactory.EffectiveTextStyle(runs.First().RunProperties);
-
-            var run = runs
-                .Skip(1)
-                .First();
-
-            var fieldCode = run
-                .ChildsOfType<Word.FieldCode>()
-                .Single();
-
-            var text = fieldCode.Text;
-            var field = text.CreateField(style);
-            field.Update(PageVariables.Empty);
-            return field;
+            return new EmptyField(style);
         }
 
-        private static Field CreateField(
-            this string text,
-            TextStyle style)
+        return items[0].Trim() switch
         {
-            var items = text.Split("\\");
-            switch (items[0].Trim())
-            {
-                case "PAGE":
-                    return new PageNumberField(style);
-                case "NUMPAGES":
-                    return new TotalPagesField(style);
-                default:
-                    return new EmptyField(style);
-            }
-        }
+            "PAGE" => new PageNumberField(style),
+            "NUMPAGES" => new TotalPagesField(style),
+            _ => new EmptyField(style),
+        };
     }
 }

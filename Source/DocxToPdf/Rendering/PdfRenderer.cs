@@ -2,51 +2,47 @@
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Pages;
+using Proxoft.DocxToPdf.Core.Rendering;
+using Proxoft.DocxToPdf.Core.Structs;
 
-namespace Proxoft.DocxToPdf.Rendering
+namespace Proxoft.DocxToPdf.Rendering;
+
+internal class PdfRenderer(PdfDocument pdfDocument, RenderingOptions renderingOptions) : IRenderer
 {
-    internal class PdfRenderer : IRenderer
+    private readonly PdfDocument _pdfDocument = pdfDocument;
+
+    private Dictionary<PageNumber, PdfRendererPage> _pages = [];
+
+    public RenderingOptions Options { get; } = renderingOptions;
+
+    public void CreatePage(PageNumber pageNumber, PageConfiguration configuration)
     {
-        private readonly PdfDocument _pdfDocument;
-
-        private Dictionary<PageNumber, PdfRendererPage> _pages = new Dictionary<PageNumber, PdfRendererPage>();
-
-        public PdfRenderer(PdfDocument pdfDocument, RenderingOptions renderingOptions)
+        if (_pages.ContainsKey(pageNumber))
         {
-            _pdfDocument = pdfDocument;
-            this.Options = renderingOptions;
+            return;
         }
 
-        public RenderingOptions Options { get; }
-
-        public void CreatePage(PageNumber pageNumber, PageConfiguration configuration)
+        var pdfPage = new PdfPage
         {
-            if (_pages.ContainsKey(pageNumber))
-            {
-                return;
-            }
+            Orientation = (PdfSharp.PageOrientation)configuration.PageOrientation
+        };
 
-            var pdfPage = new PdfPage
-            {
-                Orientation = (PdfSharp.PageOrientation)configuration.PageOrientation
-            };
+        pdfPage.Width = configuration.Size.Width;
+        pdfPage.Height = configuration.Size.Height;
 
-            pdfPage.Width = configuration.Size.Width;
-            pdfPage.Height = configuration.Size.Height;
+        _pdfDocument.AddPage(pdfPage);
+        _pages.Add(pageNumber, new PdfRendererPage(pageNumber, XGraphics.FromPdfPage(pdfPage), this.Options));
+    }
 
-            _pdfDocument.AddPage(pdfPage);
-            _pages.Add(pageNumber, new PdfRendererPage(pageNumber, XGraphics.FromPdfPage(pdfPage), this.Options));
-        }
-
-        public IRendererPage GetPage(PageNumber pageNumber)
-            => this.GetPage(pageNumber, Point.Zero);
-        
-        public IRendererPage GetPage(PageNumber pageNumber, Point offsetRendering)
-        {
-            var page = _pages[pageNumber];
-            return offsetRendering == Point.Zero
-                ? page
-                : page.Offset(offsetRendering);
-        }
+    public IRendererPage GetPage(PageNumber pageNumber)
+        => this.GetPage(pageNumber, Point.Zero);
+    
+    public IRendererPage GetPage(PageNumber pageNumber, Point offsetRendering)
+    {
+        var page = _pages[pageNumber];
+        return offsetRendering == Point.Zero
+            ? page
+            : page.Offset(offsetRendering);
     }
 }

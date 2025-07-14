@@ -2,249 +2,248 @@
 using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
+using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 
-namespace Proxoft.DocxToPdf.Models.Tables.Grids
+namespace Proxoft.DocxToPdf.Models.Tables.Grids;
+
+internal class Grid(
+    double[] columnWidths,
+    GridRow[] rowHeights)
 {
-    internal class Grid
+    private readonly double[] _columnWidths = columnWidths;
+    private readonly GridRow[] _gridRows = rowHeights;
+    private readonly List<PageContext> _pageContexts = [];
+
+    public Func<PagePosition, PageContext>? PageContextFactory { get; set; }
+
+    public int ColumnCount => _columnWidths.Length;
+
+    public int RowCount => _gridRows.Length;
+
+    public IEnumerable<PageRegion> GetPageRegions()
     {
-        private readonly double[] _columnWidths;
-        private readonly GridRow[] _gridRows;
-        private readonly List<PageContext> _pageContexts = new List<PageContext>();
+        HorizontalSpace space = this.CalculateHorizontalCellSpace(new GridPosition(0, _columnWidths.Length, 0, 0));
 
-        public Grid(
-            IEnumerable<double> columnWidths,
-            IEnumerable<GridRow> rowHeights)
-        {
-            _columnWidths = columnWidths.ToArray();
-            _gridRows = rowHeights.ToArray();
-        }
-
-        public Func<PagePosition, PageContext>? PageContextFactory { get; set; }
-
-        public int ColumnCount => _columnWidths.Length;
-
-        public int RowCount => _gridRows.Length;
-
-        public IEnumerable<PageRegion> GetPageRegions()
-        {
-            var space = this.CalculateHorizontalCellSpace(new GridPosition(0, _columnWidths.Length, 0, 0));
-            
-            var pageRegions = Enumerable
-                .Range(0, _gridRows.Length)
+        PageRegion[] pageRegions = [
+            ..Enumerable.Range(0, _gridRows.Length)
                 .SelectMany(i =>
                 {
-                    var regs = this.FindPageRegionsOfRow(i);
-                    var pageRegions = regs
+                    (PagePosition page, Rectangle region)[] regs = this.FindPageRegionsOfRow(i);
+                    IEnumerable<PageRegion> pageRegions = regs
                         .Select(pair =>
                         {
-                            var rect = new Rectangle(pair.region.TopLeft, new Size(space.Width, pair.region.Height));
+                            Rectangle rect = new(pair.region.TopLeft, new Size(space.Width, pair.region.Height));
                             return new PageRegion(pair.page, rect);
                         });
 
                     return pageRegions;
                 })
-                .ToArray();
+        ];
 
-            return pageRegions;
+        return pageRegions;
+    }
+
+    public void ResetPageContexts(PageContext startOn)
+    {
+        _pageContexts.Clear();
+        _pageContexts.Add(startOn);
+    }
+
+    public PageContext CreateStartPageContextForCell(GridPosition position)
+    {
+        PageContext rowPageContext = this.GetOrCreateRowPageContext(position);
+        HorizontalSpace horizontalSpace = this.CalculateHorizontalCellSpace(position);
+        return rowPageContext.Crop(horizontalSpace);
+    }
+
+    public PageContext CreateNextPageContextForCell(PagePosition currentPagePosition, GridPosition position)
+    {
+        PageContext rowPageContext = this.GetOrCreateNextPageContext(currentPagePosition);
+        HorizontalSpace horizontalSpace = this.CalculateHorizontalCellSpace(position);
+        return rowPageContext.Crop(horizontalSpace);
+    }
+
+    public void JustifyGridRows(GridPosition position, IReadOnlyCollection<PageRegion> pageRegions)
+    {
+        double totalHeightOfCell = pageRegions.Sum(pr => pr.Region.Height);
+
+        if (position.RowSpan == 1)
+        {
+            _gridRows[position.Row].Expand(totalHeightOfCell);
+            return;
         }
 
-        public void ResetPageContexts(PageContext startOn)
+        GridRow[] affectedRows = [..this.GetRowsInPosition(position)];
+
+        double rowsSum = affectedRows.Sum(r => r.Height);
+        if (rowsSum > totalHeightOfCell)
         {
-            _pageContexts.Clear();
-            _pageContexts.Add(startOn);
+            return;
         }
 
-        public PageContext CreateStartPageContextForCell(GridPosition position)
+        double[] distribution = Distribute([.. affectedRows.Select(r => r.Height)], totalHeightOfCell - rowsSum);
+        for (int i = 0; i < distribution.Length; i++)
         {
-            var rowPageContext = this.GetOrCreateRowPageContext(position);
-            var horizontalSpace = this.CalculateHorizontalCellSpace(position);
-            return rowPageContext.Crop(horizontalSpace);
+            affectedRows[i].Expand(distribution[i]);
         }
+    }
 
-        public PageContext CreateNextPageContextForCell(PagePosition currentPagePosition, GridPosition position)
+    public CellBorder GetBorder(GridPosition position)
+    {
+        HorizontalSpace space = this.CalculateHorizontalCellSpace(position);
+        Point lx = new(space.X, 0);
+        Point rx = new(space.RightX, 0);
+
+        BorderLine? topLine = null;
+        BorderLine? bottomLine = null;
+        List<BorderLine> leftLines = [];
+        List<BorderLine> rightLines = [];
+
+        for (int i = position.Row; i < position.Row + position.RowSpan; i++)
         {
-            var rowPageContext = this.GetOrCreateNextPageContext(currentPagePosition);
-            var horizontalSpace = this.CalculateHorizontalCellSpace(position);
-            return rowPageContext.Crop(horizontalSpace);
-        }
-
-        public void JustifyGridRows(GridPosition position, IReadOnlyCollection<PageRegion> pageRegions)
-        {
-            var totalHeightOfCell = pageRegions.Sum(pr => pr.Region.Height);
-
-            if (position.RowSpan == 1)
+            (PagePosition page, Rectangle region)[] regions = this.FindPageRegionsOfRow(i);
+            if(i == position.Row)
             {
-                _gridRows[position.Row].Expand(totalHeightOfCell);
-                return;
+                (PagePosition pagePosition, Rectangle region) = regions.First();
+                Point start = region.TopLeft + lx;
+                Point end = region.TopLeft + rx;
+
+                topLine = new BorderLine(pagePosition.PageNumber, start, end);
             }
 
-            var affectedRows = this.GetRowsInPosition(position)
-                .ToArray();
-
-            var rowsSum = affectedRows.Sum(r => r.Height);
-            if (rowsSum > totalHeightOfCell)
+            foreach((PagePosition page, Rectangle region) in regions)
             {
-                return;
+                leftLines.Add(new BorderLine(page.PageNumber, region.TopLeft + lx, region.BottomLeft + lx));
+                rightLines.Add(new BorderLine(page.PageNumber, region.TopLeft + rx, region.BottomLeft + rx));
             }
 
-            var distribution = Distribute(affectedRows.Select(r => r.Height).ToArray(), totalHeightOfCell - rowsSum);
-            for (var i = 0; i < distribution.Length; i++)
+            if(i == position.Row + position.RowSpan - 1)
             {
-                affectedRows[i].Expand(distribution[i]);
+                (PagePosition pagePosition, Rectangle region) = regions.Last();
+                Point start = new(region.X + space.X, region.BottomY);
+                Point end = new(region.X + space.RightX, region.BottomY);
+
+                bottomLine = new BorderLine(pagePosition.PageNumber, start, end);
             }
         }
 
-        public CellBorder GetBorder(GridPosition position)
+        return new CellBorder(topLine, bottomLine, [..leftLines], [.. rightLines]);
+    }
+
+    private HorizontalSpace CalculateHorizontalCellSpace(GridPosition position)
+    {
+        double offset = _columnWidths
+           .Take(position.Column)
+           .Aggregate(0d, (col, acc) => acc + col);
+
+        double width = _columnWidths
+          .Skip(position.Column)
+          .Take(position.ColumnSpan)
+          .Aggregate(0.0, (col, acc) => acc + col);
+
+        return new HorizontalSpace(offset, width);
+    }
+
+    private double RowAbsoluteYOffset(GridPosition position) =>
+        this.RowAbsoluteYOffset(position.Row);
+
+    private double RowAbsoluteYOffset(int rowIndex) =>
+        _gridRows
+            .Take(rowIndex)
+            .Sum(gr => gr.Height);
+
+    private static double[] Distribute(double[] currentValues, double totalValueToDistribute)
+    {
+        if (totalValueToDistribute <= 0)
         {
-            var space = this.CalculateHorizontalCellSpace(position);
-            var lx = new Point(space.X, 0);
-            var rx = new Point(space.RightX, 0);
-
-            BorderLine? topLine = null;
-            BorderLine? bottomLine = null;
-            var leftLines = new List<BorderLine>();
-            var rightLines = new List<BorderLine>();
-
-            for (var i = position.Row; i < position.Row + position.RowSpan; i++)
-            {
-                var regions = this.FindPageRegionsOfRow(i);
-                if(i == position.Row)
-                {
-                    var (pagePosition, region) = regions.First();
-                    var start = region.TopLeft + lx;
-                    var end = region.TopLeft + rx;
-
-                    topLine = new BorderLine(pagePosition.PageNumber, start, end);
-                }
-
-                foreach(var reg in regions)
-                {
-                    leftLines.Add(new BorderLine(reg.page.PageNumber, reg.region.TopLeft + lx, reg.region.BottomLeft + lx));
-                    rightLines.Add(new BorderLine(reg.page.PageNumber, reg.region.TopLeft + rx, reg.region.BottomLeft + rx));
-                }
-
-                if(i == position.Row + position.RowSpan - 1)
-                {
-                    var (pagePosition, region) = regions.Last();
-                    var start = new Point(region.X + space.X, region.BottomY);
-                    var end = new Point(region.X + space.RightX, region.BottomY);
-
-                    bottomLine = new BorderLine(pagePosition.PageNumber, start, end);
-                }
-            }
-
-            return new CellBorder(topLine, bottomLine, leftLines, rightLines);
+            return currentValues;
         }
 
-        private HorizontalSpace CalculateHorizontalCellSpace(GridPosition position)
-        {
-            var offset = _columnWidths
-               .Take(position.Column)
-               .Aggregate(0d, (col, acc) => acc + col);
-
-            var width = _columnWidths
-              .Skip(position.Column)
-              .Take(position.ColumnSpan)
-              .Aggregate(0.0, (col, acc) => acc + col);
-
-            return new HorizontalSpace(offset, width);
-        }
-
-        private double RowAbsoluteOffset(GridPosition position)
-            => this.RowAbsoluteOffset(position.Row);
-
-        private double RowAbsoluteOffset(int rowIndex)
-                => _gridRows
-                    .Take(rowIndex)
-                    .Sum(gr => gr.Height);
-
-        private static double[] Distribute(IReadOnlyCollection<double> currentValues, double totalValueToDistribute)
-        {
-            if (totalValueToDistribute <= 0)
-            {
-                return currentValues.ToArray();
-            }
-
-            var perItem = totalValueToDistribute / currentValues.Count;
-            var copy = currentValues
+        double perItem = totalValueToDistribute / currentValues.Length;
+        double[] copy = [
+            ..currentValues
                 .Select((v, i) =>
                 {
-                    var newValue = i < currentValues.Count - 1
+                    double newValue = i < currentValues.Length - 1
                         ? v + perItem
                         : v + (totalValueToDistribute - (i * perItem));
 
                     return newValue;
-                });
+                })
+        ];
 
-            return copy.ToArray();
-        }
+        return copy;
+    }
 
-        private IEnumerable<GridRow> GetRowsInPosition(GridPosition position)
+    private IEnumerable<GridRow> GetRowsInPosition(GridPosition position) =>
+        _gridRows
+            .Skip(position.Row)
+            .Take(position.RowSpan);
+
+    private PageContext GetOrCreateRowPageContext(GridPosition position)
+    {
+        double rowOffset = this.RowAbsoluteYOffset(position);
+        PageContext pageContext = _pageContexts.First();
+        do
         {
-            return _gridRows
-                .Skip(position.Row)
-                .Take(position.RowSpan);
-        }
-
-        private PageContext GetOrCreateRowPageContext(GridPosition position)
-        {
-            var rowOffset = this.RowAbsoluteOffset(position);
-            var pc = _pageContexts.First();
-            do
+            if (pageContext.Region.Height > rowOffset)
             {
-                if (pc.Region.Height > rowOffset)
-                {
-                    return pc.Crop(rowOffset, 0, 0, 0);
-                }
-
-                rowOffset -= pc.Region.Height;
-                pc = this.GetOrCreateNextPageContext(pc.PagePosition);
-            } while (true);
-        }
-
-        private PageContext GetOrCreateNextPageContext(PagePosition currentPagePosition)
-        {
-            var nextPageContext = _pageContexts.FirstOrDefault(pc => pc.PagePosition == currentPagePosition.Next());
-            if(nextPageContext != null)
-            {
-                return nextPageContext;
+                return pageContext.Crop(rowOffset, 0, 0, 0);
             }
 
-            nextPageContext = this.PageContextFactory(currentPagePosition);
-            _pageContexts.Add(nextPageContext);
+            rowOffset -= pageContext.Region.Height;
+            pageContext = this.GetOrCreateNextPageContext(pageContext.PagePosition);
+        } while (true);
+    }
+
+    private PageContext GetOrCreateNextPageContext(PagePosition currentPagePosition)
+    {
+        PageContext? nextPageContext = _pageContexts.FirstOrDefault(pc => pc.PagePosition == currentPagePosition.Next());
+        if(nextPageContext != null)
+        {
             return nextPageContext;
         }
 
-        private IEnumerable<(PagePosition page, Rectangle region)> FindPageRegionsOfRow(int rowIndex)
+        if(this.PageContextFactory is null)
         {
-            var offset = this.RowAbsoluteOffset(rowIndex);
-            var remainingHeight = _gridRows[rowIndex].Height;
+            throw new Exception("PageContext factory is null");
+        }
 
-            var regions = new List<(PagePosition, Rectangle)>();
+        nextPageContext = this.PageContextFactory(currentPagePosition);
+        _pageContexts.Add(nextPageContext);
+        return nextPageContext;
+    }
 
-            foreach (var pg in _pageContexts)
+    private (PagePosition page, Rectangle region)[] FindPageRegionsOfRow(int rowIndex)
+    {
+        double offset = this.RowAbsoluteYOffset(rowIndex);
+        double remainingHeight = _gridRows[rowIndex].Height;
+
+        List<(PagePosition, Rectangle)> regions = [];
+
+        foreach (PageContext pg in _pageContexts)
+        {
+            if (pg.Region.Height < offset)
             {
-                if (pg.Region.Height < offset)
-                {
-                    offset -= pg.Region.Height;
-                    continue;
-                }
-
-                var availableHeight = pg.Region.Height - offset;
-
-                var h = Math.Min(availableHeight, remainingHeight);
-                var region = pg.Region.Crop(offset, 0, pg.Region.Height - offset - h, 0);
-                regions.Add((pg.PagePosition, region));
-                offset = 0;
-                remainingHeight -= h;
-                if (remainingHeight == 0)
-                {
-                    break;
-                }
+                offset -= pg.Region.Height;
+                continue;
             }
 
-            return regions;
+            double availableHeight = pg.Region.Height - offset;
+
+            double h = Math.Min(availableHeight, remainingHeight);
+            Rectangle region = pg.Region.Crop(offset, 0, pg.Region.Height - offset - h, 0);
+            regions.Add((pg.PagePosition, region));
+            offset = 0;
+            remainingHeight -= h;
+            if (remainingHeight == 0)
+            {
+                break;
+            }
         }
+
+        return [.. regions];
     }
 }

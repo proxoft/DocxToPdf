@@ -1,38 +1,34 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DocumentFormat.OpenXml;
-using Proxoft.DocxToPdf.Core;
-using Proxoft.DocxToPdf.Models.Styles;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Models.Styles.Services;
 
-namespace Proxoft.DocxToPdf.Models
+namespace Proxoft.DocxToPdf.Models.Core;
+
+internal static class Factory
 {
-    internal static class Factory
-    {
-        public static IEnumerable<PageContextElement> CreatePageElements(
-            this IEnumerable<OpenXmlCompositeElement> openXmlComposites,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleFactory)
-        {
-            return openXmlComposites
+    public static PageContextElement[] CreatePageElements(
+        this IEnumerable<OpenXmlCompositeElement> openXmlComposites,
+        IImageAccessor imageAccessor,
+        IStyleFactory styleFactory) =>
+        [
+            ..openXmlComposites
                 .Select(xml =>
                 {
-                    var e = xml.CreateElement(imageAccessor, styleFactory);
+                    PageContextElement e = xml.CreateElement(imageAccessor, styleFactory);
                     return e;
-                });
-        }
+                })
+        ];
 
-        public static PageContextElement CreateElement(
-            this OpenXmlCompositeElement openXmlComposite,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleFactory)
+    public static PageContextElement CreateElement(
+        this OpenXmlCompositeElement openXmlComposite,
+        IImageAccessor imageAccessor,
+        IStyleFactory styleFactory) =>
+        openXmlComposite switch
         {
-            return openXmlComposite switch
-            {
-                Word.Paragraph p => Paragraphs.Builders.ParagraphFactory.Create(p, imageAccessor, styleFactory),
-                Word.Table t => Tables.Builders.TableFactory.Create(t, imageAccessor, styleFactory),
-                _ => throw new RendererException("Unhandled element")
-            };
-        }
-    }
+            Word.Paragraph p => Paragraphs.Builders.ParagraphFactory.Create(p, imageAccessor, styleFactory),
+            Word.Table t => Tables.Builders.TableFactory.Create(t, imageAccessor, styleFactory),
+            _ => throw new RendererException("Unhandled element")
+        };
 }

@@ -1,157 +1,152 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Core;
-using Proxoft.DocxToPdf.Models.Styles;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
 using WDrawing = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Styles.Services;
+using Proxoft.DocxToPdf.Extensions;
+using Proxoft.DocxToPdf.Extensions.Units;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
+using Proxoft.DocxToPdf.Core.Structs;
+using Proxoft.DocxToPdf.Core.Images;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
-namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders
+namespace Proxoft.DocxToPdf.Models.Paragraphs.Builders;
+
+internal static class ParagraphElementsBuilder
 {
-    internal static class ParagraphElementsBuilder
+    public static IEnumerable<LineElement> CreateParagraphElements(
+        this Word.Paragraph paragraph,
+        IImageAccessor imageAccessor,
+        IStyleFactory styleFactory)
     {
-        public static IEnumerable<LineElement> CreateParagraphElements(
-            this Word.Paragraph paragraph,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleFactory)
+        Stack<Word.Run> runs = paragraph
+            .SelectRuns()
+            .ToStackReversed();
+
+        List<LineElement> elements = [];
+
+        while (runs.Count > 0)
         {
-            var runs = paragraph
-                .SelectRuns()
-                .ToStack();
-
-            var elements = new List<LineElement>();
-
-            while (runs.Count > 0)
+            Word.Run run = runs.Pop();
+            if (run.IsFieldStart())
             {
-                var run = runs.Pop();
-                if (run.IsFieldStart())
+                List<Word.Run> fieldRuns = [ run ];
+                do
                 {
-                    var fieldRuns = new List<Word.Run> { run };
-                    do
-                    {
-                        run = runs.Pop();
-                        fieldRuns.Add(run);
-                    } while (!run.IsFieldEnd());
+                    run = runs.Pop();
+                    fieldRuns.Add(run);
+                } while (!run.IsFieldEnd());
 
-                    var field = fieldRuns.CreateField(styleFactory);
-                    elements.Add(field);
-                }
-                else
-                {
-                    var runElements = run.CreateParagraphElements(imageAccessor, styleFactory);
-                    elements.AddRange(runElements);
-                }
+                LineElement field = fieldRuns.CreateField(styleFactory);
+                elements.Add(field);
             }
-
-            return elements.Union(new[] { ParagraphCharElement.Create(styleFactory.TextStyle) });
+            else
+            {
+                LineElement[] runElements = run.CreateParagraphElements(imageAccessor, styleFactory);
+                elements.AddRange(runElements);
+            }
         }
 
-        public static IEnumerable<FixedDrawing> CreateFixedDrawingElements(this Word.Paragraph paragraph, IImageAccessor imageAccessor)
-        {
-            var drawings = paragraph
+        return elements.Union([ParagraphCharElement.Create(styleFactory.TextStyle)]);
+    }
+
+    public static IEnumerable<FixedDrawing> CreateFixedDrawingElements(this Word.Paragraph paragraph, IImageAccessor imageAccessor)
+    {
+        FixedDrawing[] drawings = [
+            ..paragraph
                 .Descendants<Word.Drawing>()
                 .Where(d => d.Anchor != null)
                 .Select(d => d.Anchor!.ToFixedDrawing(imageAccessor))
-                .ToArray();
+        ];
 
-            return drawings;
-        }
+        return drawings;
+    }
 
-        private static IEnumerable<LineElement> CreateParagraphElements(
-            this Word.Run run,
-            IImageAccessor imageAccessor,
-            IStyleFactory styleAccessor)
-        {
-            var textStyle = styleAccessor.EffectiveTextStyle(run.RunProperties);
+    private static LineElement[] CreateParagraphElements(
+        this Word.Run run,
+        IImageAccessor imageAccessor,
+        IStyleFactory styleAccessor)
+    {
+        TextStyle textStyle = styleAccessor.EffectiveTextStyle(run.RunProperties);
 
-            var elements = run
+        LineElement[] elements = [
+            ..run
                 .ChildElements
                 .Where(c => c is Word.Text || c is Word.TabChar || c is Word.Drawing || c is Word.Break || c is Word.CarriageReturn)
                 .SelectMany(c => {
                     return c switch
                     {
                         Word.Text t => t.SplitTextToElements(textStyle),
-                        Word.TabChar t => new LineElement[] { new TabElement(textStyle) },
+                        Word.TabChar t => [new TabElement(textStyle)],
                         Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
-                        Word.CarriageReturn _ => new LineElement[] { new NewLineElement(textStyle) },
+                        Word.CarriageReturn _ => [new NewLineElement(textStyle)],
                         Word.Break b => b.CreateBreakElement(textStyle),
                         _ => throw new RendererException("unprocessed child")
                     };
                 })
-                .ToArray();
+        ];
 
-            return elements;
-        }
+        return elements;
+    }
 
-        private static IEnumerable<LineElement> CreateBreakElement(this Word.Break breakXml, TextStyle textStyle)
-        {
-            if(breakXml.Type == null)
+    private static LineElement[] CreateBreakElement(this Word.Break breakXml, TextStyle textStyle) =>
+        breakXml.Type is null
+            ? [new NewLineElement(textStyle)]
+            : [];
+
+    private static LineElement[] SplitTextToElements(this Word.Text text, TextStyle textStyle) =>
+        [..text.InnerText
+            .SplitToWordsAndWhitechars()
+            .Select(s =>
             {
-                return new LineElement[] { new NewLineElement(textStyle) };
-            }
-
-            return new LineElement[0];
-        }
-
-        private static IEnumerable<LineElement> SplitTextToElements(
-            this Word.Text text,
-            TextStyle textStyle)
-        {
-            var elements = text.InnerText
-                .SplitToWordsAndWhitechars()
-                .Select(s =>
+                return s switch
                 {
-                    return s switch
-                    {
-                        " " => (LineElement)new SpaceElement(textStyle),
-                        _ => new WordElement(s, textStyle)
-                    };
-                })
-                .ToArray();
+                    " " => (LineElement)new SpaceElement(textStyle),
+                    _ => new WordElement(s, textStyle)
+                };
+            })
+        ];
 
-            return elements;
-        }
-
-        private static InilineDrawing[] CreateInlineDrawing(this Word.Drawing drawing, IImageAccessor imageAccessor)
+    private static InilineDrawing[] CreateInlineDrawing(this Word.Drawing drawing, IImageAccessor imageAccessor)
+    {
+        if (drawing.Inline == null)
         {
-            if (drawing.Inline == null)
-            {
-                return new InilineDrawing[0];
-            }
-
-            var inlineDrawing = drawing.Inline.ToInilineDrawing(imageAccessor);
-            return new[] { inlineDrawing };
+            return [];
         }
 
-        private static InilineDrawing ToInilineDrawing(this WDrawing.Inline inline, IImageAccessor imageAccessor)
-        {
-            var size = inline.Extent.ToSize();
-            var blipElement = inline.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
+        InilineDrawing inlineDrawing = drawing.Inline.ToInilineDrawing(imageAccessor);
+        return [ inlineDrawing ];
+    }
 
-            return new InilineDrawing(blipElement.Embed.Value, size, imageAccessor);
-        }
+    private static InilineDrawing ToInilineDrawing(this WDrawing.Inline inline, IImageAccessor imageAccessor)
+    {
+        Size size = inline.Extent.ToSize();
+        DocumentFormat.OpenXml.Drawing.Blip blipElement = inline.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
 
-        private static FixedDrawing ToFixedDrawing(this WDrawing.Anchor anchor, IImageAccessor imageAccessor)
-        {
-            var size = anchor.Extent.ToSize();
-            var blipElement = anchor.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
+        return new InilineDrawing(blipElement.Embed?.Value ?? "", size, imageAccessor);
+    }
 
-            var margin = anchor.ToAnchorMargin();
-            var position = anchor.SimplePos.Value
-                ? new Point(anchor.SimplePosition.X.Value, anchor.SimplePosition.Y.Value)
-                : new Point(anchor.HorizontalPosition.PositionOffset.ToPoint(), anchor.VerticalPosition.PositionOffset.ToPoint());
+    private static FixedDrawing ToFixedDrawing(this WDrawing.Anchor anchor, IImageAccessor imageAccessor)
+    {
+        Size size = anchor.Extent.ToSize();
+        DocumentFormat.OpenXml.Drawing.Blip blipElement = anchor.Descendants<DocumentFormat.OpenXml.Drawing.Blip>().First();
 
-            return new FixedDrawing(blipElement.Embed.Value, position, size, margin, imageAccessor);
-        }
+        Margin margin = anchor.ToAnchorMargin();
+        Point position = (anchor.SimplePos?.Value ?? false)
+            ? new Point(anchor.SimplePosition?.X?.Value ?? 0, anchor.SimplePosition?.Y?.Value ?? 0)
+            : new Point(anchor.HorizontalPosition?.PositionOffset.ToDouble() ?? 0, anchor.VerticalPosition?.PositionOffset.ToDouble() ?? 0);
 
-        private static Margin ToAnchorMargin(this WDrawing.Anchor anchor)
-        {
-            var top = anchor.DistanceFromTop.EmuToPoint();
-            var right = anchor.DistanceFromRight.EmuToPoint();
-            var bottom = anchor.DistanceFromBottom.EmuToPoint();
-            var left = anchor.DistanceFromLeft.EmuToPoint();
+        return new FixedDrawing(blipElement.Embed?.Value ?? "", position, size, margin, imageAccessor);
+    }
 
-            return new Margin(top, right, bottom, left);
-        }
+    private static Margin ToAnchorMargin(this WDrawing.Anchor anchor)
+    {
+        double top = anchor.DistanceFromTop.EmuToPoint();
+        double right = anchor.DistanceFromRight.EmuToPoint();
+        double bottom = anchor.DistanceFromBottom.EmuToPoint();
+        double left = anchor.DistanceFromLeft.EmuToPoint();
+
+        return new Margin(top, right, bottom, left);
     }
 }

@@ -2,14 +2,15 @@
 using System.Drawing;
 using System.Linq;
 using DocumentFormat.OpenXml;
-using DocumentFormat.OpenXml.Drawing.Diagrams;
-using Word = DocumentFormat.OpenXml.Wordprocessing;
+using Proxoft.DocxToPdf.Extensions;
+using Proxoft.DocxToPdf.Extensions.Conversions;
+using Proxoft.DocxToPdf.Extensions.Units;
 
-namespace Proxoft.DocxToPdf.Models.Styles;
+namespace Proxoft.DocxToPdf.Models.Styles.Paragraphs;
 
 internal static class Conversions
 {
-    public static string EffectiveTypeFace(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, string defaultTypeFace)
+    public static string EffectiveTypeFace(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, string defaultTypeFace)
     {
         Word.RunFonts? effectiveRunFonts = EnumerableExtensions
             .MergeAndFilter(runProperties?.RunFonts, styleRuns.Select(s => s.RunFonts), rf => rf != null)
@@ -19,16 +20,16 @@ internal static class Conversions
         return typeFace ?? defaultTypeFace;
     }
 
-    public static float EffectiveFontSize(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, float defaultSize)
+    public static float EffectiveFontSize(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, float defaultSize)
     {
-        var effectiveFontSize = EnumerableExtensions
+        Word.FontSize? effectiveFontSize = EnumerableExtensions
             .MergeAndFilter(runProperties?.FontSize, styleRuns.Select(s => s.FontSize), fs => fs?.Val != null)
             .FirstOrDefault();
 
         return effectiveFontSize.ToFloat(defaultSize);
     }
 
-    public static Color EffectiveColor(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, Color defaultBrush)
+    public static Color EffectiveColor(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, Color defaultBrush)
     {
         var runColor = EnumerableExtensions
                 .MergeAndFilter(runProperties?.Color, styleRuns.Select(s => s.Color), c => c != null)
@@ -37,7 +38,7 @@ internal static class Conversions
         return runColor?.ToColor() ?? defaultBrush;
     }
 
-    public static FontStyle EffectiveFontStyle(this Word.RunProperties runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, FontStyle defaultFontStyle)
+    public static FontStyle EffectiveFontStyle(this Word.RunProperties? runProperties, IReadOnlyCollection<Word.StyleRunProperties> styleRuns, FontStyle defaultFontStyle)
     {
         var bold = runProperties?.Bold
                 ?? styleRuns.Select(s => s.Bold).FirstOrDefault(x => x != null);
@@ -61,9 +62,14 @@ internal static class Conversions
         return fontStyle;
     }
 
-    public static FontStyle EffectiveFontStyle(this Word.RunPropertiesBaseStyle runPropertiesBase)
+    public static FontStyle EffectiveFontStyle(this Word.RunPropertiesBaseStyle? runPropertiesBase)
     {
-        var fontStyle = runPropertiesBase.Bold.BoldStyle(FontStyle.Regular)
+        if(runPropertiesBase is null)
+        {
+            return FontStyle.Regular;
+        }
+
+        FontStyle fontStyle = runPropertiesBase.Bold.BoldStyle(FontStyle.Regular)
            | runPropertiesBase.Italic.ItalicStyle(FontStyle.Regular)
            | runPropertiesBase.Strike.StrikeStyle(FontStyle.Regular)
            | runPropertiesBase.Underline.UnderlineStyle(FontStyle.Regular);
@@ -82,22 +88,24 @@ internal static class Conversions
 
     public static ParagraphSpacing Override(
         this ParagraphSpacing defaultSpacing,
-        Word.SpacingBetweenLines spacingBetweenLines,
-        params Word.SpacingBetweenLines[] prioritized)
+        Word.SpacingBetweenLines[] prioritized)
     {
-        StringValue before = null;
-        StringValue after = null;
-        StringValue line = null;
-        EnumValue<Word.LineSpacingRuleValues> lineRule = null;
+        StringValue? before = null;
+        StringValue? after = null;
+        StringValue? line = null;
+        EnumValue<Word.LineSpacingRuleValues>? lineRule = null;
 
-        foreach (var spacing in new[] { spacingBetweenLines }.Union(prioritized).Where(s => s != null))
+        foreach (var spacing in prioritized)
         {
-            before = before ?? spacing.Before;
-            after = after ?? spacing.After;
-            line = line ?? spacing.Line;
-            lineRule = lineRule ?? spacing.LineRule;
+            before ??= spacing.Before;
+            after ??= spacing.After;
+            line ??= spacing.Line;
+            lineRule ??= spacing.LineRule;
 
-            if (before != null && after != null && line != null)
+            if (before is not null
+                && after is not null
+                && line is not null
+                && lineRule is not null)
             {
                 break;
             }
@@ -111,7 +119,7 @@ internal static class Conversions
     }
 
     public static ParagraphSpacing ToParagraphSpacing(
-        this Word.SpacingBetweenLines spacingXml,
+        this Word.SpacingBetweenLines? spacingXml,
         ParagraphSpacing ifNull)
     {
         if (spacingXml == null)
@@ -127,7 +135,7 @@ internal static class Conversions
     }
 
     public static LineAlignment GetLinesAlignment(
-        this Word.Justification justification,
+        this Word.Justification? justification,
         LineAlignment ifNull)
     {
         if (justification?.Val is null)
@@ -150,7 +158,7 @@ internal static class Conversions
         return lineSpacing;
     }
 
-    private static LineSpacing GetLineSpacing(this StringValue line, EnumValue<Word.LineSpacingRuleValues> lineRule)
+    private static LineSpacing GetLineSpacing(this StringValue? line, EnumValue<Word.LineSpacingRuleValues>? lineRule)
     {
         Word.LineSpacingRuleValues rule = lineRule?.Value ?? Word.LineSpacingRuleValues.Auto;
 
