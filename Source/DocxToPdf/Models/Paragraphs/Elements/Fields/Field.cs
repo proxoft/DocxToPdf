@@ -3,6 +3,7 @@ using Proxoft.DocxToPdf.Core;
 using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
 
@@ -30,7 +31,7 @@ internal abstract class Field(TextStyle textStyle) : LineElement
             page.RenderRectangle(_lineRegion, _textStyle.Background);
         }
 
-        var layout = new Rectangle(this.Position.Offset, this.Size);
+        Rectangle layout = new(this.Position.Offset, this.Size);
         page.RenderText(_content, _textStyle, layout);
 
         this.RenderBorder(page, page.Options.WordBorders);
@@ -40,7 +41,7 @@ internal abstract class Field(TextStyle textStyle) : LineElement
     {
         this.UpdateCore(variables);
 
-        var w = this.Width;
+        double w = this.Width;
         _content = this.GetContent();
         this.Size = _textStyle.MeasureText(_content);
 

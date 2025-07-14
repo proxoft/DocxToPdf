@@ -1,10 +1,9 @@
-﻿namespace Proxoft.DocxToPdf.Models
+﻿namespace Proxoft.DocxToPdf.Models.Core;
+
+internal enum FieldUpdateResult
 {
-    internal enum FieldUpdateResult
-    {
-        NoChange,
-        Resized,
-        BoundingBoxResized,
-        ReconstructionNecessary
-    }
+    NoChange,
+    Resized,
+    BoundingBoxResized,
+    ReconstructionNecessary
 }

@@ -11,7 +11,7 @@ using Proxoft.DocxToPdf.Models.Styles.Services;
 
 using C = Proxoft.DocxToPdf.Core.Structs;
 
-using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
+using static Proxoft.DocxToPdf.Models.Core.FieldUpdateResult;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Drawings;
 using Proxoft.DocxToPdf.Core.Rendering;
 
@@ -42,7 +42,7 @@ internal class Paragraph(
 
         this.PrepareFixedDrawings(pageContext, nextPageContextFactory);
 
-        var context = pageContext;
+        PageContext context = pageContext;
         do
         {
             (execResult, continueOnLineIndex) = this.ExecutePrepare(context, continueOnLineIndex);
@@ -53,7 +53,7 @@ internal class Paragraph(
             }
         } while (execResult != ExecuteResult.Done);
 
-        var heightInLastRegion = _lines
+        double heightInLastRegion = _lines
             .Where(l => l.Position.Page == context.PagePosition)
             .Sum(l => l.HeightWithSpacing);
 
@@ -62,21 +62,20 @@ internal class Paragraph(
 
     private void PrepareFixedDrawings(PageContext context, Func<PagePosition, PageContextElement, PageContext> nextPageContextFactory)
     {
-        var currentContext = context;
-        var unprocessed = _fixedDrawings.ToList();
+        PageContext currentContext = context;
+        List<FixedDrawing> unprocessed = [.. _fixedDrawings];
 
-        var paragraphYOffset = 0.0;
+        double paragraphYOffset = 0.0;
         while(unprocessed.Count > 0)
         {
-            var fitsInContext = unprocessed
+            FixedDrawing[] fitsInContext = [.. unprocessed
                 .Where(fd => fd.OffsetFromParent.Y < currentContext.Region.BottomY
-                          && fd.OffsetFromParent.Y + fd.Size.Height < currentContext.Region.BottomY)
-                .ToArray();
+                          && fd.OffsetFromParent.Y + fd.Size.Height < currentContext.Region.BottomY)];
 
-            foreach(var fd in fitsInContext)
+            foreach (FixedDrawing fd in fitsInContext)
             {
-                var y = Math.Max(0, fd.OffsetFromParent.Y - paragraphYOffset);
-                var position = currentContext
+                double y = Math.Max(0, fd.OffsetFromParent.Y - paragraphYOffset);
+                DocumentPosition position = currentContext
                     .TopLeft
                     .MoveX(fd.OffsetFromParent.X)
                     .MoveY(y);
@@ -95,15 +94,15 @@ internal class Paragraph(
 
     private (ExecuteResult, int) ExecutePrepare(PageContext context, int fromLineIndex)
     {
-        var yOffset = 0.0;
+        double yOffset = 0.0;
 
         // update lines
-        var i = fromLineIndex;
+        int i = fromLineIndex;
         while (i < _lines.Length)
         {
-            var line = _lines[i];
+            Line line = _lines[i];
 
-            var updateResult = line.Update(context.PageVariables);
+            FieldUpdateResult updateResult = line.Update(context.PageVariables);
             if(updateResult == ReconstructionNecessary)
             {
                 this.ClearLinesFromIndex(i);
@@ -120,12 +119,12 @@ internal class Paragraph(
             i++;
         }
 
-        var defaultLineHeight = _styleFactory.TextStyle.Font.Height;
-        var relativeYOffset = _lines.Sum(l => l.HeightWithSpacing);
+        double defaultLineHeight = _styleFactory.TextStyle.Font.Height;
+        double relativeYOffset = _lines.Sum(l => l.HeightWithSpacing);
 
         while (_unprocessedElements.Count > 0)
         {
-            var line = _unprocessedElements.CreateLine(
+            Line line = _unprocessedElements.CreateLine(
                 this.ParagraphStyle.LineAlignment,
                 relativeYOffset,
                 _fixedDrawings,
@@ -154,15 +153,15 @@ internal class Paragraph(
 
     public override void Render(IRenderer renderer)
     {
-        foreach(var fixedDrawing in _fixedDrawings)
+        foreach(FixedDrawing fixedDrawing in _fixedDrawings)
         {
-            var page = renderer.GetPage(fixedDrawing.Position.Page.PageNumber).Offset(_pageOffset);
+            IRendererPage page = renderer.GetPage(fixedDrawing.Position.Page.PageNumber).Offset(_pageOffset);
             fixedDrawing.Render(page);
         }
 
-        foreach(var line in _lines)
+        foreach (Line line in _lines)
         {
-            var page = renderer.GetPage(line.Position.Page.PageNumber).Offset(_pageOffset);
+            IRendererPage page = renderer.GetPage(line.Position.Page.PageNumber).Offset(_pageOffset);
             line.Render(page);
         }
 

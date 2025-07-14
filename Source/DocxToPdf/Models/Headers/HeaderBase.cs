@@ -4,14 +4,9 @@ using Proxoft.DocxToPdf.Models.Core;
 
 namespace Proxoft.DocxToPdf.Models.Headers;
 
-internal abstract class HeaderBase : PageElement
+internal abstract class HeaderBase(PageMargin pageMargin) : PageElement
 {
-    public HeaderBase(PageMargin pageMargin)
-    {
-        this.PageMargin = pageMargin;
-    }
-
-    protected PageMargin PageMargin { get; }
+    protected PageMargin PageMargin { get; } = pageMargin;
 
     public double TopY => this.LastPageRegion.Region.Y;
 

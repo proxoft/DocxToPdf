@@ -3,8 +3,9 @@ using System.Linq;
 using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Styles;
-using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
+using static Proxoft.DocxToPdf.Models.Core.FieldUpdateResult;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
@@ -17,7 +18,7 @@ internal class Line: ParagraphElementBase
     {
         _segments = [.. segments];
 
-        var boundingRectangle = Rectangle.Union(segments.Select(s => s.PageRegion));
+        Rectangle boundingRectangle = Rectangle.Union(segments.Select(s => s.PageRegion));
         this.Size = boundingRectangle.Size;
         _lineSpacing = lineSpacing;
     }
@@ -28,7 +29,7 @@ internal class Line: ParagraphElementBase
     public override void SetPosition(DocumentPosition position)
     {
         base.SetPosition(position);
-        foreach(var segment in _segments)
+        foreach (LineSegment segment in _segments)
         {
             segment.SetPosition(position);
         }
@@ -36,9 +37,9 @@ internal class Line: ParagraphElementBase
 
     public FieldUpdateResult Update(PageVariables variables)
     {
-        foreach(var segment in _segments)
+        foreach (LineSegment segment in _segments)
         {
-            var result = segment.Update(variables);
+            FieldUpdateResult result = segment.Update(variables);
             if(result == ReconstructionNecessary)
             {
                 return result;

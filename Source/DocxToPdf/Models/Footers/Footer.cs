@@ -25,12 +25,12 @@ internal class Footer(
         PageContext context = new(pagePosition, region, page.DocumentVariables);
 
         PageContext childContextRequest(PagePosition pagePosition, PageContextElement child)
-            => this.OutOfPageContextFactory(page);
+            => OutOfPageContextFactory(page);
 
-        var absoluteHeight = page.Configuration.Height;
+        double absoluteHeight = page.Configuration.Height;
 
         double spaceAfterPrevious = 0.0;
-        foreach (var child in _childs)
+        foreach (PageContextElement child in _childs)
         {
             child.Prepare(context, childContextRequest);
             PageRegion lastRegion = child.LastPageRegion;
@@ -52,14 +52,14 @@ internal class Footer(
             - this.PageMargin.Footer;
 
         _pageOffset = new Point(0, offsetY);
-        foreach(var child in _childs)
+        foreach (PageContextElement child in _childs)
         {
             child.SetPageOffset(_pageOffset);
         }
 
         if (boundingRegion.Region.Height < this.PageMargin.FooterHeight)
         {
-            var resized = new Rectangle(boundingRegion.Region.TopLeft, boundingRegion.Region.Width, this.PageMargin.FooterHeight);
+            Rectangle resized = new(boundingRegion.Region.TopLeft, boundingRegion.Region.Width, this.PageMargin.FooterHeight);
             boundingRegion = new PageRegion(boundingRegion.PagePosition, resized);
         }
 
@@ -72,7 +72,7 @@ internal class Footer(
         this.RenderBorders(renderer, renderer.Options.FooterBorders, pageOffset: _pageOffset);
     }
 
-    private PageContext OutOfPageContextFactory(IPage page)
+    private static PageContext OutOfPageContextFactory(IPage page)
     {
         Rectangle region = new(0, page.Configuration.Height + 1, 1000000, 1000000);
         return new PageContext(PagePosition.None, region, new DocumentVariables(0));

@@ -12,24 +12,23 @@ internal static class Factory
         this IEnumerable<OpenXmlCompositeElement> openXmlComposites,
         IImageAccessor imageAccessor,
         IStyleFactory styleFactory) =>
-        [..openXmlComposites
-            .Select(xml =>
-            {
-                var e = xml.CreateElement(imageAccessor, styleFactory);
-                return e;
-            })
+        [
+            ..openXmlComposites
+                .Select(xml =>
+                {
+                    PageContextElement e = xml.CreateElement(imageAccessor, styleFactory);
+                    return e;
+                })
         ];
 
     public static PageContextElement CreateElement(
         this OpenXmlCompositeElement openXmlComposite,
         IImageAccessor imageAccessor,
-        IStyleFactory styleFactory)
-    {
-        return openXmlComposite switch
+        IStyleFactory styleFactory) =>
+        openXmlComposite switch
         {
             Word.Paragraph p => Paragraphs.Builders.ParagraphFactory.Create(p, imageAccessor, styleFactory),
             Word.Table t => Tables.Builders.TableFactory.Create(t, imageAccessor, styleFactory),
             _ => throw new RendererException("Unhandled element")
         };
-    }
 }

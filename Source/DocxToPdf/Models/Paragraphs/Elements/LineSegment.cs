@@ -6,10 +6,11 @@ using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Models.Common;
+using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Paragraphs.Elements.Fields;
 using Proxoft.DocxToPdf.Models.Styles;
 
-using static Proxoft.DocxToPdf.Models.FieldUpdateResult;
+using static Proxoft.DocxToPdf.Models.Core.FieldUpdateResult;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
@@ -82,7 +83,7 @@ internal class LineSegment : ParagraphElementBase
     public FieldUpdateResult Update(PageVariables pageVariables)
     {
         bool justifyIsNecessary = false;
-        foreach (var e in _elements.OfType<Field>())
+        foreach (Field e in _elements.OfType<Field>())
         {
             bool resized = e.Update(pageVariables) == Resized;
             justifyIsNecessary = justifyIsNecessary || resized;
@@ -138,7 +139,7 @@ internal class LineSegment : ParagraphElementBase
         double baselineOffset)
     {
         double x = startX;
-        foreach (var element in _trimmedElements)
+        foreach (LineElement element in _trimmedElements)
         {
             element.Justify(this.Position + new Point(x, 0), baselineOffset, new Size(element.Width, lineHeight));
             x += element.Size.Width;
@@ -154,7 +155,7 @@ internal class LineSegment : ParagraphElementBase
         double sw = CalculateSpaceExpansion(_trimmedElements, freeSpaceWidth);
         double x = 0.0;
 
-        foreach (var element in _trimmedElements)
+        foreach (LineElement element in _trimmedElements)
         {
             double width = element is SpaceElement
                 ? sw + element.Size.Width

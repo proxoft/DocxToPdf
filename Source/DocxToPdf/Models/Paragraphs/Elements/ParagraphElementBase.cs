@@ -2,7 +2,7 @@
 using Proxoft.DocxToPdf.Core.Rendering;
 using Proxoft.DocxToPdf.Core.Structs;
 using Proxoft.DocxToPdf.Models.Common;
-
+using Proxoft.DocxToPdf.Models.Core;
 using Drawing = System.Drawing;
 
 namespace Proxoft.DocxToPdf.Models.Paragraphs.Elements;
@@ -33,7 +33,7 @@ internal abstract class ParagraphElementBase : IPageRenderable
             return;
         }
 
-        var region = this.PageRegion;
+        Rectangle region = this.PageRegion;
 
         page.RenderLine(region.TopLine(pen));
         page.RenderLine(region.RightLine(pen));
