@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.Globalization;
-using OpenXml = DocumentFormat.OpenXml;
 
 using static DocumentFormat.OpenXml.Wordprocessing.HighlightColorValues;
 
