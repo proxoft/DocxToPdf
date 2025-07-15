@@ -1,6 +1,6 @@
 ﻿namespace Proxoft.DocxToPdf.Documents.Paragraphs;
 
-internal record Word(
+internal record Text(
     ModelId Id,
     string text
 ) : Element(Id);

@@ -1,3 +1,3 @@
 ﻿namespace Proxoft.DocxToPdf.Documents.Paragraphs;
 
-internal record Space(ModelId Id): Model(Id);
+internal record Space(ModelId Id): Element(Id);
