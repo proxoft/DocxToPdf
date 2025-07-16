@@ -1,6 +1,9 @@
-﻿namespace Proxoft.DocxToPdf.Documents.Paragraphs;
+﻿using Proxoft.DocxToPdf.Documents.Styles.Texts;
+
+namespace Proxoft.DocxToPdf.Documents.Paragraphs;
 
 internal record Text(
     ModelId Id,
-    string text
+    string Content,
+    TextStyle TextStyle
 ) : Element(Id);

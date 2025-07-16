@@ -36,6 +36,9 @@ internal sealed class ModelId(string name, int id) : IEquatable<ModelId>
 internal sealed class ModelIdFactory
 {
     private readonly ModelIdContainer _ignored = new("ign");
+
+    private readonly ModelIdContainer _section = new("sct");
+    
     private readonly ModelIdContainer _paragraph = new("par");
     private readonly ModelIdContainer _word = new("wrd");
     private readonly ModelIdContainer _drawing = new("drw");
@@ -45,6 +48,9 @@ internal sealed class ModelIdFactory
     //private readonly ModelIdContainer _cell = new("cel");
 
     public ModelId NextIgnoredId() =>
+        _ignored.Next();
+
+    public ModelId NextSectionId() =>
         _ignored.Next();
 
     public ModelId NextParagraphId() =>

@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
-using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
 namespace Proxoft.DocxToPdf.Builders.Paragraphs;
 
@@ -31,7 +30,7 @@ internal static class ParagraphBuilder
                         // Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
                         // Word.CarriageReturn _ => [new NewLineElement(textStyle)],
                         // Word.Break b => b.CreateBreakElement(textStyle),
-                        _ => [new Text(services.IdFactory.NextWordId(), "!ignored!")]
+                        _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", TextExtensions._default)]
                     };
                 })
         ];

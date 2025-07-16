@@ -1,11 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Styles;
+using Proxoft.DocxToPdf.Documents.Styles.Texts;
 
 namespace Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 
 internal static class TextExtensions
 {
+    public static readonly TextStyle _default = new("Arial", 11, FontDecoration.Regular, new Color("000000"), Color.Empty);
+
     public static Element[] SplitToElements(this Word.Text text, BuilderServices services) =>
         [..text.InnerText
             .SplitToWordsAndWhitechars()
@@ -14,7 +18,7 @@ internal static class TextExtensions
                 Element e = s switch
                 {
                     " " => new Space(services.IdFactory.NextWordId()),
-                    _ => new Text(services.IdFactory.NextWordId(), s)
+                    _ => new Text(services.IdFactory.NextWordId(), s, _default)
                 };
 
                 return e;
