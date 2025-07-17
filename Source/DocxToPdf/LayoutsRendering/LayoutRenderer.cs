@@ -68,23 +68,20 @@ internal static class LayoutRenderer
     {
         switch (layout)
         {
-            case ParagraphLayout paragraph:
-                paragraph.Lines.Render(graphics, options);
-                paragraph.RenderBorder(graphics, options.ParagraphBorder);
-                break;
-            case LineLayout line:
-                line.Childs.Render(graphics, options);
-                line.RenderBorder(graphics, options.LineBorder);
+            case IComposedLayout composedLayout:
+                composedLayout.InnerLayouts.Render(graphics, options);
                 break;
             case TextLayout text:
-                graphics.DrawString(text.Text.Content, _font, XBrushes.Black, new XPoint(text.BoundingBox.X, text.BoundingBox.Y));
-                text.RenderBorder(graphics, options.WordBorder);
+                graphics.DrawString(text.Text.Content, _font, XBrushes.Black, new XPoint(text.BoundingBox.X, text.BoundingBox.Bottom));
                 break;
         }
+
+        layout.RenderBorder(graphics, options);
     }
 
-    private static void RenderBorder(this Layout layout, XGraphics graphics, BorderStyle borderStyle)
+    private static void RenderBorder(this Layout layout, XGraphics graphics, RenderOptions options)
     {
+        BorderStyle borderStyle = options.GetBorderStyle(layout);
         if(borderStyle == BorderStyle.None)
         {
             return;

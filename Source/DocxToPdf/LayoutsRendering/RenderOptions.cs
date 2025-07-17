@@ -1,4 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
+using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 namespace Proxoft.DocxToPdf.LayoutsRendering;
 
@@ -19,4 +21,16 @@ internal class RenderOptions
     public bool RenderWhitespaceCharacters { get; set; } = false;
 
     public bool RenderCellCharacter { get; set; } = false;
+}
+
+internal static class Operators
+{
+    public static BorderStyle GetBorderStyle(this RenderOptions options, Layout forLayout) =>
+        forLayout switch
+        {
+            ParagraphLayout => options.ParagraphBorder,
+            LineLayout => options.LineBorder,
+            TextLayout => options.WordBorder,
+            _ => BorderStyle.None,
+        };
 }
