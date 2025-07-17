@@ -19,7 +19,7 @@ internal static class ParagraphLayoutBuilder
         Stack<Element> unprocessed = paragraph.Elements.ToStackReversed();
 
         Rectangle area = availableArea;
-        Position position = availableArea.Position;
+        Position position = availableArea.TopLeft;
 
         ModelReference paragraphReference = ModelReference.New(paragraph.Id);
 
@@ -27,7 +27,7 @@ internal static class ParagraphLayoutBuilder
 
         float remainingWidth = availableArea.Width;
         float remainingHeight = availableArea.Height;
-        Position currentPosition = availableArea.Position;
+        Position currentPosition = availableArea.TopLeft;
 
         ElementLayout[] lineElements = [];
         while (unprocessed.Count > 0)
@@ -45,8 +45,8 @@ internal static class ParagraphLayoutBuilder
 
                 remainingHeight -= lineLayout.BoundingBox.Height;
                 remainingWidth = availableArea.Width;
-                currentPosition = new Position(availableArea.Position.X, availableArea.Height)
-                    .ShiftY(-remainingHeight);
+                currentPosition = new Position(availableArea.TopLeft.X, currentPosition.Y)
+                    .ShiftY(lineLayout.BoundingBox.Height);
 
                 unprocessed.Push(element);
                 if (interrupt)
@@ -79,7 +79,8 @@ internal static class ParagraphLayoutBuilder
             .Select(l => l.BoundingBox)
             .CalculateBoundingBox();
 
-        return new LayoutingResult([..lines], ModelReference.None, availableArea.CropFromTop(paragraphBb.Height));
+        ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb);
+        return new LayoutingResult([pl], ModelReference.None, availableArea.CropFromTop(paragraphBb.Height));
     }
 
     private static LineLayout CreateLine(

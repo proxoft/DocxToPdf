@@ -15,24 +15,29 @@ internal record Rectangle(float X, float Y, float Width, float Height)
 
     public float Botton => this.Y + this.Height;
 
-    public Position Position => new(this.X, this.Y);
+    public Position TopLeft => new(this.X, this.Y);
+
+    public Position BottomRight => new(this.X + this.Width, this.Y + this.Width);
 
     public Size Size => new(this.Width, this.Height);
 
     public Rectangle CropFromLeft(float delta) =>
-        new(this.X + delta, this.Y, this.Width, this.Height);
+        FromCorners(new Position(this.X + delta, this.Y), this.BottomRight);
 
     public Rectangle CropFromTop(float delta) =>
-        new(this.X, this.Y + delta, this.Width, this.Height);
+        FromCorners(new Position(this.X, this.Y + delta), this.BottomRight);
 
     public Rectangle CropFromRight(float delta) =>
-        new(this.X, this.Y, this.Width - delta, this.Height);
+        FromCorners(this.TopLeft, new Position(this.BottomRight.X - delta, this.BottomRight.Y));
 
     public Rectangle CropFromBottom(float delta) =>
-        new(this.X, this.Y, this.Width, this.Height - delta);
+        FromCorners(this.TopLeft, new Position(this.BottomRight.X, this.BottomRight.Y - delta));
 
     public static Rectangle FromSize(Size size) =>
         new(0, 0, size.Width, size.Height);
+
+    public static Rectangle FromCorners(Position topLeft, Position bottomRight) =>
+        new(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
 };
 
 internal static class Operators
