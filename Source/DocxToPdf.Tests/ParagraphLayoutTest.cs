@@ -1,7 +1,4 @@
-﻿using PdfSharp.Pdf;
-using Proxoft.DocxToPdf.Documents;
-using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.LayoutsBuilders;
+﻿using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.LayoutsRendering;
 using Proxoft.DocxToPdf.Tests.Tools;
 
@@ -9,63 +6,45 @@ namespace Proxoft.DocxToPdf.Tests;
 
 public class ParagraphLayoutTest
 {
+    private readonly RenderOptions _options = new()
+    {
+        WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid)
+    };
+
     [Fact]
     public void Paragraph()
     {
-        DocumentModel dm = "Paragraphs/Paragraph.docx".ReadDocumentModel();
-        PageLayout[] pages = new LayoutBuilder().CreatePages(dm);
+        PageLayout[] pages = "Paragraphs/Paragraph.docx".ReadAndLayoutDocument();
 
         pages
             .Should()
             .NotBeEmpty();
 
-        RenderOptions options = new()
-        {
-            WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid)
-        };
-
-        PdfDocument pdfDocument = LayoutRenderer.CreatePdf(pages, options);
-
-        "Paragraphs/v2_Paragraph.pdf".Save(pdfDocument);
+        "Paragraphs/v2_Paragraph.pdf".RenderAndSave(pages, _options);
     }
 
     [Fact]
     public void ParagraphOverPage()
     {
-        DocumentModel dm = "Paragraphs/ParagraphOverPage.docx".ReadDocumentModel();
-        PageLayout[] pages = new LayoutBuilder().CreatePages(dm);
+        PageLayout[] pages = "Paragraphs/ParagraphOverPage.docx".ReadAndLayoutDocument();
 
         pages
             .Should()
             .NotBeEmpty();
 
-        RenderOptions options = new()
-        {
-            WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid)
-        };
 
-        PdfDocument pdfDocument = LayoutRenderer.CreatePdf(pages, options);
-
-        "Paragraphs/v2_ParagraphOverPage.pdf".Save(pdfDocument);
+        "Paragraphs/v2_ParagraphOverPage.pdf".RenderAndSave(pages, _options);
     }
 
     [Fact]
     public void ParagraphOverPageSimple()
     {
-        DocumentModel dm = "Paragraphs/ParagraphOverPageSimple.docx".ReadDocumentModel();
-        PageLayout[] pages = new LayoutBuilder().CreatePages(dm);
+        PageLayout[] pages = "Paragraphs/ParagraphOverPageSimple.docx".ReadAndLayoutDocument();
 
         pages
             .Should()
             .NotBeEmpty();
 
-        RenderOptions options = new()
-        {
-            WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid)
-        };
-
-        PdfDocument pdfDocument = LayoutRenderer.CreatePdf(pages, options);
-
-        "Paragraphs/v2_ParagraphOverPageSimple.pdf".Save(pdfDocument);
+        "Paragraphs/v2_ParagraphOverPageSimple.pdf".RenderAndSave(pages, _options);
     }
 }
