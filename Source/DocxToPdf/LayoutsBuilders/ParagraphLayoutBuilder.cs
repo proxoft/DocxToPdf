@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Extensions;
@@ -12,11 +13,13 @@ internal static class ParagraphLayoutBuilder
 {
     public static LayoutingResult Process(
         this Paragraph paragraph,
-        ModelReference startFrom,
+        LastProcessed alreadyProcessed,
         Rectangle availableArea,
         LayoutServices services)
     {
-        Stack<Element> unprocessed = paragraph.Elements.ToStackReversed();
+        Stack<Element> unprocessed = paragraph.Elements
+            .SkipProcessed(alreadyProcessed.Current)
+            .ToStackReversed();
 
         Rectangle area = availableArea;
         Position position = availableArea.TopLeft;
@@ -30,6 +33,8 @@ internal static class ParagraphLayoutBuilder
         Position currentPosition = availableArea.TopLeft;
 
         ElementLayout[] lineElements = [];
+        ModelId lastProcessedElementId = ModelId.None;
+        ResultStatus status = ResultStatus.Finished;
         while (unprocessed.Count > 0)
         {
             Element element = unprocessed.Pop();
@@ -37,20 +42,24 @@ internal static class ParagraphLayoutBuilder
 
             if(boundingBox.Width > remainingWidth || boundingBox.Height > remainingHeight)
             {
-                LineLayout lineLayout = lineElements.CreateLine(paragraphReference);
-                lines.Add(lineLayout);
-                lineElements = [];
-
                 bool interrupt = boundingBox.Height > remainingHeight;
 
-                remainingHeight -= lineLayout.BoundingBox.Height;
+                if (lineElements.Length > 0)
+                {
+                    LineLayout lineLayout = lineElements.CreateLine(paragraphReference);
+                    lines.Add(lineLayout);
+                    remainingHeight -= lineLayout.BoundingBox.Height;
+                    currentPosition = new Position(availableArea.TopLeft.X, currentPosition.Y)
+                        .ShiftY(lineLayout.BoundingBox.Height);
+                }
+
+                lineElements = [];
                 remainingWidth = availableArea.Width;
-                currentPosition = new Position(availableArea.TopLeft.X, currentPosition.Y)
-                    .ShiftY(lineLayout.BoundingBox.Height);
 
                 unprocessed.Push(element);
                 if (interrupt)
                 {
+                    status = ResultStatus.RequestDrawingArea;
                     break;
                 }
             }
@@ -66,6 +75,7 @@ internal static class ParagraphLayoutBuilder
                 lineElements = [.. lineElements, el];
                 currentPosition = currentPosition.ShiftX(boundingBox.Width);
                 remainingWidth -= boundingBox.Width;
+                lastProcessedElementId = element.Id;
             }
         }
 
@@ -77,10 +87,17 @@ internal static class ParagraphLayoutBuilder
 
         Rectangle paragraphBb = lines
             .Select(l => l.BoundingBox)
+            .DefaultIfEmpty(Rectangle.Empty) // create empty line
             .CalculateBoundingBox();
 
         ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb);
-        return new LayoutingResult([pl], ModelReference.None, availableArea.CropFromTop(paragraphBb.Height));
+        return new LayoutingResult(
+            [pl],
+            new LastProcessed([paragraph.Id, lastProcessedElementId]),
+            ModelReference.None,
+            availableArea.CropFromTop(paragraphBb.Height),
+            status
+        );
     }
 
     private static LineLayout CreateLine(

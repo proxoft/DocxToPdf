@@ -17,7 +17,7 @@ internal record Rectangle(float X, float Y, float Width, float Height)
 
     public Position TopLeft => new(this.X, this.Y);
 
-    public Position BottomRight => new(this.X + this.Width, this.Y + this.Width);
+    public Position BottomRight => new(this.X + this.Width, this.Y + this.Height);
 
     public Size Size => new(this.Width, this.Height);
 

@@ -5,10 +5,10 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal record LayoutingResult(
     Layout[] Layouts,
+    LastProcessed LastProcessed,
     ModelReference ContinueFromElement,
-    Rectangle RemainingDrawingArea)
+    Rectangle RemainingDrawingArea,
+    ResultStatus Status)
 {
-    public static readonly LayoutingResult None = new([], ModelReference.None, Rectangle.Empty);
-
-    public bool IsFinished => this.ContinueFromElement.IsNone;
+    public static readonly LayoutingResult None = new([], LastProcessed.None, ModelReference.None, Rectangle.Empty, ResultStatus.RequestDrawingArea);
 }
