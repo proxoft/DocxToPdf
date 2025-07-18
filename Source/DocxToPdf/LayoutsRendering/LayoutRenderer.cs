@@ -72,7 +72,7 @@ internal static class LayoutRenderer
                 composedLayout.InnerLayouts.Render(graphics, options);
                 break;
             case TextLayout text:
-                graphics.DrawString(text.Text.Content, _font, XBrushes.Black, new XPoint(text.BoundingBox.X, text.BoundingBox.Bottom));
+                graphics.DrawString(text.Text.Content, _font, XBrushes.Black, new XPoint(text.BoundingBox.X, text.BoundingBox.Bottom - text.BaselineOffset));
                 break;
         }
 

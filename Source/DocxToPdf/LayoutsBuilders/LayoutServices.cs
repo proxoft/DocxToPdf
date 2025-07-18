@@ -12,17 +12,17 @@ internal class LayoutServices
     private readonly TextStyle _default = new("Arial", 11, FontDecoration.Regular, new Color("000000"), Color.Empty);
 
     // result should contain additional info like: scalable for images
-    public Size CalculateBoundingBox(Element element)
+    public (Size boundingBox, float baseLineOffset) CalculateBoundingSizeAndBaseline(Element element)
     {
-        Size bb = element switch
+        (Size boundingBox, float baseLineOffset) = element switch
         {
             Text t => XUnitCalculator.CalculateBoundingBox(t.Content, _default),
             Space => XUnitCalculator.CalculateBoundingBox(" ", _default),
             Tab => XUnitCalculator.CalculateBoundingBox('\t'.ToString(), _default),
-            _ => Size.Zero
+            _ => (Size.Zero, 0)
         };
 
-        return bb;
+        return (boundingBox, baseLineOffset);
     }
 }
 
@@ -43,10 +43,12 @@ file static class XUnitCalculator
         _stringFormat.FormatFlags = D.StringFormatFlags.MeasureTrailingSpaces;
     }
 
-    public static Size CalculateBoundingBox(string text, TextStyle textStyle)
+    public static (Size boundingBox, float baseLineOffset) CalculateBoundingBox(string text, TextStyle textStyle)
     {
         D.Font font = new(textStyle.FontFamily, textStyle.FontSize, D.FontStyle.Regular);
         D.SizeF sizeF = _graphics.MeasureString(text, font, D.PointF.Empty, _stringFormat);
-        return new Size(sizeF.Width, sizeF.Height);
+
+        float cellAscent = font.SizeInPoints * font.FontFamily.GetCellAscent(font.Style) / font.FontFamily.GetEmHeight(font.Style);
+        return (new Size(sizeF.Width, sizeF.Height), sizeF.Height - cellAscent);
     }
 }

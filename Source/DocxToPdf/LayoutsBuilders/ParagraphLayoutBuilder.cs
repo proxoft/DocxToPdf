@@ -33,15 +33,15 @@ internal static class ParagraphLayoutBuilder
         while (unprocessed.Count > 0)
         {
             Element element = unprocessed.Pop();
-            Size size = services.CalculateBoundingBox(element);
+            (Size boundingBox, float baseLineOffset) = services.CalculateBoundingSizeAndBaseline(element);
 
-            if(size.Width > remainingWidth || size.Height > remainingHeight)
+            if(boundingBox.Width > remainingWidth || boundingBox.Height > remainingHeight)
             {
                 LineLayout lineLayout = lineElements.CreateLine(paragraphReference);
                 lines.Add(lineLayout);
                 lineElements = [];
 
-                bool interrupt = size.Height > remainingHeight;
+                bool interrupt = boundingBox.Height > remainingHeight;
 
                 remainingHeight -= lineLayout.BoundingBox.Height;
                 remainingWidth = availableArea.Width;
@@ -56,16 +56,16 @@ internal static class ParagraphLayoutBuilder
             }
             else
             {
-                Rectangle bb = new(currentPosition, size);
+                Rectangle bb = new(currentPosition, boundingBox);
                 ElementLayout el = element switch
                 {
-                    Text t => new TextLayout(ModelReference.New(paragraph.Id, element.Id), bb, t),
+                    Text t => new TextLayout(ModelReference.New(paragraph.Id, element.Id), bb, baseLineOffset, t),
                     _ => new EmptyLayout(ModelReference.New(paragraph.Id, element.Id), bb)
                 };
 
                 lineElements = [.. lineElements, el];
-                currentPosition = currentPosition.ShiftX(size.Width);
-                remainingWidth -= size.Width;
+                currentPosition = currentPosition.ShiftX(boundingBox.Width);
+                remainingWidth -= boundingBox.Width;
             }
         }
 
