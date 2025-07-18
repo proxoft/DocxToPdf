@@ -21,13 +21,11 @@ public class ParagraphLayoutTest
 
         RenderOptions options = new()
         {
-            // ParagraphBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid),
-            // LineBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid),
             WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid)
         };
 
         PdfDocument pdfDocument = LayoutRenderer.CreatePdf(pages, options);
 
-        "Paragraphs/Layout_Paragraph.pdf".Save(pdfDocument);
+        "Paragraphs/v2_Paragraph.pdf".Save(pdfDocument);
     }
 }
