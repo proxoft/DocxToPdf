@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Common;
-using Proxoft.DocxToPdf.Builders.Paragraphs;
 using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Extensions;
 
@@ -47,11 +46,14 @@ internal static class CellBuilder
                 GridPosition gridPosition = new(colIndex, colSpan, rowIndex, rowSpan);
                 ModelId cellId = services.IdFactory.NextCellId();
                 Model[] paragraphsAndTables = cell.CreateParagraphsAndTables(services);
+                Borders borders = cell.CreateCellBorders();
+
                 Cell newCell = new(
                     cellId,
                     gridPosition,
                     paragraphsAndTables,
-                    Borders.SolidBlack);
+                    new Padding(0.5f, 4, 0.5f, 4),
+                    borders);
 
                 for (int r = rowIndex; r < rowIndex + rowSpan; r++)
                 {

@@ -1,9 +1,12 @@
-﻿namespace Proxoft.DocxToPdf.Documents.Tables;
+﻿using Proxoft.DocxToPdf.Documents.Common;
+
+namespace Proxoft.DocxToPdf.Documents.Tables;
 
 internal record Cell(
     ModelId Id,
     GridPosition GridPosition,
     Model[] ParagraphsOrTables,
+    Padding Padding,
     Borders Borders
 ) : Model(Id);
 
