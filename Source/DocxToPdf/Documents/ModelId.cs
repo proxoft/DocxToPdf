@@ -43,9 +43,9 @@ internal sealed class ModelIdFactory
     private readonly ModelIdContainer _word = new("wrd");
     private readonly ModelIdContainer _drawing = new("drw");
 
-    //private readonly ModelIdContainer _table = new("tbl");
+    private readonly ModelIdContainer _table = new("tbl");
     //private readonly ModelIdContainer _row = new("row");
-    //private readonly ModelIdContainer _cell = new("cel");
+    private readonly ModelIdContainer _cell = new("cel");
 
     public ModelId NextIgnoredId() =>
         _ignored.Next();
@@ -62,8 +62,11 @@ internal sealed class ModelIdFactory
     public ModelId NextDrawingId() =>
         _drawing.Next();
 
-    //public ModelId NextTableId() =>
-    //    _table.Next();
+    public ModelId NextTableId() =>
+        _table.Next();
+
+    public ModelId NextCellId() =>
+        _cell.Next();
 
     private class ModelIdContainer(string name)
     {

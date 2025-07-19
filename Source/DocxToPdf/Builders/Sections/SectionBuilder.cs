@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Common;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
-using Proxoft.DocxToPdf.Builders.Paragraphs;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
@@ -29,7 +29,7 @@ file static class Operators
     {
         List<OpenXml.OpenXmlCompositeElement> sectionElements = [];
 
-        foreach (OpenXml.OpenXmlCompositeElement child in body.RenderableChildren())
+        foreach (OpenXml.OpenXmlCompositeElement child in body.ParagraphsAndTables())
         {
             sectionElements.Add(child);
 
@@ -58,16 +58,9 @@ file static class Operators
     private static Section CreateSection(this SectionData data, BuilderServices services)
     {
         SectionProperties props = data.SectionProperties.ToSectionProperties();
-        Model[] elements = [..data.Elements.Select(e => e.ToSectionChildModel(services))]; 
+        Model[] elements = [..data.Elements.Select(e => e.ToParagraphOrTable(services))]; 
         return new Section(services.IdFactory.NextSectionId(), props, elements);
     }
-
-    private static Model ToSectionChildModel(this OpenXml.OpenXmlCompositeElement element, BuilderServices services) =>
-        element switch
-        {
-            Word.Paragraph p => p.ToParagraph(services),
-            _ => new IgnoredModel(services.IdFactory.NextIgnoredId())
-        };
 
     private static SectionProperties ToSectionProperties(this Word.SectionProperties properties)
     {
