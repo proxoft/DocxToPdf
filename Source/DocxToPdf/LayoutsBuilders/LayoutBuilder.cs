@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.LayoutsBuilders.Common;
+using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal class LayoutBuilder
 {
-    private LayoutServices _layoutServices = new();
+    private readonly LayoutServices _layoutServices = new();
 
     public PageLayout[] CreatePages(DocumentModel document)
     {
@@ -22,36 +22,32 @@ internal class LayoutBuilder
         List<PageLayout> pages = [];
         PageLayout currentPage = document.Sections[0].Properties.PageConfiguration.CreatePage();
         Rectangle remainingDrawingArea = currentPage.DrawingArea;
-        LastProcessed alreadyProcessed = LastProcessed.None;
+        SectionLayoutingResult layoutingResult = SectionLayoutingResult.None;
 
-        foreach(Section section in document.Sections)
+        foreach (Section section in document.Sections)
         {
             // if section needs new page, create new page
-            LayoutingResult result = LayoutingResult.None;
             do
             {
-                result = section.Process(alreadyProcessed, remainingDrawingArea, _layoutServices);
-                alreadyProcessed = result.Status == ResultStatus.Finished
-                    ? LastProcessed.None
-                    : result.LastProcessed;
+                layoutingResult = section.Process(
+                    layoutingResult,
+                    remainingDrawingArea,
+                    _layoutServices
+                );
 
                 currentPage = currentPage with
                 {
-                    Content = [.. currentPage.Content, .. result.Layouts]
+                    Content = [.. currentPage.Content, .. layoutingResult.Layouts]
                 };
 
-                alreadyProcessed = result.Status == ResultStatus.Finished
-                    ? LastProcessed.None
-                    : result.LastProcessed;
-
-                remainingDrawingArea = result.RemainingDrawingArea;
-                if (result.Status == ResultStatus.RequestDrawingArea)
+                remainingDrawingArea = layoutingResult.RemainingDrawingArea;
+                if (layoutingResult.Status == ResultStatus.RequestDrawingArea)
                 {
                     pages.Add(currentPage);
                     currentPage = section.Properties.PageConfiguration.CreatePage();
                     remainingDrawingArea = currentPage.DrawingArea;
                 }
-            } while (result.Status != ResultStatus.Finished);
+            } while (layoutingResult.Status != ResultStatus.Finished);
         }
 
         pages.Add(currentPage);

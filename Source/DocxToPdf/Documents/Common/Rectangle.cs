@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Proxoft.DocxToPdf.Documents.Common;
@@ -32,6 +33,9 @@ internal record Rectangle(float X, float Y, float Width, float Height)
 
     public Rectangle CropFromBottom(float delta) =>
         FromCorners(this.TopLeft, new Position(this.BottomRight.X, this.BottomRight.Y - delta));
+
+    public Rectangle CropWidth(float width) =>
+        new(this.X, this.Y, Math.Min(this.Width, width), this.Height);
 
     public static Rectangle FromSize(Size size) =>
         new(0, 0, size.Width, size.Height);

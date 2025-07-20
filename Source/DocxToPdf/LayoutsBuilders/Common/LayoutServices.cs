@@ -2,10 +2,9 @@
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Styles;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
-
 using D = System.Drawing;
 
-namespace Proxoft.DocxToPdf.LayoutsBuilders;
+namespace Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
 internal class LayoutServices
 {

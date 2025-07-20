@@ -6,19 +6,24 @@ using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
+using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
-namespace Proxoft.DocxToPdf.LayoutsBuilders;
+namespace Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 
 internal static class ParagraphLayoutBuilder
 {
-    public static LayoutingResult Process(
+    public static ParagraphLayoutingResult Process(
         this Paragraph paragraph,
-        LastProcessed alreadyProcessed,
+        ParagraphLayoutingResult previousLayoutingResult,
         Rectangle availableArea,
         LayoutServices services)
     {
+        ModelId continueFrom = previousLayoutingResult.Status == ResultStatus.Finished
+            ? ModelId.None
+            : previousLayoutingResult.StartFromElementId;
+
         Stack<Element> unprocessed = paragraph.Elements
-            .SkipProcessed(alreadyProcessed.Current)
+            .SkipProcessed(continueFrom)
             .ToStackReversed();
 
         Rectangle area = availableArea;
@@ -35,6 +40,7 @@ internal static class ParagraphLayoutBuilder
         ElementLayout[] lineElements = [];
         ModelId lastProcessedElementId = ModelId.None;
         ResultStatus status = ResultStatus.Finished;
+
         while (unprocessed.Count > 0)
         {
             Element element = unprocessed.Pop();
@@ -91,10 +97,9 @@ internal static class ParagraphLayoutBuilder
             .CalculateBoundingBox();
 
         ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb);
-        return new LayoutingResult(
+        return new ParagraphLayoutingResult(
             [pl],
-            new LastProcessed([paragraph.Id, lastProcessedElementId]),
-            ModelReference.None,
+            lastProcessedElementId,
             availableArea.CropFromTop(paragraphBb.Height),
             status
         );

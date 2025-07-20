@@ -9,6 +9,8 @@ namespace Proxoft.DocxToPdf.Builders.Tables;
 
 internal static class TableBuilder
 {
+    private const float _defaultRowHeight = 10;
+
     public static Table ToTable(this Word.Table table, BuilderServices services)
     {
         ModelId tableId = services.IdFactory.NextTableId();
@@ -53,7 +55,7 @@ internal static class TableBuilder
             .ChildsOfType<Word.TableRowHeight>()
             .FirstOrDefault();
 
-        float rowHeight = trh?.Val?.DxaToPoint() ?? 10;
+        float rowHeight = trh?.Val?.DxaToPoint() ?? _defaultRowHeight;
         Word.HeightRuleValues rule = trh?.HeightType?.Value ?? Word.HeightRuleValues.Auto;
         HeightRule heightRule = HeightRule.Auto;
         if (rule == Word.HeightRuleValues.Exact) heightRule = HeightRule.Exact;
