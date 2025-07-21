@@ -3,6 +3,8 @@ using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
@@ -74,8 +76,8 @@ internal static class ParagraphLayoutBuilder
                 Rectangle bb = new(currentPosition, boundingBox);
                 ElementLayout el = element switch
                 {
-                    Text t => new TextLayout(ModelReference.New(paragraph.Id, element.Id), bb, baseLineOffset, t),
-                    _ => new EmptyLayout(ModelReference.New(paragraph.Id, element.Id), bb)
+                    Text t => new TextLayout(ModelReference.New(paragraph.Id, element.Id), bb, baseLineOffset, t, Borders.None),
+                    _ => new EmptyLayout(ModelReference.New(paragraph.Id, element.Id), bb, Borders.None)
                 };
 
                 lineElements = [.. lineElements, el];
@@ -96,7 +98,7 @@ internal static class ParagraphLayoutBuilder
             .DefaultIfEmpty(Rectangle.Empty) // create empty line
             .CalculateBoundingBox();
 
-        ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb);
+        ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb, Borders.None);
         return new ParagraphLayoutingResult(
             [pl],
             lastProcessedElementId,
@@ -115,6 +117,6 @@ internal static class ParagraphLayoutBuilder
             .Max();
 
         Rectangle bb = elements.Select(e => e.BoundingBox).CalculateBoundingBox();
-        return new LineLayout(paragraphReference, elements, bb);
+        return new LineLayout(paragraphReference, elements, bb, Borders.None);
     }
 }

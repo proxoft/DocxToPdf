@@ -1,4 +1,6 @@
-﻿namespace Proxoft.DocxToPdf.Documents.Tables;
+﻿using Proxoft.DocxToPdf.Documents.Shared;
+
+namespace Proxoft.DocxToPdf.Documents.Tables;
 
 internal record Table(
     ModelId Id,

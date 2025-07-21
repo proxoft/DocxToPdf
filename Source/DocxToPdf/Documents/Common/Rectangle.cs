@@ -18,9 +18,30 @@ internal record Rectangle(float X, float Y, float Width, float Height)
 
     public Position TopLeft => new(this.X, this.Y);
 
-    public Position BottomRight => new(this.X + this.Width, this.Y + this.Height);
+    public Position TopRight => new(this.Right, this.Y);
+
+    public Position BottomLeft => new(this.X, this.Bottom);
+
+    public Position BottomRight => new(this.Right, this.Bottom);
 
     public Size Size => new(this.Width, this.Height);
+
+    public (Position, Position) LeftLine => (this.BottomLeft, this.TopLeft);
+
+    public (Position, Position) TopLine => (this.TopLeft, this.TopRight);
+
+    public (Position, Position) RightLine => (this.TopRight, this.BottomRight);
+
+    public (Position, Position) BottomLine => (this.BottomRight, this.BottomLeft);
+
+    public Rectangle MoveTo(Position position) =>
+        new(position.X, position.Y, this.Width, this.Height);
+    
+    public Rectangle SetWidth(float width) =>
+        new(this.X, this.Y, width, this.Height);
+
+    public Rectangle SetHeight(float height) =>
+        new(this.X, this.Y, this.Width, height);
 
     public Rectangle CropFromLeft(float delta) =>
         FromCorners(new Position(this.X + delta, this.Y), this.BottomRight);
@@ -36,6 +57,18 @@ internal record Rectangle(float X, float Y, float Width, float Height)
 
     public Rectangle CropWidth(float width) =>
         new(this.X, this.Y, Math.Min(this.Width, width), this.Height);
+
+    public Rectangle Clip(Padding padding) =>
+       this.CropFromLeft(padding.Left)
+           .CropFromTop(padding.Top)
+           .CropFromRight(padding.Right)
+           .CropFromBottom(padding.Bottom);
+
+    public Rectangle Expand(Padding padding) =>
+       this.CropFromLeft(-padding.Left)
+           .CropFromTop(-padding.Top)
+           .CropFromRight(-padding.Right)
+           .CropFromBottom(-padding.Bottom);
 
     public static Rectangle FromSize(Size size) =>
         new(0, 0, size.Width, size.Height);

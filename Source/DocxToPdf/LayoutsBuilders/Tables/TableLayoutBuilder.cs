@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Tables;
+using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
@@ -15,17 +15,27 @@ internal static class TableLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
+        CellLayoutingResult[] cellResults = [];
+        CellLayout[] cellLayouts = [];
+        Rectangle[] columnsAvailableArea = table.Grid.GridAvailableAreas(availableArea);
+
         // split area
         foreach (Cell cell in table.Cells.InLayoutingOrder())
         {
-            Rectangle cellAvailableArea = table.Grid.CalculateCellAvailableArea(cell, availableArea);
-            LayoutingResult result = cell.Process(availableArea, services);
+            CellLayoutingResult previous = previosLayoutingResult.CellsLayoutingResult
+                .OrderByDescending(r => r.Order)
+                .FirstOrDefault(r => r.CellId == cell.Id, CellLayoutingResult.None);
+
+            Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
+            CellLayoutingResult result = cell.Process(previous, cellAvailableArea, services);
+            cellResults = [..cellResults, result];
+            cellLayouts = [..cellLayouts, result.CellLayout];
+            columnsAvailableArea = columnsAvailableArea.CropClumnsAvailableArea(result.CellLayout.BoundingBox, cell.GridPosition);
         }
 
         return new TableLayoutingResult(
-            [],
-            ModelId.None,
-            [],
+            cellLayouts,
+            cellResults,
             availableArea,
             ResultStatus.Finished
         );
@@ -36,14 +46,36 @@ internal static class TableLayoutBuilder
             .OrderBy(c => c.GridPosition.Row)
             .ThenBy(c => c.GridPosition.Column);
 
-    private static Rectangle CalculateCellAvailableArea(this Grid grid, Cell cell, Rectangle tableAvailableArea)
+    private static Rectangle CalculateCellAvailableArea(this Cell cell, Rectangle[] columnsAvailableArea)
     {
-        (float offset, float width) = grid.CalculateCellRegion(cell.GridPosition);
+        float x = columnsAvailableArea[cell.GridPosition.Column].X;
+        float y = columnsAvailableArea
+            .Skip(cell.GridPosition.Column)
+            .Take(cell.GridPosition.ColumnSpan)
+            .Max(r => r.Y);
 
-        Rectangle cellArea = tableAvailableArea
-            .CropFromLeft(offset)
-            .CropWidth(width);
+        float totalWidth = columnsAvailableArea
+            .Skip(cell.GridPosition.Column)
+            .Take(cell.GridPosition.ColumnSpan)
+            .Sum(r => r.Width);
 
-        return cellArea;
+        float bottom = columnsAvailableArea
+            .Skip(cell.GridPosition.Column)
+            .Take(cell.GridPosition.ColumnSpan)
+            .Min(r => r.Bottom);
+
+        return new Rectangle(x, y, totalWidth, bottom - y);
     }
+
+    private static Rectangle[] CropClumnsAvailableArea(this Rectangle[] columnsAvailableArea, Rectangle occupiedArea, GridPosition byCell) =>
+        [
+            ..columnsAvailableArea
+                .Select((columnArea, index) =>
+                {
+                    if(index < byCell.Column || index >= byCell.Column + byCell.ColumnSpan)
+                        return columnArea;
+
+                    return columnArea.CropFromTop(occupiedArea.Height);
+                })
+        ];
 }

@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
-using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Extensions.Conversions;
 using Proxoft.DocxToPdf.Extensions.Units;
 

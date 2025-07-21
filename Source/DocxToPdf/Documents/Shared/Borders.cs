@@ -1,6 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
 
-namespace Proxoft.DocxToPdf.Documents.Tables;
+namespace Proxoft.DocxToPdf.Documents.Shared;
 
 internal record Borders(
     BorderStyle Left,

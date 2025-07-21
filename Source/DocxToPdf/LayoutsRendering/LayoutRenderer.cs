@@ -3,6 +3,8 @@ using System.Text;
 using PdfSharp;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
+using Proxoft.DocxToPdf.Documents.Common;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
@@ -76,10 +78,35 @@ internal static class LayoutRenderer
                 break;
         }
 
-        layout.RenderBorder(graphics, options);
+        layout.RenderBorder(graphics);
+        layout.RenderDebuggingBorder(graphics, options);
     }
 
-    private static void RenderBorder(this Layout layout, XGraphics graphics, RenderOptions options)
+    private static void RenderBorder(this Layout layout, XGraphics graphics)
+    {
+        if(layout.Borders == Borders.None)
+        {
+            return;
+        }
+
+        layout.BoundingBox.LeftLine.RenderBorder(layout.Borders.Left, graphics);
+        layout.BoundingBox.TopLine.RenderBorder(layout.Borders.Top, graphics);
+        layout.BoundingBox.RightLine.RenderBorder(layout.Borders.Right, graphics);
+        layout.BoundingBox.BottomLine.RenderBorder(layout.Borders.Bottom, graphics);
+    }
+
+    private static void RenderBorder(this (Position start, Position end) line, BorderStyle borderStyle, XGraphics graphics)
+    {
+        if(borderStyle == BorderStyle.None)
+        {
+            return;
+        }
+
+        XPen pen = borderStyle.ToXPen();
+        graphics.DrawLine(pen, line.start.ToXPoint(), line.end.ToXPoint());
+    }
+
+    private static void RenderDebuggingBorder(this Layout layout, XGraphics graphics, RenderOptions options)
     {
         BorderStyle borderStyle = options.GetBorderStyle(layout);
         if(borderStyle == BorderStyle.None)
@@ -87,12 +114,27 @@ internal static class LayoutRenderer
             return;
         }
 
-        XPen pen = new(XColor.FromKnownColor(XKnownColor.OrangeRed), borderStyle.Width);
-        XRect rect = new(
-            new XPoint(layout.BoundingBox.X, layout.BoundingBox.Y),
-            new XSize(layout.BoundingBox.Width, layout.BoundingBox.Height)
-        );
+        XPen pen = borderStyle.ToXPen();
+        XRect rect = layout.BoundingBox.ToXRect();
 
         graphics.DrawRectangle(pen, rect);
     }
+}
+
+file static class PdfSharpConversion
+{
+    public static XPoint ToXPoint(this Position position) =>
+        new(position.X, position.Y);
+
+    public static XPen ToXPen(this BorderStyle borderStyle)
+    {
+        (int r, int g, int b) = borderStyle.Color.Rgb;
+        return new(XColor.FromArgb(0, r, g, b), borderStyle.Width);
+    }
+
+    public static XRect ToXRect(this Rectangle rectangle) =>
+        new (
+            new XPoint(rectangle.X, rectangle.Y),
+            new XSize(rectangle.Width, rectangle.Height)
+        );
 }

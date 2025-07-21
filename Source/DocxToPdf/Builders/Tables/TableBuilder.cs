@@ -3,6 +3,7 @@ using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Documents.Tables;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Extensions;
 
 namespace Proxoft.DocxToPdf.Builders.Tables;
