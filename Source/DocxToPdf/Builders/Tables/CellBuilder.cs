@@ -10,7 +10,10 @@ namespace Proxoft.DocxToPdf.Builders.Tables;
 
 internal static class CellBuilder
 {
-    public static IEnumerable<Cell> CreateCells(this Word.Table table, BuilderServices services)
+    public static IEnumerable<Cell> CreateCells(
+        this Word.Table table,
+        CellBorderPattern cellBorderPattern,
+        BuilderServices services)
     {
         Word.TableGrid tg = table.Grid();
         Word.TableRow[] rows = [.. table.Rows()];
@@ -47,7 +50,7 @@ internal static class CellBuilder
                 GridPosition gridPosition = new(colIndex, colSpan, rowIndex, rowSpan);
                 ModelId cellId = services.IdFactory.NextCellId();
                 Model[] paragraphsAndTables = cell.CreateParagraphsAndTables(services);
-                Borders borders = cell.CreateCellBorders();
+                Borders borders = cell.CreateCellBorders(cellBorderPattern, gridPosition, (colCount, rowCount));
 
                 Cell newCell = new(
                     cellId,

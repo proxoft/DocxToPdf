@@ -97,7 +97,9 @@ internal static class LayoutRenderer
 
     private static void RenderBorder(this (Position start, Position end) line, BorderStyle borderStyle, XGraphics graphics)
     {
-        if(borderStyle == BorderStyle.None)
+        if(borderStyle == BorderStyle.None
+            || borderStyle.Width == 0
+            || borderStyle.LineStyle == LineStyle.None)
         {
             return;
         }
@@ -129,7 +131,18 @@ file static class PdfSharpConversion
     public static XPen ToXPen(this BorderStyle borderStyle)
     {
         (int r, int g, int b) = borderStyle.Color.Rgb;
-        return new(XColor.FromArgb(0, r, g, b), borderStyle.Width);
+        float width = borderStyle.LineStyle == LineStyle.None
+            ? 0
+            : borderStyle.Width;
+
+        XColor color = borderStyle.LineStyle == LineStyle.None
+            ? XColor.Empty
+            : XColor.FromArgb(0, r, g, b);
+
+        return new(color, width)
+        {
+            DashStyle = borderStyle.LineStyle.ToXDashStyle()
+        };
     }
 
     public static XRect ToXRect(this Rectangle rectangle) =>
@@ -137,4 +150,16 @@ file static class PdfSharpConversion
             new XPoint(rectangle.X, rectangle.Y),
             new XSize(rectangle.Width, rectangle.Height)
         );
+
+    private static XDashStyle ToXDashStyle(this LineStyle lineStyle) =>
+        lineStyle switch
+        {
+            LineStyle.None => XDashStyle.Solid,
+            LineStyle.Solid => XDashStyle.Solid,
+            LineStyle.Dashed => XDashStyle.Dash,
+            LineStyle.Dotted => XDashStyle.Dot,
+            LineStyle.DotDash => XDashStyle.DashDot,
+            LineStyle.DotDotDash => XDashStyle.DashDotDot,
+            _ => XDashStyle.Solid
+        };
 }

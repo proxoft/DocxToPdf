@@ -2,6 +2,10 @@
 
 internal enum LineStyle
 {
+    None,
     Solid,
-    Dotted
+    Dashed,
+    Dotted,
+    DotDash,
+    DotDotDash
 }

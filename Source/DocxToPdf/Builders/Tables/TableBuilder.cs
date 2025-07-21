@@ -1,9 +1,9 @@
 ﻿using System.Linq;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Documents.Tables;
-using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Extensions;
 
 namespace Proxoft.DocxToPdf.Builders.Tables;
@@ -16,12 +16,14 @@ internal static class TableBuilder
     {
         ModelId tableId = services.IdFactory.NextTableId();
         Grid grid = table.CreateTableGrid();
-        Cell[] cells = [..table.CreateCells(services)];
+        CellBorderPattern cellBorderPattern = table.CreateCellBorderPattern();
+        Cell[] cells = [..table.CreateCells(cellBorderPattern, services)];
 
         return new Table(
             tableId,
             cells,
             grid,
+            cellBorderPattern,
             new Borders(BorderStyle.None, BorderStyle.None, BorderStyle.None, BorderStyle.None)
         );
     }
@@ -63,5 +65,29 @@ internal static class TableBuilder
         if (rule == Word.HeightRuleValues.AtLeast) heightRule = HeightRule.AtLeast;
 
         return new GridRow(rowHeight, heightRule);
+    }
+
+    private static CellBorderPattern CreateCellBorderPattern(this Word.Table table)
+    {
+        Word.TableProperties tableProps = table.ChildElements.OfType<Word.TableProperties>().Single();
+        return tableProps.TableBorders.GetBorder();
+    }
+
+    private static CellBorderPattern GetBorder(this Word.TableBorders? borders)
+    {
+        if (borders is null)
+        {
+            return CellBorderPattern.Default;
+        }
+
+        BorderStyle top = borders.TopBorder.ToBorderStyle();
+        BorderStyle right = borders.RightBorder.ToBorderStyle();
+        BorderStyle bottom = borders.BottomBorder.ToBorderStyle();
+        BorderStyle left = borders.LeftBorder.ToBorderStyle();
+
+        BorderStyle insideH = borders.InsideHorizontalBorder.ToBorderStyle(BorderStyle.Default);
+        BorderStyle insideV = borders.InsideVerticalBorder.ToBorderStyle(BorderStyle.Default);
+
+        return new CellBorderPattern(top, right, bottom, left, insideH, insideV);
     }
 }

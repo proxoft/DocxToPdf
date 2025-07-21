@@ -47,12 +47,12 @@ internal static class CellLayoutBuilder
 
         Rectangle boundingBox = contentLayouts
             .Select(l => l.BoundingBox)
-            .CalculateBoundingBox();
+            .CalculateBoundingBox()
+            .Expand(cell.Padding);
 
         boundingBox = boundingBox
             .SetWidth(Math.Max(boundingBox.Width, availableArea.Width))
             .SetHeight(Math.Max(boundingBox.Height, 10))
-            .Expand(cell.Padding)
             .MoveTo(availableArea.TopLeft)
             ;
 
@@ -60,7 +60,7 @@ internal static class CellLayoutBuilder
             new ModelReference([cell.Id]),
             contentLayouts,
             boundingBox,
-            Borders.SolidBlack
+            cell.Borders
         );
 
         return new CellLayoutingResult(

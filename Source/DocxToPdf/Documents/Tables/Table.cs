@@ -6,5 +6,6 @@ internal record Table(
     ModelId Id,
     Cell[] Cells,
     Grid Grid,
+    CellBorderPattern CellBorderPattern,
     Borders Borders
 ) : Model(Id);
