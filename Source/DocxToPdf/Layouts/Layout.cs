@@ -5,7 +5,6 @@ using Proxoft.DocxToPdf.Documents.Shared;
 namespace Proxoft.DocxToPdf.Layouts;
 
 internal record Layout(
-    ModelReference Source,
     Rectangle BoundingBox,
     Borders Borders
 );

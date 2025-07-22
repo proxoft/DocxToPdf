@@ -30,8 +30,6 @@ internal static class ParagraphLayoutBuilder
         Rectangle area = availableArea;
         Position position = availableArea.TopLeft;
 
-        ModelReference paragraphReference = ModelReference.New(paragraph.Id);
-
         List<LineLayout> lines = [];
 
         float remainingWidth = availableArea.Width;
@@ -53,7 +51,7 @@ internal static class ParagraphLayoutBuilder
 
                 if (lineElements.Length > 0)
                 {
-                    LineLayout lineLayout = lineElements.CreateLine(paragraphReference);
+                    LineLayout lineLayout = lineElements.CreateLine();
                     lines.Add(lineLayout);
                     remainingHeight -= lineLayout.BoundingBox.Height;
                     currentPosition = new Position(availableArea.TopLeft.X, currentPosition.Y)
@@ -75,8 +73,8 @@ internal static class ParagraphLayoutBuilder
                 Rectangle bb = new(currentPosition, boundingBox);
                 ElementLayout el = element switch
                 {
-                    Text t => new TextLayout(ModelReference.New(paragraph.Id, element.Id), bb, baseLineOffset, t, Borders.None),
-                    _ => new EmptyLayout(ModelReference.New(paragraph.Id, element.Id), bb, Borders.None)
+                    Text t => new TextLayout(bb, baseLineOffset, t, Borders.None),
+                    _ => new EmptyLayout(bb, Borders.None)
                 };
 
                 lineElements = [.. lineElements, el];
@@ -88,7 +86,7 @@ internal static class ParagraphLayoutBuilder
 
         if (lineElements.Length > 0)
         {
-            LineLayout lineLayout = lineElements.CreateLine(paragraphReference);
+            LineLayout lineLayout = lineElements.CreateLine();
             lines.Add(lineLayout);
         }
 
@@ -97,7 +95,7 @@ internal static class ParagraphLayoutBuilder
             .DefaultIfEmpty(new Rectangle(availableArea.X, availableArea.Y, 0, 12)) // create empty line
             .CalculateBoundingBox();
 
-        ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb, Borders.None);
+        ParagraphLayout pl = new([.. lines], paragraphBb, Borders.None);
         return new ParagraphLayoutingResult(
             paragraph.Id,
             pl,
@@ -107,9 +105,7 @@ internal static class ParagraphLayoutBuilder
         );
     }
 
-    private static LineLayout CreateLine(
-        this ElementLayout[] elements,
-        ModelReference paragraphReference)
+    private static LineLayout CreateLine(this ElementLayout[] elements)
     {
         float height = elements
             .Select(e => e.BoundingBox.Height)
@@ -117,6 +113,6 @@ internal static class ParagraphLayoutBuilder
             .Max();
 
         Rectangle bb = elements.Select(e => e.BoundingBox).CalculateBoundingBox();
-        return new LineLayout(paragraphReference, elements, bb, Borders.None);
+        return new LineLayout(elements, bb, Borders.None);
     }
 }

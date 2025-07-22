@@ -8,7 +8,7 @@ internal record TableLayout(
     CellLayout[] Cells,
     Rectangle BoundingBox,
     Borders Borders
-) : Layout(new ModelReference([]), BoundingBox, Borders), IComposedLayout
+) : Layout(BoundingBox, Borders), IComposedLayout
 {
     public static readonly TableLayout Empty = new(
         [],

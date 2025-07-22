@@ -63,7 +63,7 @@ file static class Functions
         Rectangle boundingBox = pageConfiguration.CalculatePageBoundingBox();
         Rectangle drawingRegion = pageConfiguration.CalculatePageDrawingArea();
 
-        PageLayout page = new(ModelReference.None, boundingBox, drawingRegion, [], pageConfiguration, Borders.None);
+        PageLayout page = new(boundingBox, drawingRegion, [], pageConfiguration, Borders.None);
         return page;
     }
 

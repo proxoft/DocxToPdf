@@ -64,7 +64,6 @@ internal static class CellLayoutBuilder
             ;
 
         CellLayout cellLayout = new(
-            new ModelReference([cell.Id]),
             contentLayouts,
             boundingBox,
             cell.Borders

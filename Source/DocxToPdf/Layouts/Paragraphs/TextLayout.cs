@@ -5,8 +5,7 @@ using Proxoft.DocxToPdf.Documents.Shared;
 namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal record TextLayout(
-    ModelReference Source,
     Rectangle BoundingBox,
     double BaselineOffset,
     Text Text,
-    Borders Borders) : ElementLayout(Source, BoundingBox, Borders);
+    Borders Borders) : ElementLayout(BoundingBox, Borders);
