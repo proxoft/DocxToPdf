@@ -33,4 +33,28 @@ public class TableV2Test
 
         "Tables/CellBorders_v2.pdf".RenderAndSave(pages, _options);
     }
+
+    [Fact]
+    public void Layout()
+    {
+        PageLayout[] pages = "Tables/Layout.docx".ReadAndLayoutDocument();
+
+        pages
+            .Should()
+            .NotBeEmpty();
+
+        "Tables/Layout_v2.pdf".RenderAndSave(pages, _options);
+    }
+
+    [Fact]
+    public void Layout2()
+    {
+        PageLayout[] pages = "Tables/Layout2.docx".ReadAndLayoutDocument();
+
+        pages
+            .Should()
+            .NotBeEmpty();
+
+        "Tables/Layout2_v2.pdf".RenderAndSave(pages, _options);
+    }
 }

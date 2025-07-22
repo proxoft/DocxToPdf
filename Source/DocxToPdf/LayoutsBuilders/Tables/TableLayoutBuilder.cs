@@ -27,7 +27,7 @@ internal static class TableLayoutBuilder
                 .FirstOrDefault(r => r.CellId == cell.Id, CellLayoutingResult.None);
 
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
-            CellLayoutingResult result = cell.Process(previous, cellAvailableArea, services);
+            CellLayoutingResult result = cell.Process(previous, table.Grid, cellAvailableArea, services);
             cellResults = [..cellResults, result];
             cellLayouts = [..cellLayouts, result.CellLayout];
             columnsAvailableArea = columnsAvailableArea.CropClumnsAvailableArea(result.CellLayout.BoundingBox, cell.GridPosition);

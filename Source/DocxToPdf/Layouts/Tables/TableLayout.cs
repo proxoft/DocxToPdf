@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Documents.Tables;
 
 namespace Proxoft.DocxToPdf.Layouts.Tables;
 

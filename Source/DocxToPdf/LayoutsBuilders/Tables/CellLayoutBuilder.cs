@@ -4,7 +4,6 @@ using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
-using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Layouts;
@@ -19,6 +18,7 @@ internal static class CellLayoutBuilder
     public static CellLayoutingResult Process(
         this Cell cell,
         CellLayoutingResult previousLayoutingResult,
+        Grid grid,
         Rectangle availableArea,
         LayoutServices services)
     {
@@ -45,14 +45,21 @@ internal static class CellLayoutBuilder
             status = contentLayoutingResult.Status;
         }
 
+        float minWidth = cell.MinWidth(grid);
+        float minHeight = cell.MinHeight(grid);
+        Rectangle minSize = new Rectangle(availableArea.X, availableArea.Y, minWidth, minHeight)
+            .Clip(cell.Padding);
+
         Rectangle boundingBox = contentLayouts
             .Select(l => l.BoundingBox)
+            .Append(minSize)
             .CalculateBoundingBox()
-            .Expand(cell.Padding);
+            .Expand(cell.Padding)
+            ;
 
         boundingBox = boundingBox
-            .SetWidth(Math.Max(boundingBox.Width, availableArea.Width))
-            .SetHeight(Math.Max(boundingBox.Height, 10))
+            .SetWidth(Math.Max(boundingBox.Width, minWidth))
+            .SetHeight(Math.Max(boundingBox.Height, minHeight))
             .MoveTo(availableArea.TopLeft)
             ;
 
@@ -74,10 +81,15 @@ internal static class CellLayoutBuilder
         );
     }
 
-
     private static ParagraphLayoutingResult CreateParagraphLayout(this Paragraph paragraph, Rectangle cellDrawingArea, LayoutServices services)
     {
         ParagraphLayoutingResult p = ParagraphLayoutingResult.New(cellDrawingArea);
         return paragraph.Process(p, cellDrawingArea, services);
     }
+
+    private static float MinWidth(this Cell cell, Grid grid) =>
+        grid.CalculateCellWidth(cell.GridPosition);
+
+    private static float MinHeight(this Cell cell, Grid grid) =>
+        grid.CalculateCellHeight(cell.GridPosition); 
 }

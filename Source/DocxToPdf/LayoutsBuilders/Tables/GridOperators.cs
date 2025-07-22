@@ -41,10 +41,17 @@ internal static class GridOperators
             .Take(gridPosition.Column - 1)
             .Sum();
 
-    private static float CalculateCellWidth(this Grid grid, GridPosition gridPosition) =>
+    public static float CalculateCellWidth(this Grid grid, GridPosition gridPosition) =>
         grid.ColumnWidths
             .Skip(gridPosition.Column)
             .Take(gridPosition.ColumnSpan)
+            .Sum();
+
+    public static float CalculateCellHeight(this Grid grid, GridPosition gridPosition) =>
+        grid.RowHeights
+            .Skip(gridPosition.Row)
+            .Take(gridPosition.RowSpan)
+            .Select(r => r.Height)
             .Sum();
 
     private static float TotalGridWidth(this Grid grid) =>
