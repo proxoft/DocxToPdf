@@ -81,6 +81,34 @@ internal static class CellLayoutBuilder
         );
     }
 
+    public static CellLayoutingResult[] UpdateByGrid(this CellLayoutingResult[] results, Cell[] cells, GridLayout grid) =>
+        [..results
+            .Select(r => {
+                Cell cell = cells.Single(c => c.Id == r.CellId);
+                return r.UpdateByGrid(cell.GridPosition, grid);
+            })
+        ];
+
+    private static CellLayoutingResult UpdateByGrid(
+        this CellLayoutingResult result,
+        GridPosition gridPosition,
+        GridLayout grid)
+    {
+        float height = grid.CalculateCellAvailableHeight(gridPosition);
+        if (result.CellLayout.BoundingBox.Height >= height)
+        {
+            return result;
+        }
+
+        return result with
+        {
+            CellLayout = result.CellLayout with
+            {
+                BoundingBox = result.CellLayout.BoundingBox.SetHeight(height)
+            }
+        };
+    }
+
     private static ParagraphLayoutingResult CreateParagraphLayout(this Paragraph paragraph, Rectangle cellDrawingArea, LayoutServices services)
     {
         ParagraphLayoutingResult p = ParagraphLayoutingResult.New(cellDrawingArea);
@@ -91,5 +119,5 @@ internal static class CellLayoutBuilder
         grid.CalculateCellWidth(cell.GridPosition);
 
     private static float MinHeight(this Cell cell, GridLayout grid) =>
-        grid.CalculateCellHeight(cell.GridPosition); 
+        grid.CalculateCellAvailableHeight(cell.GridPosition); 
 }

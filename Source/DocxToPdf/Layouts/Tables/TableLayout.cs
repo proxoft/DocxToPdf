@@ -5,14 +5,12 @@ using Proxoft.DocxToPdf.Documents.Shared;
 namespace Proxoft.DocxToPdf.Layouts.Tables;
 
 internal record TableLayout(
-    ModelReference Source,
     CellLayout[] Cells,
     Rectangle BoundingBox,
     Borders Borders
-) : Layout(Source, BoundingBox, Borders), IComposedLayout
+) : Layout(new ModelReference([]), BoundingBox, Borders), IComposedLayout
 {
     public static readonly TableLayout Empty = new(
-        new ModelReference([]),
         [],
         Rectangle.Empty,
         Borders.None

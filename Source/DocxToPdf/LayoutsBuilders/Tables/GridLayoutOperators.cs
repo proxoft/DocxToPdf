@@ -1,11 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
-internal static class GridOperators
+internal static class GridLayoutOperators
 {
     public static Rectangle[] GridAvailableAreas(this GridLayout grid, Rectangle totalAvailableArea)
     {
@@ -37,21 +38,22 @@ internal static class GridOperators
         return (offset, width);
     }
 
-    private static float CalculateCellXOffset(this GridLayout grid, GridPosition gridPosition) =>
-        grid.Columns
-            .Take(gridPosition.Column - 1)
-            .Sum();
-
     public static float CalculateCellWidth(this GridLayout grid, GridPosition gridPosition) =>
         grid.Columns
             .Skip(gridPosition.Column)
             .Take(gridPosition.ColumnSpan)
             .Sum();
 
-    public static float CalculateCellHeight(this GridLayout grid, GridPosition gridPosition) =>
+    public static float CalculateCellAvailableHeight(this GridLayout grid, GridPosition gridPosition) =>
         grid.Rows
             .Skip(gridPosition.Row)
             .Take(gridPosition.RowSpan)
+            .Select(r => r.Height)
+            .Sum();
+
+    private static float CalculateCellXOffset(this GridLayout grid, GridPosition gridPosition) =>
+        grid.Columns
+            .Take(gridPosition.Column - 1)
             .Sum();
 
     private static float TotalGridWidth(this GridLayout grid) =>

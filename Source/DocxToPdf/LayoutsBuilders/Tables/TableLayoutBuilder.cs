@@ -19,10 +19,8 @@ internal static class TableLayoutBuilder
         GridLayout gridLayout = table.Grid.CreateGridLayout();
 
         CellLayoutingResult[] cellResults = [];
-        CellLayout[] cellLayouts = [];
         Rectangle[] columnsAvailableArea = gridLayout.GridAvailableAreas(availableArea);
 
-        // split area
         foreach (Cell cell in table.Cells.InLayoutingOrder())
         {
             CellLayoutingResult previous = previosLayoutingResult.CellsLayoutingResult
@@ -32,18 +30,27 @@ internal static class TableLayoutBuilder
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
             CellLayoutingResult result = cell.Process(previous, gridLayout, cellAvailableArea, services);
             cellResults = [..cellResults, result];
-            cellLayouts = [..cellLayouts, result.CellLayout];
+            gridLayout = gridLayout.JustifyGridRows(result.CellLayout.BoundingBox, cell.GridPosition);
+
+            cellResults = cellResults.UpdateByGrid(table.Cells, gridLayout);
             columnsAvailableArea = columnsAvailableArea.CropClumnsAvailableArea(result.CellLayout.BoundingBox, cell.GridPosition);
         }
 
-        Rectangle boundingBox = cellLayouts
+        Rectangle boundingBox = cellResults
+            .Select(r => r.CellLayout)
             .Select(c => c.BoundingBox)
             .CalculateBoundingBox();
 
+        TableLayout tableLayout = new(
+            [.. cellResults.Select(r => r.CellLayout)],
+            boundingBox,
+            Borders.None
+        );
+
         return new TableLayoutingResult(
             table.Id,
-            new TableLayout(new Layouts.ModelReference([]), cellLayouts, boundingBox, Borders.None),
-            GridLayout.Empty,
+            tableLayout,
+            gridLayout,
             cellResults,
             availableArea,
             ResultStatus.Finished
