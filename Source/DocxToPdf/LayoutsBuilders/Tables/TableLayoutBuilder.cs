@@ -16,9 +16,11 @@ internal static class TableLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
+        GridLayout gridLayout = table.Grid.CreateGridLayout();
+
         CellLayoutingResult[] cellResults = [];
         CellLayout[] cellLayouts = [];
-        Rectangle[] columnsAvailableArea = table.Grid.GridAvailableAreas(availableArea);
+        Rectangle[] columnsAvailableArea = gridLayout.GridAvailableAreas(availableArea);
 
         // split area
         foreach (Cell cell in table.Cells.InLayoutingOrder())
@@ -28,7 +30,7 @@ internal static class TableLayoutBuilder
                 .FirstOrDefault(r => r.CellId == cell.Id, CellLayoutingResult.None);
 
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
-            CellLayoutingResult result = cell.Process(previous, table.Grid, cellAvailableArea, services);
+            CellLayoutingResult result = cell.Process(previous, gridLayout, cellAvailableArea, services);
             cellResults = [..cellResults, result];
             cellLayouts = [..cellLayouts, result.CellLayout];
             columnsAvailableArea = columnsAvailableArea.CropClumnsAvailableArea(result.CellLayout.BoundingBox, cell.GridPosition);

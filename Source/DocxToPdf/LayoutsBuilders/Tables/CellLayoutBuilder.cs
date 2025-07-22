@@ -18,7 +18,7 @@ internal static class CellLayoutBuilder
     public static CellLayoutingResult Process(
         this Cell cell,
         CellLayoutingResult previousLayoutingResult,
-        Grid grid,
+        GridLayout grid,
         Rectangle availableArea,
         LayoutServices services)
     {
@@ -87,9 +87,9 @@ internal static class CellLayoutBuilder
         return paragraph.Process(p, cellDrawingArea, services);
     }
 
-    private static float MinWidth(this Cell cell, Grid grid) =>
+    private static float MinWidth(this Cell cell, GridLayout grid) =>
         grid.CalculateCellWidth(cell.GridPosition);
 
-    private static float MinHeight(this Cell cell, Grid grid) =>
+    private static float MinHeight(this Cell cell, GridLayout grid) =>
         grid.CalculateCellHeight(cell.GridPosition); 
 }

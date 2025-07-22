@@ -1,6 +1,8 @@
 ﻿namespace Proxoft.DocxToPdf.Layouts.Tables;
 
-internal record class GridLayout(float[] Rows)
+internal record class GridLayout(
+    float[] Columns,
+    float[] Rows)
 {
-    public static readonly GridLayout Empty = new([]);
+    public static readonly GridLayout Empty = new([], []);
 }
