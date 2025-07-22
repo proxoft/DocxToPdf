@@ -43,6 +43,7 @@ internal static class CellLayoutBuilder
 
             contentLayouts = [..contentLayouts, ..contentLayoutingResult.Layouts];
             status = contentLayoutingResult.Status;
+            remainingArea = contentLayoutingResult.RemainingDrawingArea;
         }
 
         float minWidth = cell.MinWidth(grid);

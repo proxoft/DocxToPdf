@@ -54,4 +54,15 @@ public class TableV2Test
                 .NotBeEmpty();
         });
     }
+
+    [Fact]
+    public void TableWithParagraphsXXL()
+    {
+        _executor.Convert("TableWithParagraphsXXL", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
 }
