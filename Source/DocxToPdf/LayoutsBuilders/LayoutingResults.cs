@@ -68,11 +68,13 @@ internal record CellLayoutingResult(
 }
 
 internal record TableLayoutingResult(
-    Layout[] Layouts,
+    ModelId TableId,
+    TableLayout TableLayout,
+    GridLayout Grid,
     CellLayoutingResult[] CellsLayoutingResult,
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult(Layouts, RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult([TableLayout], RemainingDrawingArea, Status)
 {
     public static TableLayoutingResult New(Rectangle remainingDrawingArea) =>
-        new([], [], remainingDrawingArea, ResultStatus.Finished);
+        new(ModelId.None, TableLayout.Empty, GridLayout.Empty, [], remainingDrawingArea, ResultStatus.Finished);
 }

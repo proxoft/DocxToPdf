@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
@@ -33,8 +34,14 @@ internal static class TableLayoutBuilder
             columnsAvailableArea = columnsAvailableArea.CropClumnsAvailableArea(result.CellLayout.BoundingBox, cell.GridPosition);
         }
 
+        Rectangle boundingBox = cellLayouts
+            .Select(c => c.BoundingBox)
+            .CalculateBoundingBox();
+
         return new TableLayoutingResult(
-            cellLayouts,
+            table.Id,
+            new TableLayout(new Layouts.ModelReference([]), cellLayouts, boundingBox, Borders.None),
+            GridLayout.Empty,
             cellResults,
             availableArea,
             ResultStatus.Finished

@@ -4,7 +4,6 @@ using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Shared;
-using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
@@ -95,7 +94,7 @@ internal static class ParagraphLayoutBuilder
 
         Rectangle paragraphBb = lines
             .Select(l => l.BoundingBox)
-            .DefaultIfEmpty(Rectangle.Empty) // create empty line
+            .DefaultIfEmpty(new Rectangle(availableArea.X, availableArea.Y, 0, 12)) // create empty line
             .CalculateBoundingBox();
 
         ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb, Borders.None);
