@@ -11,5 +11,12 @@ internal record ParagraphLayout(
     Borders Borders
 ) : Layout(Source, BoundingBox, Borders), IComposedLayout
 {
+    public static readonly ParagraphLayout Empty = new(
+        new ModelReference([]),
+        [],
+        Rectangle.Empty,
+        Borders.None
+    );
+
     public IEnumerable<Layout> InnerLayouts => this.Lines;
 }

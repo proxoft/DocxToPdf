@@ -1,6 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders;
@@ -38,13 +39,14 @@ internal record SectionLayoutingResult(
 }
 
 internal record ParagraphLayoutingResult(
-    Layout[] Layouts,
+    ModelId ParagraphId,
+    ParagraphLayout ParagraphLayout,
     ModelId StartFromElementId,
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult(Layouts, RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult([ParagraphLayout], RemainingDrawingArea, Status)
 {
     public static ParagraphLayoutingResult New(Rectangle remainingDrawingArea) =>
-        new([], ModelId.None, remainingDrawingArea, ResultStatus.Finished);
+        new(ModelId.None, ParagraphLayout.Empty, ModelId.None, remainingDrawingArea, ResultStatus.Finished);
 }
 
 internal record CellLayoutingResult(

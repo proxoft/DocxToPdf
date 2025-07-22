@@ -6,6 +6,8 @@ namespace Proxoft.DocxToPdf.LayoutsRendering;
 
 internal class RenderOptions
 {
+    public static readonly RenderOptions Default = new();
+
     public BorderStyle SectionBorder { get; set; } = BorderStyle.None;
 
     public BorderStyle SectionColumnBorder { get; set; } = BorderStyle.None;

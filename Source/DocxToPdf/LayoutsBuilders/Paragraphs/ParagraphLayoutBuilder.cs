@@ -99,7 +99,8 @@ internal static class ParagraphLayoutBuilder
 
         ParagraphLayout pl = new(paragraphReference, [.. lines], paragraphBb, Borders.None);
         return new ParagraphLayoutingResult(
-            [pl],
+            paragraph.Id,
+            pl,
             lastProcessedElementId,
             availableArea.CropFromTop(paragraphBb.Height),
             status

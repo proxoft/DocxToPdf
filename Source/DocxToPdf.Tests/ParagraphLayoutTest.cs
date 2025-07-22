@@ -1,50 +1,48 @@
-﻿using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.LayoutsRendering;
-using Proxoft.DocxToPdf.Tests.Tools;
+﻿using Proxoft.DocxToPdf.Tests.Tools;
 
 namespace Proxoft.DocxToPdf.Tests;
 
 public class ParagraphLayoutTest
 {
-    private readonly RenderOptions _options = new()
-    {
-        WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("000000"), 1, Documents.Styles.Borders.LineStyle.Solid)
-    };
+    private DocxToPdfExecutor _executor = new(
+        "Paragraphs/{0}.docx",
+        "Paragraphs/{0}_v2.pdf",
+        new()
+        {
+            WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("458976"), 1, Documents.Styles.Borders.LineStyle.Solid)
+        }
+    );
 
     [Fact]
     public void Paragraph()
     {
-        PageLayout[] pages = "Paragraphs/Paragraph.docx".ReadAndLayoutDocument();
-
-        pages
-            .Should()
-            .NotBeEmpty();
-
-        "Paragraphs/v2_Paragraph.pdf".RenderAndSave(pages, _options);
+        _executor.Convert("Paragraph", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
     }
 
     [Fact]
     public void ParagraphOverPage()
     {
-        PageLayout[] pages = "Paragraphs/ParagraphOverPage.docx".ReadAndLayoutDocument();
-
-        pages
-            .Should()
-            .NotBeEmpty();
-
-
-        "Paragraphs/v2_ParagraphOverPage.pdf".RenderAndSave(pages, _options);
+        _executor.Convert("ParagraphOverPage", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
     }
 
     [Fact]
     public void ParagraphOverPageSimple()
     {
-        PageLayout[] pages = "Paragraphs/ParagraphOverPageSimple.docx".ReadAndLayoutDocument();
-
-        pages
-            .Should()
-            .NotBeEmpty();
-
-        "Paragraphs/v2_ParagraphOverPageSimple.pdf".RenderAndSave(pages, _options);
+        _executor.Convert("ParagraphOverPageSimple", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
     }
 }

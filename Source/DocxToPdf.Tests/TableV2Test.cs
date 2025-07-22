@@ -1,60 +1,57 @@
-﻿using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.LayoutsRendering;
+﻿using Proxoft.DocxToPdf.LayoutsRendering;
 using Proxoft.DocxToPdf.Tests.Tools;
 
 namespace Proxoft.DocxToPdf.Tests;
 
 public class TableV2Test
 {
-    private readonly RenderOptions _options = new()
-    {
-    };
+    private DocxToPdfExecutor _executor = new(
+        "Tables/{0}.docx",
+        "Tables/{0}_v2.pdf",
+        RenderOptions.Default
+    );
 
     [Fact]
     public void Table()
     {
-        PageLayout[] pages = "Tables/Table.docx".ReadAndLayoutDocument();
-
-        pages
-            .Should()
-            .NotBeEmpty();
-
-        "Tables/Table_v2.pdf".RenderAndSave(pages, _options);
+        _executor.Convert("Table", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
     }
 
     [Fact]
     public void CellBorders()
     {
-        PageLayout[] pages = "Tables/CellBorders.docx".ReadAndLayoutDocument();
-
-        pages
-            .Should()
-            .NotBeEmpty();
-
-        "Tables/CellBorders_v2.pdf".RenderAndSave(pages, _options);
+        _executor.Convert("CellBorders", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
     }
 
     [Fact]
     public void Layout()
     {
-        PageLayout[] pages = "Tables/Layout.docx".ReadAndLayoutDocument();
-
-        pages
-            .Should()
-            .NotBeEmpty();
-
-        "Tables/Layout_v2.pdf".RenderAndSave(pages, _options);
+        _executor.Convert("Layout", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
     }
 
     [Fact]
     public void Layout2()
     {
-        PageLayout[] pages = "Tables/Layout2.docx".ReadAndLayoutDocument();
-
-        pages
-            .Should()
-            .NotBeEmpty();
-
-        "Tables/Layout2_v2.pdf".RenderAndSave(pages, _options);
+        _executor.Convert("Layout2", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
     }
 }
