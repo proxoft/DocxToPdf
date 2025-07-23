@@ -81,7 +81,7 @@ internal static class ParagraphLayoutBuilder
 
 
         ResultStatus status = 
-            lines.Count == 0 ? ResultStatus.Ignore
+            lines.Count == 0 ? ResultStatus.IgnoreRequestDrawingArea
             : unprocessed.Length > 0 ? ResultStatus.RequestDrawingArea
             : ResultStatus.Finished;
 

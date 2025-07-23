@@ -25,7 +25,7 @@ internal static class TableLayoutBuilder
         {
             CellLayoutingResult previous = previosLayoutingResult.CellsLayoutingResult
                 .OrderByDescending(r => r.Order)
-                .FirstOrDefault(r => r.CellId == cell.Id, CellLayoutingResult.None);
+                .FirstOrDefault(r => r.ModelId == cell.Id, CellLayoutingResult.None);
 
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
             CellLayoutingResult result = cell.Process(previous, gridLayout, cellAvailableArea, services);

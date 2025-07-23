@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using Proxoft.DocxToPdf.Documents;
+﻿using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Tables;
-using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
@@ -16,64 +14,64 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 internal static class SectionLayoutBuilder
 {
     public static SectionLayoutingResult Process(
-        this Section section,
-        SectionLayoutingResult previousLayoutingResult,
-        Rectangle drawingPageArea,
-        LayoutServices services)
+            this Section section,
+            SectionLayoutingResult previousLayoutingResult,
+            Rectangle drawingPageArea,
+            LayoutServices services)
     {
-        // split drawing page Area to columns
-        // skip elements using startFrom
-
-        Stack<Model> toProcess = section.Elements
-            .SkipProcessed(previousLayoutingResult.LastProcessedModel, finished: previousLayoutingResult.LastModelLayoutingResult.Status == ResultStatus.Finished)
-            .ToStackReversed();
+        bool previousWasFinished = previousLayoutingResult.LastModelLayoutingResult.Status == ResultStatus.Finished;
+        Model[] unprocessed = [
+            ..section
+                .Elements
+                .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult.ModelId, previousWasFinished)
+        ];
 
         Layout[] layouts = [];
-
+        LayoutingResult lastModelResult = NoLayoutingResult.Instance;
+        ResultStatus resultStatus = ResultStatus.Finished;
         Rectangle remainingArea = drawingPageArea;
-        ResultStatus status = ResultStatus.Finished;
 
-        ModelId lastModelId = ModelId.None;
-        LayoutingResult modelLayoutingResult = NoLayoutingResult.Instance;
-
-        while (toProcess.Count > 0 && status == ResultStatus.Finished)
+        foreach (Model model in unprocessed)
         {
-            Model model = toProcess.Pop();
-            switch (model)
+            LayoutingResult lr = model switch
             {
-                case Paragraph paragraph:
-                    {
-                        ParagraphLayoutingResult paragraphResult = previousLayoutingResult.LastProcessedModel == paragraph.Id
-                            ? (ParagraphLayoutingResult)previousLayoutingResult.LastModelLayoutingResult
-                            : ParagraphLayoutingResult.New(remainingArea);
-
-                        modelLayoutingResult = paragraph.Process(paragraphResult, remainingArea, services);
-                    }
-                    break;
-                case Table table:
-                    {
-                        TableLayoutingResult tableResult = previousLayoutingResult.LastProcessedModel == table.Id
-                            ? (TableLayoutingResult)previousLayoutingResult.LastModelLayoutingResult
-                            : TableLayoutingResult.New(remainingArea);
-
-                        modelLayoutingResult = table.Process(tableResult, remainingArea, services);
-                    }
-                    break;
+                Paragraph paragraph => paragraph.ProcessParagraph(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
+                Table table => table.ProcessTable(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
+                _ => NoLayoutingResult.Instance
             };
 
-            layouts = [.. layouts, .. modelLayoutingResult.Layouts];
-            remainingArea = modelLayoutingResult.RemainingDrawingArea;
-            status = modelLayoutingResult.Status;
+            if(lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea)
+            {
+                remainingArea = lr.RemainingDrawingArea;
+                layouts = [.. layouts, .. lr.Layouts];
+                lastModelResult = lr;
+            }
 
-            lastModelId = model.Id;
+            if(lr.Status != ResultStatus.Finished)
+            {
+                resultStatus = ResultStatus.RequestDrawingArea;
+                break;
+            }
         }
 
         return new SectionLayoutingResult(
+            section.Id,
             layouts,
-            lastModelId,
-            modelLayoutingResult,
+            lastModelResult,
             remainingArea,
-            status
+            resultStatus
         );
+    }
+
+    private static ParagraphLayoutingResult ProcessParagraph(this Paragraph paragraph, LayoutingResult previousResult, Rectangle remainingArea, LayoutServices services)
+    {
+        ParagraphLayoutingResult plr = previousResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
+        return paragraph.Process(plr, remainingArea, services);
+    }
+
+    private static TableLayoutingResult ProcessTable(this Table table, LayoutingResult previousResult, Rectangle remainingArea, LayoutServices services)
+    {
+        TableLayoutingResult tlr = previousResult.AsResultOfModel(table.Id, TableLayoutingResult.None);
+        return table.Process(tlr, remainingArea, services);
     }
 }

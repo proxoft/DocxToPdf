@@ -11,29 +11,34 @@ internal enum ResultStatus
 {
     Finished,
     RequestDrawingArea,
-    Ignore
+    IgnoreRequestDrawingArea
 }
 
 internal record LayoutingResult(
+    ModelId ModelId,
     Layout[] Layouts,
     Rectangle RemainingDrawingArea,
     ResultStatus Status);
 
-internal record NoLayoutingResult(Layout[] Layouts, Rectangle RemainingDrawingArea, ResultStatus Status) : LayoutingResult(Layouts, RemainingDrawingArea, Status)
+internal record NoLayoutingResult : LayoutingResult
 {
-    public static readonly NoLayoutingResult Instance = new([], Rectangle.Empty, ResultStatus.Finished);
+    public static readonly NoLayoutingResult Instance = new();
+
+    private NoLayoutingResult() : base(ModelId.None, [], Rectangle.Empty, ResultStatus.IgnoreRequestDrawingArea)
+    {
+    }
 }
 
 internal record SectionLayoutingResult(
+    ModelId ModelId,
     Layout[] Layouts,
-    ModelId LastProcessedModel,
     LayoutingResult LastModelLayoutingResult, // TableOrParagraph
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult(Layouts, RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, Layouts, RemainingDrawingArea, Status)
 {
     public static readonly SectionLayoutingResult None = new(
-        [],
         ModelId.None,
+        [],
         NoLayoutingResult.Instance,
         Rectangle.Empty,
         ResultStatus.Finished
@@ -41,25 +46,25 @@ internal record SectionLayoutingResult(
 }
 
 internal record ParagraphLayoutingResult(
-    ModelId ParagraphId,
+    ModelId ModelId,
     ParagraphLayout ParagraphLayout,
     ModelId StartFromElementId,
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult([ParagraphLayout], RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, [ParagraphLayout], RemainingDrawingArea, Status)
 {
-    public static ParagraphLayoutingResult New(Rectangle remainingDrawingArea) =>
-        new(ModelId.None, ParagraphLayout.Empty, ModelId.None, remainingDrawingArea, ResultStatus.Finished);
+    public static ParagraphLayoutingResult None =>
+        new(ModelId.None, ParagraphLayout.Empty, ModelId.None, Rectangle.Empty, ResultStatus.Finished);
 }
 
 internal record CellLayoutingResult(
-    ModelId CellId,
+    ModelId ModelId,
     int Order,
     CellLayout CellLayout,
     GridPosition GridPosition,
     ModelId LastProcessedModel,
     LayoutingResult LastModelLayoutingResult, // TableOrParagraph
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult([CellLayout], RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, [CellLayout], RemainingDrawingArea, Status)
 {
     public static readonly CellLayoutingResult None = new(
         ModelId.None,
@@ -74,13 +79,26 @@ internal record CellLayoutingResult(
 }
 
 internal record TableLayoutingResult(
-    ModelId TableId,
+    ModelId ModelId,
     TableLayout TableLayout,
     GridLayout Grid,
     CellLayoutingResult[] CellsLayoutingResult,
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult([TableLayout], RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, [TableLayout], RemainingDrawingArea, Status)
 {
-    public static TableLayoutingResult New(Rectangle remainingDrawingArea) =>
-        new(ModelId.None, TableLayout.Empty, GridLayout.Empty, [], remainingDrawingArea, ResultStatus.Finished);
+    public static TableLayoutingResult None = new(
+        ModelId.None,
+        TableLayout.Empty,
+        GridLayout.Empty,
+        [],
+        Rectangle.Empty,
+        ResultStatus.Finished);
+}
+
+internal static class LayoutingResultFunctions
+{
+    public static T AsResultOfModel<T>(this LayoutingResult result, ModelId forModel, T ifNone) where T : LayoutingResult =>
+        result.ModelId == forModel
+            ? (T)result
+            : ifNone;
 }

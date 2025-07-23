@@ -37,16 +37,16 @@ internal static class CellLayoutBuilder
             Model model = toProcess.Pop();
             contentLayoutingResult = model switch
             {
-                Paragraph p => p.CreateParagraphLayout(remainingArea, services),
+                Paragraph p => p.CreateParagraphLayout(NoLayoutingResult.Instance, remainingArea, services),
                 _ => NoLayoutingResult.Instance
             };
 
-            if(contentLayoutingResult.Status != ResultStatus.Ignore)
+            if(contentLayoutingResult.Status != ResultStatus.IgnoreRequestDrawingArea)
             {
                 contentLayouts = [.. contentLayouts, .. contentLayoutingResult.Layouts];
             }
 
-            status = contentLayoutingResult.Status == ResultStatus.Ignore
+            status = contentLayoutingResult.Status == ResultStatus.IgnoreRequestDrawingArea
                 ? ResultStatus.RequestDrawingArea
                 : contentLayoutingResult.Status;
 
@@ -115,10 +115,37 @@ internal static class CellLayoutBuilder
         };
     }
 
-    private static ParagraphLayoutingResult CreateParagraphLayout(this Paragraph paragraph, Rectangle cellDrawingArea, LayoutServices services)
+    private static LayoutingResult[] LayoutElements(
+        this Model[] models,
+        LayoutingResult previousLayoutingResult,
+        Rectangle availableArea,
+        LayoutServices services)
     {
-        ParagraphLayoutingResult p = ParagraphLayoutingResult.New(cellDrawingArea);
-        return paragraph.Process(p, cellDrawingArea, services);
+        LayoutingResult modelLayoutingResult = NoLayoutingResult.Instance;
+        foreach(Model model in models)
+        {
+            modelLayoutingResult = model switch
+            {
+                Paragraph paragraph => paragraph.CreateParagraphLayout(previousLayoutingResult, availableArea, services),
+                _ => NoLayoutingResult.Instance
+            };
+
+
+        }
+
+        return [];
+    }
+
+    private static ParagraphLayoutingResult CreateParagraphLayout(
+        this Paragraph paragraph,
+        LayoutingResult previousLayoutingResult,
+        Rectangle cellDrawingArea, LayoutServices services)
+    {
+        ParagraphLayoutingResult plr = previousLayoutingResult is ParagraphLayoutingResult pr && pr.ModelId == paragraph.Id
+            ? pr
+            : ParagraphLayoutingResult.None;
+
+        return paragraph.Process(plr, cellDrawingArea, services);
     }
 
     private static float MinWidth(this Cell cell, GridLayout grid) =>
