@@ -6,4 +6,4 @@ namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 internal record EmptyLayout(
     Rectangle BoundingBox,
     Borders Borders
-) : ElementLayout(BoundingBox, Borders);
+) : ElementLayout(BoundingBox, Borders, LayoutPartition.StartEnd);

@@ -5,5 +5,6 @@ namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal abstract record ElementLayout(
     Rectangle BoundingBox,
-    Borders Borders
-) : Layout(BoundingBox, Borders);
+    Borders Borders,
+    LayoutPartition Partition
+) : Layout(BoundingBox, Borders, Partition);

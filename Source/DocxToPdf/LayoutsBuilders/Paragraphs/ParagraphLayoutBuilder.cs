@@ -4,6 +4,7 @@ using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
@@ -19,9 +20,7 @@ internal static class ParagraphLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
-        ModelId continueFrom = previousLayoutingResult.Status == ResultStatus.Finished
-            ? ModelId.None
-            : previousLayoutingResult.StartFromElementId;
+        ModelId continueFrom = previousLayoutingResult.StartFromElementId;
 
         IEnumerable<Element> unprocessed = paragraph.Elements
             .SkipProcessed(continueFrom);
@@ -34,7 +33,8 @@ internal static class ParagraphLayoutBuilder
             .CalculateBoundingBox();
 
         Rectangle remainingArea = Rectangle.FromCorners(paragraphBb.BottomLeft, availableArea.BottomRight);
-        ParagraphLayout pl = new([.. lines], paragraphBb, Borders.None);
+        LayoutPartition partition = status.CalculateLayoutPartition(previousLayoutingResult);
+        ParagraphLayout pl = new([.. lines], paragraphBb, Borders.None, partition);
         return new ParagraphLayoutingResult(
             paragraph.Id,
             pl,
@@ -137,4 +137,6 @@ internal static class ParagraphLayoutBuilder
         Rectangle bb = elements.Select(e => e.BoundingBox).CalculateBoundingBox();
         return new LineLayout(elements, isLast, bb, Borders.None);
     }
+
+    
 }

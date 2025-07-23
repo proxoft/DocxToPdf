@@ -9,7 +9,7 @@ internal record LineLayout(
     bool IsLastLineOfParagraph,
     Rectangle BoundingBox,
     Borders Borders
-) : Layout(BoundingBox, Borders), IComposedLayout
+) : Layout(BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
 {
     public IEnumerable<Layout> InnerLayouts => this.Words;
 }

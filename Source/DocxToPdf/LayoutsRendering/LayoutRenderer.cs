@@ -93,9 +93,16 @@ internal static class LayoutRenderer
         }
 
         layout.BoundingBox.LeftLine.RenderBorder(layout.Borders.Left, graphics);
-        layout.BoundingBox.TopLine.RenderBorder(layout.Borders.Top, graphics);
+        if(layout.Partition is LayoutPartition.Start or LayoutPartition.StartEnd)
+        {
+            layout.BoundingBox.TopLine.RenderBorder(layout.Borders.Top, graphics);
+        }
+        
         layout.BoundingBox.RightLine.RenderBorder(layout.Borders.Right, graphics);
-        layout.BoundingBox.BottomLine.RenderBorder(layout.Borders.Bottom, graphics);
+        if (layout.Partition is LayoutPartition.End or LayoutPartition.StartEnd)
+        {
+            layout.BoundingBox.BottomLine.RenderBorder(layout.Borders.Bottom, graphics);
+        }
     }
 
     private static void RenderBorder(this (Position start, Position end) line, BorderStyle borderStyle, XGraphics graphics)

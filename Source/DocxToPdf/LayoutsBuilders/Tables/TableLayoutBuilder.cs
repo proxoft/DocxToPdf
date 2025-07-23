@@ -3,6 +3,7 @@ using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Tables;
+using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
@@ -57,15 +58,18 @@ internal static class TableLayoutBuilder
             .Select(c => c.BoundingBox)
             .CalculateBoundingBox();
 
-        TableLayout tableLayout = new(
-            [.. cellResults.Select(r => r.CellLayout)],
-            boundingBox,
-            Borders.None
-        );
-
         ResultStatus status = cellResults.Any(r => r.Status == ResultStatus.RequestDrawingArea)
             ? ResultStatus.RequestDrawingArea
             : ResultStatus.Finished;
+
+        LayoutPartition partition = status.CalculateLayoutPartition(previosLayoutingResult);
+
+        TableLayout tableLayout = new(
+            [.. cellResults.Select(r => r.CellLayout)],
+            boundingBox,
+            Borders.None,
+            partition
+        );
 
         return new TableLayoutingResult(
             table.Id,

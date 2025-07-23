@@ -72,10 +72,13 @@ internal static class CellLayoutBuilder
             .Expand(cell.Padding)
             ;
 
+        LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResult);
+
         CellLayout cellLayout = new(
             layouts,
             boundingBox,
-            cell.Borders
+            cell.Borders,
+            partition
         );
 
         return new CellLayoutingResult(

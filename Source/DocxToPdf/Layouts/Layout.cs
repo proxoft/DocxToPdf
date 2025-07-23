@@ -6,7 +6,8 @@ namespace Proxoft.DocxToPdf.Layouts;
 
 internal record Layout(
     Rectangle BoundingBox,
-    Borders Borders
+    Borders Borders,
+    LayoutPartition Partition
 );
 
 internal interface IComposedLayout

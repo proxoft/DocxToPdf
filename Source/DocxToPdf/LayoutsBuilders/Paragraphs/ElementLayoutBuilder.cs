@@ -1,6 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
@@ -15,7 +16,7 @@ internal static class ElementLayoutBuilder
         Rectangle boundingBox = new(onPosition, size);
         ElementLayout layout = element switch
         {
-            Text t => new TextLayout(boundingBox, baseLineOffset, t, Borders.None),
+            Text t => new TextLayout(boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
             Space => new SpaceLayout(boundingBox, baseLineOffset, Borders.None),
             _ => new EmptyLayout(boundingBox, Borders.None)
         };

@@ -10,4 +10,4 @@ internal record PageLayout(
     Layout[] Content,
     PageConfiguration Configuration,
     Borders Borders
-) : Layout(BoundingBox, Borders);
+) : Layout(BoundingBox, Borders, LayoutPartition.StartEnd);

@@ -7,13 +7,15 @@ namespace Proxoft.DocxToPdf.Layouts.Tables;
 internal record TableLayout(
     CellLayout[] Cells,
     Rectangle BoundingBox,
-    Borders Borders
-) : Layout(BoundingBox, Borders), IComposedLayout
+    Borders Borders,
+    LayoutPartition Partition
+) : Layout(BoundingBox, Borders, Partition), IComposedLayout
 {
     public static readonly TableLayout Empty = new(
         [],
         Rectangle.Empty,
-        Borders.None
+        Borders.None,
+        LayoutPartition.StartEnd
     );
 
     public IEnumerable<Layout> InnerLayouts => this.Cells;

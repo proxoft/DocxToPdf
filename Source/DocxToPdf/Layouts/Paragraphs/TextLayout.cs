@@ -8,4 +8,5 @@ internal record TextLayout(
     Rectangle BoundingBox,
     float BaselineOffset,
     Text Text,
-    Borders Borders) : ElementLayout(BoundingBox, Borders);
+    Borders Borders,
+    LayoutPartition Partition) : ElementLayout(BoundingBox, Borders, Partition);
