@@ -2,9 +2,9 @@
 
 namespace Proxoft.DocxToPdf.Tests;
 
-public class ParagraphLayoutTest
+public class ParagraphV2Test
 {
-    private DocxToPdfExecutor _executor = new(
+    private readonly DocxToPdfExecutor _executor = new(
         "Paragraphs/{0}.docx",
         "Paragraphs/{0}_v2.pdf",
         new()

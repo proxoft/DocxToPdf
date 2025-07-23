@@ -6,6 +6,6 @@ namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal record TextLayout(
     Rectangle BoundingBox,
-    double BaselineOffset,
+    float BaselineOffset,
     Text Text,
     Borders Borders) : ElementLayout(BoundingBox, Borders);

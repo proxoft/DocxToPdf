@@ -47,13 +47,17 @@ internal static class TableLayoutBuilder
             Borders.None
         );
 
+        ResultStatus status = cellResults.Any(r => r.Status == ResultStatus.RequestDrawingArea)
+            ? ResultStatus.RequestDrawingArea
+            : ResultStatus.Finished;
+
         return new TableLayoutingResult(
             table.Id,
             tableLayout,
             gridLayout,
             cellResults,
             availableArea,
-            ResultStatus.Finished
+            status
         );
     }
 

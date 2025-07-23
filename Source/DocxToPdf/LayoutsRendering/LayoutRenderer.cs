@@ -76,6 +76,9 @@ internal static class LayoutRenderer
             case TextLayout text:
                 graphics.DrawString(text.Text.Content, _font, XBrushes.Black, new XPoint(text.BoundingBox.X, text.BoundingBox.Bottom - text.BaselineOffset));
                 break;
+            case SpaceLayout space:
+                graphics.DrawString("·", _font, XBrushes.Black, new XPoint(space.BoundingBox.X, space.BoundingBox.Bottom - space.BaselineOffset));
+                break;
         }
 
         layout.RenderBorder(graphics);

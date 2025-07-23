@@ -41,8 +41,15 @@ internal static class CellLayoutBuilder
                 _ => NoLayoutingResult.Instance
             };
 
-            contentLayouts = [..contentLayouts, ..contentLayoutingResult.Layouts];
-            status = contentLayoutingResult.Status;
+            if(contentLayoutingResult.Status != ResultStatus.Ignore)
+            {
+                contentLayouts = [.. contentLayouts, .. contentLayoutingResult.Layouts];
+            }
+
+            status = contentLayoutingResult.Status == ResultStatus.Ignore
+                ? ResultStatus.RequestDrawingArea
+                : contentLayoutingResult.Status;
+
             remainingArea = contentLayoutingResult.RemainingDrawingArea;
         }
 

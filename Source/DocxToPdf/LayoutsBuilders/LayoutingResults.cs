@@ -10,7 +10,8 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders;
 internal enum ResultStatus
 {
     Finished,
-    RequestDrawingArea
+    RequestDrawingArea,
+    Ignore
 }
 
 internal record LayoutingResult(

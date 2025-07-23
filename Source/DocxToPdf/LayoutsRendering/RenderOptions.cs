@@ -33,6 +33,7 @@ internal static class Operators
             ParagraphLayout => options.ParagraphBorder,
             LineLayout => options.LineBorder,
             TextLayout => options.WordBorder,
+            SpaceLayout => options.WordBorder,
             _ => BorderStyle.None,
         };
 }
