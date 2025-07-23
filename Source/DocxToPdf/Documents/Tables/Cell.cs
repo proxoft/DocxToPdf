@@ -10,5 +10,3 @@ internal record Cell(
     Padding Padding,
     Borders Borders
 ) : Model(Id);
-
-internal record GridPosition(int Column, int ColumnSpan, int Row, int RowSpan);

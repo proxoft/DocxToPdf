@@ -1,5 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
+using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Tables;
@@ -53,6 +54,7 @@ internal record CellLayoutingResult(
     ModelId CellId,
     int Order,
     CellLayout CellLayout,
+    GridPosition GridPosition,
     ModelId LastProcessedModel,
     LayoutingResult LastModelLayoutingResult, // TableOrParagraph
     Rectangle RemainingDrawingArea,
@@ -62,6 +64,7 @@ internal record CellLayoutingResult(
         ModelId.None,
         -1,
         CellLayout.Empty,
+        new GridPosition(0, 0, 0, 0),
         ModelId.None,
         NoLayoutingResult.Instance,
         Rectangle.Empty,

@@ -74,19 +74,18 @@ internal static class CellLayoutBuilder
             cell.Id,
             previousLayoutingResult.Order + 1,
             cellLayout,
+            cell.GridPosition,
             ModelId.None,
             contentLayoutingResult,
             availableArea,
-            ResultStatus.Finished
+            status
         );
     }
 
-    public static CellLayoutingResult[] UpdateByGrid(this CellLayoutingResult[] results, Cell[] cells, GridLayout grid) =>
-        [..results
-            .Select(r => {
-                Cell cell = cells.Single(c => c.Id == r.CellId);
-                return r.UpdateByGrid(cell.GridPosition, grid);
-            })
+    public static CellLayoutingResult[] UpdateByGrid(this CellLayoutingResult[] results, GridLayout grid) =>
+        [
+            ..results
+                .Select(r =>r.UpdateByGrid(r.GridPosition, grid))
         ];
 
     private static CellLayoutingResult UpdateByGrid(

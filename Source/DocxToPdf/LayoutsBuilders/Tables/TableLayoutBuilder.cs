@@ -32,8 +32,8 @@ internal static class TableLayoutBuilder
             cellResults = [..cellResults, result];
             gridLayout = gridLayout.JustifyGridRows(result.CellLayout.BoundingBox, cell.GridPosition);
 
-            cellResults = cellResults.UpdateByGrid(table.Cells, gridLayout);
-            columnsAvailableArea = columnsAvailableArea.CropClumnsAvailableArea(result.CellLayout.BoundingBox, cell.GridPosition);
+            cellResults = cellResults.UpdateByGrid(gridLayout);
+            columnsAvailableArea = columnsAvailableArea.CropColumnsAvailableArea(cellResults);
         }
 
         Rectangle boundingBox = cellResults
@@ -83,15 +83,17 @@ internal static class TableLayoutBuilder
         return new Rectangle(x, y, totalWidth, bottom - y);
     }
 
-    private static Rectangle[] CropClumnsAvailableArea(this Rectangle[] columnsAvailableArea, Rectangle occupiedArea, GridPosition byCell) =>
-        [
-            ..columnsAvailableArea
-                .Select((columnArea, index) =>
-                {
-                    if(index < byCell.Column || index >= byCell.Column + byCell.ColumnSpan)
-                        return columnArea;
+    private static Rectangle[] CropColumnsAvailableArea(this Rectangle[] availableColumnsAreas, CellLayoutingResult[] cellResults) =>
+        [..availableColumnsAreas
+            .Select((aa, index) =>
+            {
+                float bottom = cellResults
+                    .Where(r => r.GridPosition.ContainsColumnIndex(index))
+                    .Select(r => r.CellLayout.BoundingBox.Bottom)
+                    .DefaultIfEmpty(aa.Y)
+                    .Max();
 
-                    return columnArea.CropFromTop(occupiedArea.Height);
-                })
+                return Rectangle.FromCorners(new Position(aa.X, bottom), aa.BottomRight);
+            })
         ];
 }

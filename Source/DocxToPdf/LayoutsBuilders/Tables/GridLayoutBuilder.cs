@@ -42,12 +42,12 @@ internal static class GridLayoutBuilder
 
     private static float[] CalculateRowDistributionRatio(this RowLayout[] rows, GridPosition gridPosition)
     {
-        int resizableRows = rows.Where((r, i) => i.IsInGridPosition(gridPosition)).Count() - rows.FixedRowsCount(gridPosition);
+        int resizableRows = rows.Where((r, i) => gridPosition.ContainsRowIndex(i)).Count() - rows.FixedRowsCount(gridPosition);
 
         return [
             ..rows
                 .Select((row, index) =>
-                    row.Rule == HeightRule.Exact || !index.IsInGridPosition(gridPosition)
+                    row.Rule == HeightRule.Exact || !gridPosition.ContainsRowIndex(index)
                         ? 0
                         : 1f / resizableRows
                 )
@@ -60,7 +60,4 @@ internal static class GridLayoutBuilder
             .Take(gridPosition.RowSpan)
             .Where(r => r.Rule == HeightRule.Exact)
             .Count();
-
-    private static bool IsInGridPosition(this int index, GridPosition gridPosition) =>
-        gridPosition.Row <= index && index < (gridPosition.Row + gridPosition.RowSpan);
 }
