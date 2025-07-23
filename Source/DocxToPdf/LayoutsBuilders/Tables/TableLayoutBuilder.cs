@@ -16,12 +16,15 @@ internal static class TableLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
-        GridLayout gridLayout = table.Grid.CreateGridLayout();
+        GridLayout gridLayout = previosLayoutingResult.Grid == GridLayout.Empty
+            ? table.Grid.CreateGridLayout()
+            : previosLayoutingResult.Grid;
 
         CellLayoutingResult[] cellResults = [];
         Rectangle[] columnsAvailableArea = gridLayout.GridAvailableAreas(availableArea);
+        bool[] columnFinished = [.. columnsAvailableArea.Select(_ => false)];
 
-        foreach (Cell cell in table.Cells.InLayoutingOrder())
+        foreach (Cell cell in table.Cells.InLayoutingOrder().SkipFinished(previosLayoutingResult.CellsLayoutingResult))
         {
             CellLayoutingResult previous = previosLayoutingResult.CellsLayoutingResult
                 .OrderByDescending(r => r.Order)
@@ -34,6 +37,19 @@ internal static class TableLayoutBuilder
 
             cellResults = cellResults.UpdateByGrid(gridLayout);
             columnsAvailableArea = columnsAvailableArea.CropColumnsAvailableArea(cellResults);
+
+            if(result.Status != ResultStatus.Finished)
+            {
+                for(int i = cell.GridPosition.Column; i < cell.GridPosition.Column + cell.GridPosition.ColumnSpan; i++)
+                {
+                    columnFinished[i] = true;
+                }
+            }
+
+            if(columnFinished.All(c => c == true))
+            {
+                break;
+            }
         }
 
         Rectangle boundingBox = cellResults
@@ -65,6 +81,10 @@ internal static class TableLayoutBuilder
         cells
             .OrderBy(c => c.GridPosition.Row)
             .ThenBy(c => c.GridPosition.Column);
+
+    private static IEnumerable<Cell> SkipFinished(this IEnumerable<Cell> cells, CellLayoutingResult[] results) =>
+        cells
+            .Where(c => results.All(r => !(r.ModelId == c.Id && r.Status == ResultStatus.Finished)));
 
     private static Rectangle CalculateCellAvailableArea(this Cell cell, Rectangle[] columnsAvailableArea)
     {

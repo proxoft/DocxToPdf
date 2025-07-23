@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Tables;
-using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
@@ -22,57 +20,60 @@ internal static class CellLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
+        bool isFinished = previousLayoutingResult.LastModelLayoutingResult.Status == ResultStatus.Finished;
+        Model[] unprocessed = [
+            ..cell
+                .ParagraphsOrTables
+                .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult.ModelId, isFinished)
+        ];
+
+        LayoutingResult lastModelResult = NoLayoutingResult.Instance;
         Rectangle remainingArea = availableArea.Clip(cell.Padding);
-        Layout[] contentLayouts = [];
+        Layout[] layouts = [];
+        ResultStatus resultStatus = ResultStatus.Finished;
 
-        Stack<Model> toProcess = cell.ParagraphsOrTables
-           .SkipProcessed(previousLayoutingResult.LastProcessedModel, finished: previousLayoutingResult.LastModelLayoutingResult.Status == ResultStatus.Finished)
-           .ToStackReversed();
-
-        ResultStatus status = ResultStatus.Finished;
-        LayoutingResult contentLayoutingResult = NoLayoutingResult.Instance;
-
-        while (toProcess.Count > 0 && status == ResultStatus.Finished)
+        foreach (Model model in unprocessed)
         {
-            Model model = toProcess.Pop();
-            contentLayoutingResult = model switch
+            LayoutingResult lr = model switch
             {
-                Paragraph p => p.CreateParagraphLayout(NoLayoutingResult.Instance, remainingArea, services),
+                Paragraph paragraph => paragraph.CreateParagraphLayout(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
+                // Table table => table.Cr(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
                 _ => NoLayoutingResult.Instance
             };
 
-            if(contentLayoutingResult.Status != ResultStatus.IgnoreRequestDrawingArea)
+            if (lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea)
             {
-                contentLayouts = [.. contentLayouts, .. contentLayoutingResult.Layouts];
+                remainingArea = lr.RemainingDrawingArea;
+                layouts = [.. layouts, .. lr.Layouts];
+                lastModelResult = lr;
             }
 
-            status = contentLayoutingResult.Status == ResultStatus.IgnoreRequestDrawingArea
-                ? ResultStatus.RequestDrawingArea
-                : contentLayoutingResult.Status;
-
-            remainingArea = contentLayoutingResult.RemainingDrawingArea;
+            if (lr.Status != ResultStatus.Finished)
+            {
+                // remainingArea = new Rectangle(availableArea.BottomLeft, new Size(availableArea.Width, 0));
+                resultStatus = ResultStatus.RequestDrawingArea;
+                break;
+            }
         }
 
         float minWidth = cell.MinWidth(grid);
-        float minHeight = cell.MinHeight(grid);
+        float minHeight = Math.Min(
+            cell.MinHeight(grid) - previousLayoutingResult.CellLayout.BoundingBox.Height, // decrease height by already reserved height
+            availableArea.Height // cell height cannot exceed available area
+        ); 
+
         Rectangle minSize = new Rectangle(availableArea.X, availableArea.Y, minWidth, minHeight)
             .Clip(cell.Padding);
 
-        Rectangle boundingBox = contentLayouts
+        Rectangle boundingBox = layouts
             .Select(l => l.BoundingBox)
-            .Append(minSize)
+            .Append(minSize) // append mininum bounding box if there are no elements or the elements have smaller width than the cell default
             .CalculateBoundingBox()
             .Expand(cell.Padding)
             ;
 
-        boundingBox = boundingBox
-            .SetWidth(Math.Max(boundingBox.Width, minWidth))
-            .SetHeight(Math.Max(boundingBox.Height, minHeight))
-            .MoveTo(availableArea.TopLeft)
-            ;
-
         CellLayout cellLayout = new(
-            contentLayouts,
+            layouts,
             boundingBox,
             cell.Borders
         );
@@ -82,10 +83,9 @@ internal static class CellLayoutBuilder
             previousLayoutingResult.Order + 1,
             cellLayout,
             cell.GridPosition,
-            ModelId.None,
-            contentLayoutingResult,
-            availableArea,
-            status
+            lastModelResult,
+            remainingArea,
+            resultStatus
         );
     }
 
@@ -115,37 +115,14 @@ internal static class CellLayoutBuilder
         };
     }
 
-    private static LayoutingResult[] LayoutElements(
-        this Model[] models,
-        LayoutingResult previousLayoutingResult,
-        Rectangle availableArea,
-        LayoutServices services)
-    {
-        LayoutingResult modelLayoutingResult = NoLayoutingResult.Instance;
-        foreach(Model model in models)
-        {
-            modelLayoutingResult = model switch
-            {
-                Paragraph paragraph => paragraph.CreateParagraphLayout(previousLayoutingResult, availableArea, services),
-                _ => NoLayoutingResult.Instance
-            };
-
-
-        }
-
-        return [];
-    }
-
-    private static ParagraphLayoutingResult CreateParagraphLayout(
+        private static ParagraphLayoutingResult CreateParagraphLayout(
         this Paragraph paragraph,
         LayoutingResult previousLayoutingResult,
-        Rectangle cellDrawingArea, LayoutServices services)
+        Rectangle remainingArea,
+        LayoutServices services)
     {
-        ParagraphLayoutingResult plr = previousLayoutingResult is ParagraphLayoutingResult pr && pr.ModelId == paragraph.Id
-            ? pr
-            : ParagraphLayoutingResult.None;
-
-        return paragraph.Process(plr, cellDrawingArea, services);
+        ParagraphLayoutingResult plr = previousLayoutingResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
+        return paragraph.Process(plr, remainingArea, services);
     }
 
     private static float MinWidth(this Cell cell, GridLayout grid) =>

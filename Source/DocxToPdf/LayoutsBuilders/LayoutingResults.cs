@@ -61,7 +61,6 @@ internal record CellLayoutingResult(
     int Order,
     CellLayout CellLayout,
     GridPosition GridPosition,
-    ModelId LastProcessedModel,
     LayoutingResult LastModelLayoutingResult, // TableOrParagraph
     Rectangle RemainingDrawingArea,
     ResultStatus Status) : LayoutingResult(ModelId, [CellLayout], RemainingDrawingArea, Status)
@@ -71,7 +70,6 @@ internal record CellLayoutingResult(
         -1,
         CellLayout.Empty,
         new GridPosition(0, 0, 0, 0),
-        ModelId.None,
         NoLayoutingResult.Instance,
         Rectangle.Empty,
         ResultStatus.Finished
