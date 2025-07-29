@@ -46,8 +46,7 @@ internal static class GridLayoutOperators
 
     public static float CalculateCellAvailableHeight(this GridLayout grid, GridPosition gridPosition) =>
         grid.Rows
-            .Skip(gridPosition.Row)
-            .Take(gridPosition.RowSpan)
+            .Where(r => gridPosition.ContainsRowIndex(r.Row))
             .Select(r => r.Height)
             .Sum();
 

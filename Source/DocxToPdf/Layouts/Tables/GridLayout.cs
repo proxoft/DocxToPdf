@@ -9,4 +9,4 @@ internal record class GridLayout(
     public static readonly GridLayout Empty = new([], []);
 }
 
-internal record RowLayout(float Height, HeightRule Rule);
+internal record RowLayout(int Row, float Height, HeightRule Rule);

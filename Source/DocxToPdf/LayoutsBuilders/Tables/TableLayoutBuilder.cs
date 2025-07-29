@@ -17,37 +17,34 @@ internal static class TableLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
-        GridLayout gridLayout = previosLayoutingResult.Grid == GridLayout.Empty
-            ? table.Grid.CreateGridLayout()
-            : previosLayoutingResult.Grid;
+        GridLayout gridLayout = table.Grid.InitializeGridLayout();
 
         CellLayoutingResult[] cellResults = [];
         Rectangle[] columnsAvailableArea = gridLayout.GridAvailableAreas(availableArea);
         bool[] columnFinished = [.. columnsAvailableArea.Select(_ => false)];
 
-        foreach (Cell cell in table.Cells.InLayoutingOrder().SkipFinished(previosLayoutingResult.CellsLayoutingResult))
+        foreach (Cell cell in table.Cells.InLayoutingOrder().SkipFinished(previosLayoutingResult.CellsLayoutingResults))
         {
-            CellLayoutingResult previous = previosLayoutingResult.CellsLayoutingResult
-                .OrderByDescending(r => r.Order)
-                .FirstOrDefault(r => r.ModelId == cell.Id, CellLayoutingResult.None);
+            CellLayoutingResult[] previous = [
+                ..previosLayoutingResult.CellsLayoutingResults
+                .Where(r => r.ModelId == cell.Id)
+            ];
 
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
             CellLayoutingResult result = cell.Process(previous, gridLayout, cellAvailableArea, services);
+
             cellResults = [..cellResults, result];
-            gridLayout = gridLayout.JustifyGridRows(result.CellLayout.BoundingBox, cell.GridPosition);
+            cellResults = cellResults.UpdateStatusByLastResult();
+
+            gridLayout = gridLayout.JustifyGridRows(result.CellLayout.BoundingBox, cell.GridPosition, table.Grid);
 
             cellResults = cellResults.UpdateByGrid(gridLayout);
-            columnsAvailableArea = columnsAvailableArea.CropColumnsAvailableArea(cellResults);
+            columnsAvailableArea = gridLayout
+                .GridAvailableAreas(availableArea)
+                .CropColumnsAvailableArea(cellResults);
 
-            if(result.Status != ResultStatus.Finished)
-            {
-                for(int i = cell.GridPosition.Column; i < cell.GridPosition.Column + cell.GridPosition.ColumnSpan; i++)
-                {
-                    columnFinished[i] = true;
-                }
-            }
-
-            if(columnFinished.All(c => c == true))
+            bool allColumnsFinished = cellResults.AllColumnsFinished(gridLayout.Columns.Length);
+            if (allColumnsFinished)
             {
                 break;
             }
@@ -75,7 +72,7 @@ internal static class TableLayoutBuilder
             table.Id,
             tableLayout,
             gridLayout,
-            cellResults,
+            [..previosLayoutingResult.CellsLayoutingResults, ..cellResults], // collect all results
             availableArea,
             status
         );
@@ -117,11 +114,26 @@ internal static class TableLayoutBuilder
             {
                 float bottom = cellResults
                     .Where(r => r.GridPosition.ContainsColumnIndex(index))
-                    .Select(r => r.CellLayout.BoundingBox.Bottom)
+                    .Select(r => r.Status == ResultStatus.RequestDrawingArea
+                        ? aa.Bottom
+                        : r.CellLayout.BoundingBox.Bottom
+                    )
                     .DefaultIfEmpty(aa.Y)
                     .Max();
 
                 return Rectangle.FromCorners(new Position(aa.X, bottom), aa.BottomRight);
             })
         ];
+
+    private static bool AllColumnsFinished(this CellLayoutingResult[] results, int colCount) =>
+        Enumerable.Range(0, colCount)
+            .Select(index => results.IsColumnFinished(index))
+            .All(isFinished => isFinished);
+
+    private static bool IsColumnFinished(this CellLayoutingResult[] results, int colIndex) =>
+        results
+            .Where(r => r.GridPosition.ContainsColumnIndex(colIndex))
+            .Select(r => r.Status)
+            .DefaultIfEmpty(ResultStatus.Finished)
+            .Any(s => s == ResultStatus.RequestDrawingArea);
 }

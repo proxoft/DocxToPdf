@@ -16,6 +16,16 @@ internal static class ParagraphLayoutBuilder
 
     public static ParagraphLayoutingResult Process(
         this Paragraph paragraph,
+        LayoutingResult previousLayoutingResult,
+        Rectangle availableArea,
+        LayoutServices services)
+    {
+        ParagraphLayoutingResult plr = previousLayoutingResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
+        return paragraph.ProcessInternal(plr, availableArea, services);
+    }
+
+    public static ParagraphLayoutingResult ProcessInternal(
+        this Paragraph paragraph,
         ParagraphLayoutingResult previousLayoutingResult,
         Rectangle availableArea,
         LayoutServices services)
@@ -137,6 +147,4 @@ internal static class ParagraphLayoutBuilder
         Rectangle bb = elements.Select(e => e.BoundingBox).CalculateBoundingBox();
         return new LineLayout(elements, isLast, bb, Borders.None);
     }
-
-    
 }

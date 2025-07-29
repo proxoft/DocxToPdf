@@ -80,7 +80,7 @@ internal record TableLayoutingResult(
     ModelId ModelId,
     TableLayout TableLayout,
     GridLayout Grid,
-    CellLayoutingResult[] CellsLayoutingResult,
+    CellLayoutingResult[] CellsLayoutingResults,
     Rectangle RemainingDrawingArea,
     ResultStatus Status) : LayoutingResult(ModelId, [TableLayout], RemainingDrawingArea, Status)
 {

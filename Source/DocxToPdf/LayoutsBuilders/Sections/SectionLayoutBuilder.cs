@@ -35,7 +35,7 @@ internal static class SectionLayoutBuilder
         {
             LayoutingResult lr = model switch
             {
-                Paragraph paragraph => paragraph.ProcessParagraph(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
+                Paragraph paragraph => paragraph.Process(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
                 Table table => table.ProcessTable(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
                 _ => NoLayoutingResult.Instance
             };
@@ -61,12 +61,6 @@ internal static class SectionLayoutBuilder
             remainingArea,
             resultStatus
         );
-    }
-
-    private static ParagraphLayoutingResult ProcessParagraph(this Paragraph paragraph, LayoutingResult previousResult, Rectangle remainingArea, LayoutServices services)
-    {
-        ParagraphLayoutingResult plr = previousResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
-        return paragraph.Process(plr, remainingArea, services);
     }
 
     private static TableLayoutingResult ProcessTable(this Table table, LayoutingResult previousResult, Rectangle remainingArea, LayoutServices services)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
@@ -15,17 +16,12 @@ internal static class CellLayoutBuilder
 {
     public static CellLayoutingResult Process(
         this Cell cell,
-        CellLayoutingResult previousLayoutingResult,
+        CellLayoutingResult[] previousLayoutingResults,
         GridLayout grid,
         Rectangle availableArea,
         LayoutServices services)
     {
-        bool isFinished = previousLayoutingResult.LastModelLayoutingResult.Status == ResultStatus.Finished;
-        Model[] unprocessed = [
-            ..cell
-                .ParagraphsOrTables
-                .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult.ModelId, isFinished)
-        ];
+        Model[] unprocessed = cell.ParagraphsOrTables.FilterProcessed(previousLayoutingResults);
 
         LayoutingResult lastModelResult = NoLayoutingResult.Instance;
         Rectangle remainingArea = availableArea.Clip(cell.Padding);
@@ -36,7 +32,7 @@ internal static class CellLayoutBuilder
         {
             LayoutingResult lr = model switch
             {
-                Paragraph paragraph => paragraph.CreateParagraphLayout(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
+                Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, services),
                 // Table table => table.Cr(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
                 _ => NoLayoutingResult.Instance
             };
@@ -58,9 +54,9 @@ internal static class CellLayoutBuilder
 
         float minWidth = cell.MinWidth(grid);
         float minHeight = Math.Min(
-            cell.MinHeight(grid) - previousLayoutingResult.CellLayout.BoundingBox.Height, // decrease height by already reserved height
-            availableArea.Height // cell height cannot exceed available area
-        ); 
+            cell.MinHeight(grid), // decrease height by already reserved height
+            0 // cell height cannot exceed available area
+        );
 
         Rectangle minSize = new Rectangle(availableArea.X, availableArea.Y, minWidth, minHeight)
             .Clip(cell.Padding);
@@ -72,9 +68,10 @@ internal static class CellLayoutBuilder
             .Expand(cell.Padding)
             ;
 
-        LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResult);
+        LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResults.LastByOrder());
 
         CellLayout cellLayout = new(
+            cell.Id,
             layouts,
             boundingBox,
             cell.Borders,
@@ -83,7 +80,7 @@ internal static class CellLayoutBuilder
 
         return new CellLayoutingResult(
             cell.Id,
-            previousLayoutingResult.Order + 1,
+            previousLayoutingResults.LastByOrder().Order + 1,
             cellLayout,
             cell.GridPosition,
             lastModelResult,
@@ -92,10 +89,51 @@ internal static class CellLayoutBuilder
         );
     }
 
-    public static CellLayoutingResult[] UpdateByGrid(this CellLayoutingResult[] results, GridLayout grid) =>
+    public static CellLayoutingResult[] UpdateStatusByLastResult(
+        this CellLayoutingResult[] results)
+    {
+        if(results.Length <= 1)
+        {
+            return results;
+        }
+
+        CellLayoutingResult last = results[^1];
+        if(last.Status == ResultStatus.Finished)
+        {
+            // check previous
+            bool containsNotFinished = results
+                .Any(r => r.Status != ResultStatus.Finished && r.GridPosition.BottomRow() == last.GridPosition.BottomRow());
+
+            if (containsNotFinished)
+            {
+                last = last.ForceRequestDrawingAreaStatus();
+                return [.. results.SkipLast(1), last];
+            }
+            else
+            {
+                return results;
+            }
+        }
+        else
+        {
+            CellLayoutingResult[] updated = [
+                ..results
+                    .Select(res =>
+                        res == last || res.GridPosition.BottomRow() != last.GridPosition.BottomRow()
+                        ? res
+                        : res.ForceRequestDrawingAreaStatus())
+            ];
+
+            return updated;
+        }
+    }
+
+    public static CellLayoutingResult[] UpdateByGrid(
+        this CellLayoutingResult[] results,
+        GridLayout grid) =>
         [
             ..results
-                .Select(r =>r.UpdateByGrid(r.GridPosition, grid))
+                .Select(r => r.UpdateByGrid(r.GridPosition, grid))
         ];
 
     private static CellLayoutingResult UpdateByGrid(
@@ -118,19 +156,32 @@ internal static class CellLayoutBuilder
         };
     }
 
-        private static ParagraphLayoutingResult CreateParagraphLayout(
-        this Paragraph paragraph,
-        LayoutingResult previousLayoutingResult,
-        Rectangle remainingArea,
-        LayoutServices services)
+    private static CellLayoutingResult ForceRequestDrawingAreaStatus(this CellLayoutingResult result)
     {
-        ParagraphLayoutingResult plr = previousLayoutingResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
-        return paragraph.Process(plr, remainingArea, services);
+        CellLayout cellLayout = result.CellLayout with
+        {
+            Partition = result.CellLayout.Partition.RemoveEnd()
+        };
+
+        CellLayoutingResult r = result with
+        {
+            CellLayout = cellLayout,
+            Status = ResultStatus.RequestDrawingArea
+        };
+
+        return r;
     }
 
     private static float MinWidth(this Cell cell, GridLayout grid) =>
         grid.CalculateCellWidth(cell.GridPosition);
 
     private static float MinHeight(this Cell cell, GridLayout grid) =>
-        grid.CalculateCellAvailableHeight(cell.GridPosition); 
+        grid.CalculateCellAvailableHeight(cell.GridPosition);
+
+    public static Model[] FilterProcessed(this IEnumerable<Model> models, CellLayoutingResult[] previousResults)
+    {
+        CellLayoutingResult lastResult = previousResults.LastByOrder();
+        bool isFinished = lastResult.LastModelLayoutingResult.Status == ResultStatus.Finished;
+        return [.. models.SkipProcessed(lastResult.LastModelLayoutingResult.ModelId, isFinished)];
+    }
 }

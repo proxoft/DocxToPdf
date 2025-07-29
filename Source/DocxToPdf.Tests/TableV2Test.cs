@@ -65,4 +65,26 @@ public class TableV2Test
                 .NotBeEmpty();
         });
     }
+
+    [Fact]
+    public void TableWithOneColumnParagraphsXXXL()
+    {
+        _executor.Convert("TableWithOneColumnParagraphsXXXL", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void TableWithParagraphsXXXL()
+    {
+        _executor.Convert("TableWithParagraphsXXXL", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
 }
