@@ -11,13 +11,19 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 internal static class TableLayoutBuilder
 {
-    public static TableLayoutingResult Process(
+    public static TableLayoutingResult Process(this Table table, LayoutingResult previousResult, Rectangle remainingArea, LayoutServices services)
+    {
+        TableLayoutingResult tlr = previousResult.AsResultOfModel(table.Id, TableLayoutingResult.None);
+        return table.ProcessInternal(tlr, remainingArea, services);
+    }
+
+    private static TableLayoutingResult ProcessInternal(
         this Table table,
         TableLayoutingResult previosLayoutingResult,
         Rectangle availableArea,
         LayoutServices services)
     {
-        GridLayout gridLayout = table.Grid.InitializeGridLayout();
+        GridLayout gridLayout = table.Grid.InitializeGridLayout(table.Id);
 
         CellLayoutingResult[] cellResults = [];
         Rectangle[] columnsAvailableArea = gridLayout.GridAvailableAreas(availableArea);
@@ -36,7 +42,7 @@ internal static class TableLayoutBuilder
             cellResults = [..cellResults, result];
             cellResults = cellResults.UpdateStatusByLastResult();
 
-            gridLayout = gridLayout.JustifyGridRows(result.CellLayout.BoundingBox, cell.GridPosition, table.Grid);
+            gridLayout = gridLayout.JustifyGridRows(table.Id, result.CellLayout.BoundingBox, cell.GridPosition, table.Grid);
 
             cellResults = cellResults.UpdateByGrid(gridLayout);
             columnsAvailableArea = gridLayout
@@ -62,6 +68,7 @@ internal static class TableLayoutBuilder
         LayoutPartition partition = status.CalculateLayoutPartition(previosLayoutingResult);
 
         TableLayout tableLayout = new(
+            table.Id,
             [.. cellResults.Select(r => r.CellLayout)],
             boundingBox,
             Borders.None,
@@ -73,7 +80,7 @@ internal static class TableLayoutBuilder
             tableLayout,
             gridLayout,
             [..previosLayoutingResult.CellsLayoutingResults, ..cellResults], // collect all results
-            availableArea,
+            Rectangle.FromCorners(boundingBox.BottomLeft, availableArea.BottomRight),
             status
         );
     }

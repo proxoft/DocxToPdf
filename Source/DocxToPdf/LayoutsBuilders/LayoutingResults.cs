@@ -22,11 +22,12 @@ internal record LayoutingResult(
 
 internal record NoLayoutingResult : LayoutingResult
 {
-    public static readonly NoLayoutingResult Instance = new();
-
-    private NoLayoutingResult() : base(ModelId.None, [], Rectangle.Empty, ResultStatus.IgnoreRequestDrawingArea)
+    private NoLayoutingResult() : base(ModelId.None, [], Rectangle.Empty, ResultStatus.Finished)
     {
     }
+
+    public static NoLayoutingResult Create(Rectangle remainingDrawingArea) =>
+        new() { RemainingDrawingArea = remainingDrawingArea };
 }
 
 internal record SectionLayoutingResult(
@@ -39,7 +40,7 @@ internal record SectionLayoutingResult(
     public static readonly SectionLayoutingResult None = new(
         ModelId.None,
         [],
-        NoLayoutingResult.Instance,
+        NoLayoutingResult.Create(Rectangle.Empty),
         Rectangle.Empty,
         ResultStatus.Finished
     );
@@ -70,7 +71,7 @@ internal record CellLayoutingResult(
         -1,
         CellLayout.Empty,
         new GridPosition(0, 0, 0, 0),
-        NoLayoutingResult.Instance,
+        NoLayoutingResult.Create(Rectangle.Empty),
         Rectangle.Empty,
         ResultStatus.Finished
     );

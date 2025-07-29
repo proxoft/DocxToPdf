@@ -87,4 +87,26 @@ public class TableV2Test
                 .NotBeEmpty();
         });
     }
+
+    [Fact]
+    public void TableWithTable()
+    {
+        _executor.Convert("TableWithTable", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void TableWithTableOverPage()
+    {
+        _executor.Convert("TableWithTableOverPage", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
 }

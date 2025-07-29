@@ -19,25 +19,22 @@ internal static class SectionLayoutBuilder
             Rectangle drawingPageArea,
             LayoutServices services)
     {
-        bool previousWasFinished = previousLayoutingResult.LastModelLayoutingResult.Status == ResultStatus.Finished;
-        Model[] unprocessed = [
-            ..section
+        Model[] unprocessed = section
                 .Elements
-                .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult.ModelId, previousWasFinished)
-        ];
+                .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult);
 
         Layout[] layouts = [];
-        LayoutingResult lastModelResult = NoLayoutingResult.Instance;
-        ResultStatus resultStatus = ResultStatus.Finished;
         Rectangle remainingArea = drawingPageArea;
+        LayoutingResult lastModelResult = previousLayoutingResult.LastModelLayoutingResult;
+        ResultStatus resultStatus = ResultStatus.Finished;
 
         foreach (Model model in unprocessed)
         {
             LayoutingResult lr = model switch
             {
-                Paragraph paragraph => paragraph.Process(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
-                Table table => table.ProcessTable(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
-                _ => NoLayoutingResult.Instance
+                Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, services),
+                Table table => table.Process(lastModelResult, remainingArea, services),
+                _ => NoLayoutingResult.Create(remainingArea)
             };
 
             if(lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea)
@@ -61,11 +58,5 @@ internal static class SectionLayoutBuilder
             remainingArea,
             resultStatus
         );
-    }
-
-    private static TableLayoutingResult ProcessTable(this Table table, LayoutingResult previousResult, Rectangle remainingArea, LayoutServices services)
-    {
-        TableLayoutingResult tlr = previousResult.AsResultOfModel(table.Id, TableLayoutingResult.None);
-        return table.Process(tlr, remainingArea, services);
     }
 }

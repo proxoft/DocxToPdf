@@ -21,10 +21,13 @@ internal static class CellLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
-        Model[] unprocessed = cell.ParagraphsOrTables.FilterProcessed(previousLayoutingResults);
+        Model[] unprocessed = cell.ParagraphsOrTables.SkipProcessed(previousLayoutingResults.LastByOrder());
 
-        LayoutingResult lastModelResult = NoLayoutingResult.Instance;
         Rectangle remainingArea = availableArea.Clip(cell.Padding);
+        LayoutingResult lastModelResult = previousLayoutingResults.Length == 0
+            ? NoLayoutingResult.Create(remainingArea)
+            : previousLayoutingResults.Last().LastModelLayoutingResult;
+
         Layout[] layouts = [];
         ResultStatus resultStatus = ResultStatus.Finished;
 
@@ -33,8 +36,8 @@ internal static class CellLayoutBuilder
             LayoutingResult lr = model switch
             {
                 Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, services),
-                // Table table => table.Cr(previousLayoutingResult.LastModelLayoutingResult, remainingArea, services),
-                _ => NoLayoutingResult.Instance
+                Table table => table.Process(lastModelResult, remainingArea, services),
+                _ => NoLayoutingResult.Create(remainingArea)
             };
 
             if (lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea)
@@ -46,7 +49,6 @@ internal static class CellLayoutBuilder
 
             if (lr.Status != ResultStatus.Finished)
             {
-                // remainingArea = new Rectangle(availableArea.BottomLeft, new Size(availableArea.Width, 0));
                 resultStatus = ResultStatus.RequestDrawingArea;
                 break;
             }
