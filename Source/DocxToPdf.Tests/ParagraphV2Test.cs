@@ -25,6 +25,17 @@ public class ParagraphV2Test
     }
 
     [Fact]
+    public void ParagraphLineSpacing()
+    {
+        _executor.Convert("ParagraphLineSpacing", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
     public void ParagraphOverPage()
     {
         _executor.Convert("ParagraphOverPage", pages =>

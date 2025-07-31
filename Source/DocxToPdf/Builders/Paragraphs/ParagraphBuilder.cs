@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Styles.Paragraphs;
 
 namespace Proxoft.DocxToPdf.Builders.Paragraphs;
 
@@ -14,7 +15,8 @@ internal static class ParagraphBuilder
                 .SelectMany(run => run.SplitToElements(services))
         ];
 
-        return new Paragraph(services.IdFactory.NextParagraphId(), elements);
+        ParagraphStyle paragraphStyle = services.Styles.ForParagraph(paragraph.ParagraphProperties);
+        return new Paragraph(services.IdFactory.NextParagraphId(), elements, paragraphStyle);
     }
 
     private static Element[] SplitToElements(this Word.Run run, BuilderServices services) =>

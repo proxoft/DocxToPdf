@@ -14,7 +14,7 @@ internal static class DocumentBuilder
             return DocumentModel.Null;
         }
 
-        BuilderServices builderServices = new();
+        BuilderServices builderServices = new(docx.MainDocumentPart);
         Section[] sections = docx.MainDocumentPart.Document.Body.ToSections(builderServices);
         return new DocumentModel(sections);
     }

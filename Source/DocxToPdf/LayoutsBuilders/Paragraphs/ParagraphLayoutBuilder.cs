@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Documents.Styles.Paragraphs;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
@@ -35,7 +37,7 @@ internal static class ParagraphLayoutBuilder
         IEnumerable<Element> unprocessed = paragraph.Elements
             .SkipProcessed(continueFrom);
 
-        (LineLayout[] lines, ModelId lastProcessedElementId, ResultStatus status) = unprocessed.CreateLines(availableArea, services);
+        (LineLayout[] lines, ModelId lastProcessedElementId, ResultStatus status) = unprocessed.CreateLines(availableArea, paragraph.Style, services);
 
         Rectangle paragraphBb = lines
             .Select(l => l.BoundingBox)
@@ -57,6 +59,7 @@ internal static class ParagraphLayoutBuilder
     private static (LineLayout[] lines, ModelId lastProcessedElementId, ResultStatus status) CreateLines(
         this IEnumerable<Element> elements,
         Rectangle availableArea,
+        ParagraphStyle style,
         LayoutServices services)
     {
         Element[] unprocessed = [..elements];
@@ -74,6 +77,8 @@ internal static class ParagraphLayoutBuilder
             (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentPosition, availableArea.Width, services);
             remainingHeight -= line.BoundingBox.Height;
 
+            float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
+
             if (remainingHeight >= 0)
             {
                 lines.Add(line);
@@ -81,12 +86,10 @@ internal static class ParagraphLayoutBuilder
                 unprocessed = [..unprocessed.SkipWhile(e => e.Id != lastElementId).Skip(1)];
                 currentPosition = currentPosition.ShiftY(line.BoundingBox.Height);
             }
-            else
-            {
-                keepProcessing = false;
-            }
 
-            keepProcessing &= unprocessed.Length > 0;
+            remainingHeight -= lineSpaceAfterLine;
+            currentPosition = currentPosition.ShiftY(lineSpaceAfterLine);
+            keepProcessing = (remainingHeight > 0) && unprocessed.Length > 0;
         } while (keepProcessing);
 
 

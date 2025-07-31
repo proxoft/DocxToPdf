@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using DocumentFormat.OpenXml;
-using PdfSharp.Drawing;
 
 namespace Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 
