@@ -23,7 +23,12 @@ internal static class ParagraphLayoutBuilder
         LayoutServices services)
     {
         ParagraphLayoutingResult plr = previousLayoutingResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
-        return paragraph.ProcessInternal(plr, availableArea, services);
+
+        Rectangle ar = plr.StartFromElementId == ModelId.None
+            ? availableArea
+            : availableArea.CropFromTop(paragraph.Style.ParagraphSpacing.Before);
+
+        return paragraph.ProcessInternal(plr, ar, services);
     }
 
     public static ParagraphLayoutingResult ProcessInternal(
@@ -37,16 +42,24 @@ internal static class ParagraphLayoutBuilder
         IEnumerable<Element> unprocessed = paragraph.Elements
             .SkipProcessed(continueFrom);
 
-        (LineLayout[] lines, ModelId lastProcessedElementId, ResultStatus status) = unprocessed.CreateLines(availableArea, paragraph.Style, services);
+        (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) = unprocessed.CreateLines(availableArea, paragraph.Style, services);
 
         Rectangle paragraphBb = lines
             .Select(l => l.BoundingBox)
             .DefaultIfEmpty(new Rectangle(availableArea.X, availableArea.Y, 0, 0))
-            .CalculateBoundingBox();
+            .CalculateBoundingBox()
+            .ExpandHeight(spaceAfterLastLine)
+            ;
 
         Rectangle remainingArea = Rectangle.FromCorners(paragraphBb.BottomLeft, availableArea.BottomRight);
         LayoutPartition partition = status.CalculateLayoutPartition(previousLayoutingResult);
         ParagraphLayout pl = new([.. lines], paragraphBb, Borders.None, partition);
+
+        if(status == ResultStatus.Finished)
+        {
+            remainingArea = remainingArea.CropFromTop(paragraph.Style.ParagraphSpacing.After);
+        }
+
         return new ParagraphLayoutingResult(
             paragraph.Id,
             pl,
@@ -56,7 +69,7 @@ internal static class ParagraphLayoutBuilder
         );
     }
 
-    private static (LineLayout[] lines, ModelId lastProcessedElementId, ResultStatus status) CreateLines(
+    private static (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) CreateLines(
         this IEnumerable<Element> elements,
         Rectangle availableArea,
         ParagraphStyle style,
@@ -72,6 +85,7 @@ internal static class ParagraphLayoutBuilder
         float remainingHeight = availableArea.Height;
 
         Position currentPosition = availableArea.TopLeft;
+        float spaceAfterLastLine = 0;
         do
         {
             (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentPosition, availableArea.Width, services);
@@ -89,6 +103,12 @@ internal static class ParagraphLayoutBuilder
 
             remainingHeight -= lineSpaceAfterLine;
             currentPosition = currentPosition.ShiftY(lineSpaceAfterLine);
+
+            if(unprocessed.Length == 0)
+            {
+                spaceAfterLastLine = lineSpaceAfterLine;
+            }
+
             keepProcessing = (remainingHeight > 0) && unprocessed.Length > 0;
         } while (keepProcessing);
 
@@ -98,7 +118,7 @@ internal static class ParagraphLayoutBuilder
             : unprocessed.Length > 0 ? ResultStatus.RequestDrawingArea
             : ResultStatus.Finished;
 
-        return ([..lines], lastProcessed, status);
+        return ([..lines], spaceAfterLastLine, lastProcessed, status);
     }
 
     private static (LineLayout line, ModelId lastElementId) CreateLine(
