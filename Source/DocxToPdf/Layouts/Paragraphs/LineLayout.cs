@@ -8,7 +8,8 @@ internal record LineLayout(
     ElementLayout[] Words,
     bool IsLastLineOfParagraph,
     Rectangle BoundingBox,
-    Borders Borders
+    Borders Borders,
+    ElementLayout SpecialCharacter
 ) : Layout(BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
 {
     public IEnumerable<Layout> InnerLayouts => this.Words;

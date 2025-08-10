@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Styles.Texts;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
@@ -88,7 +88,7 @@ internal static class ParagraphLayoutBuilder
         float spaceAfterLastLine = 0;
         do
         {
-            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentPosition, availableArea.Width, services);
+            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentPosition, availableArea.Width, style.TextStyle, services);
             remainingHeight -= line.BoundingBox.Height;
 
             float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
@@ -125,6 +125,7 @@ internal static class ParagraphLayoutBuilder
         this Element[] elements,
         Position startPosition,
         float availableWidth,
+        TextStyle textStyle,
         LayoutServices services)
     {
         float lineWidth = 0;
@@ -150,17 +151,18 @@ internal static class ParagraphLayoutBuilder
 
         // TODO: known issue: if element does not fit in line, word wrap must be implemented
         return elementLayouts.Length == 0
-            ? (CreateEmptyLine(startPosition), lastElementId)
-            : (elementLayouts.CreateLine(!interrupted), lastElementId);
+            ? (CreateEmptyLine(startPosition, textStyle, services), lastElementId)
+            : (elementLayouts.CreateLine(!interrupted, textStyle, services), lastElementId);
     }
 
-    private static LineLayout CreateEmptyLine(Position position)
+    private static LineLayout CreateEmptyLine(Position position, TextStyle textStyle, LayoutServices services)
     {
         Rectangle bb = new(position, new Size(0, _defaultLineHeight));
-        return new LineLayout([], true, bb, Borders.None);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(true, bb.TopRight, services);
+        return new LineLayout([], true, bb, Borders.None, specialChar);
     }
 
-    private static LineLayout CreateLine(this ElementLayout[] elements, bool isLast)
+    private static LineLayout CreateLine(this ElementLayout[] elements, bool isLast, TextStyle textStyle, LayoutServices services)
     {
         float height = elements
             .Select(e => e.Size.Height)
@@ -179,6 +181,32 @@ internal static class ParagraphLayoutBuilder
             .Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
         ];
 
-        return new LineLayout(e2, isLast, bb, Borders.None);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(isLast, bb.TopRight, services);
+        return new LineLayout(e2, isLast, bb, Borders.None, specialChar);
+    }
+}
+
+file static class Operations
+{
+    public static ElementLayout CreateLineCharacter(this TextStyle textStyle, bool isLastLine, Position position, LayoutServices services) =>
+        isLastLine
+            ? textStyle.CreateParagraphSpecialChar(position, services)
+            : textStyle.CreateEmptyElement(position, services);
+
+    //public static ElementLayout CreateEndOfLineCharacter(this TextStyle textStyle, bool isLastLine, Position position, LayoutServices services)
+    //{
+    //    Text endOfLineChar = new(ModelId.None, "⏎", textStyle);
+    //    return endOfLineChar.CreateLayout(position, services);
+    //}
+
+    private static ElementLayout CreateParagraphSpecialChar(this TextStyle textStyle, Position position, LayoutServices services)
+    {
+        Text paragraphChar = new(ModelId.None, "¶", textStyle);
+        return paragraphChar.CreateLayout(position, services);
+    }
+
+    private static ElementLayout CreateEmptyElement(this TextStyle textStyle, Position position, LayoutServices services)
+    {
+        return new EmptyLayout(new Rectangle(position, Size.Zero), Borders.None, textStyle);
     }
 }

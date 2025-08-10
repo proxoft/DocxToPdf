@@ -3,9 +3,6 @@ using System.Text;
 using PdfSharp;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
-using Proxoft.DocxToPdf.Documents.Common;
-using Proxoft.DocxToPdf.Documents.Shared;
-using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsRendering.Renderers;
@@ -77,6 +74,7 @@ internal static class LayoutRenderer
         }
 
         layout.RenderBorder(graphics);
+        layout.RenderSpecialCharacter(graphics, options);
         layout.RenderDebuggingBorder(graphics, options);
     }
 }
