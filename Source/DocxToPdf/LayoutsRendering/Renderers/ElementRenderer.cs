@@ -1,5 +1,6 @@
 ﻿using PdfSharp.Drawing;
 using Proxoft.DocxToPdf.Documents.Common;
+using Proxoft.DocxToPdf.Documents.Styles;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 namespace Proxoft.DocxToPdf.LayoutsRendering.Renderers;
@@ -17,6 +18,12 @@ internal static class ElementRenderer
             SpaceLayout => renderOptions.RenderWhitespaceCharacters ? "·" : " ",
             _ => ""
         };
+
+        if(layout.GetTextStyle().Background != Color.Empty)
+        {
+            XBrush backgroundBrush = layout.GetTextStyle().Background.ToXBrush();
+            graphics.DrawRectangle(backgroundBrush, layout.BoundingBox.ToXRect());
+        }
 
         Position p = new(layout.BoundingBox.X, layout.BoundingBox.Bottom - layout.LineBaseLineOffset);
         graphics.DrawString(text, font, brush, p.ToXPoint());

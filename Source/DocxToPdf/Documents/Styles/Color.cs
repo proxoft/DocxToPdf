@@ -10,8 +10,13 @@ internal record Color(string Hex)
     public (int r, int g, int b) Rgb => this.Hex == "auto"
         ? (0 , 0, 0) // black
         : this.Hex.ToRgb();
-}
 
+    public static Color FromArgb(int r, int g, int b)
+    {
+        string hex = $"{r:X2}{g:X2}{b:X2}";
+        return new Color(hex);
+    }
+}
 
 file static class ColorOperations
 {

@@ -1,20 +1,19 @@
 ﻿using System.Linq;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Styles;
+using Proxoft.DocxToPdf.Documents.Styles;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
 
-using Col = Proxoft.DocxToPdf.Documents.Styles.Color;
 using Drawing = DocumentFormat.OpenXml.Drawing;
 
 namespace Proxoft.DocxToPdf.Builders.Styles;
 
 internal static class TextStyleBuilder
 {
-    public static TextStyle CreateDefaultTextStyle(this DocDefaults? docDefaults, Drawing.Theme? theme)
+    public static TextStyle CreateDefaultTextStyle(this Word.DocDefaults? docDefaults, Drawing.Theme? theme)
     {
         if (docDefaults?.RunPropertiesDefault is null)
         {
-            return new TextStyle("Arial", 11, FontDecoration.None, Col.Black, Col.Empty);
+            return new TextStyle("Arial", 11, FontDecoration.None, Color.Black, Color.Empty);
         }
 
         TextStyle textStyle = docDefaults.RunPropertiesDefault.CreateTextStyle(theme);
@@ -23,8 +22,8 @@ internal static class TextStyleBuilder
 
     public static TextStyle CreateTextStyle(
         this TextStyle defaultTextStyle,
-        RunProperties? runProperties,
-        StyleRunProperties[] styles)
+        Word.RunProperties? runProperties,
+        Word.StyleRunProperties[] styles)
     {
         string fontFamily = styles
             .Select(s => s.RunFonts?.Ascii?.Value)
@@ -40,28 +39,31 @@ internal static class TextStyleBuilder
             .Where(s => s > 0)
             .First();
 
+        Color fontColor = runProperties.GetFontColor(styles, defaultTextStyle.Brush);
         FontDecoration fontDecoration = defaultTextStyle.FontDecoration.GetFontDecoration(runProperties, styles);
+
+        Color background = runProperties?.Highlight.ToColor() ?? defaultTextStyle.Background;
 
         return new TextStyle(
             fontFamily,
             fontSize,
             fontDecoration,
-            defaultTextStyle.Brush,
-            defaultTextStyle.Background
+            fontColor,
+            background
         );
     }
 
-    private static TextStyle CreateTextStyle(this RunPropertiesDefault runPropertiesDefault, Drawing.Theme? theme)
+    private static TextStyle CreateTextStyle(this Word.RunPropertiesDefault runPropertiesDefault, Drawing.Theme? theme)
     {
         string typeFace = runPropertiesDefault.GetTypeFace(theme);
         FontDecoration fontDecoration = runPropertiesDefault?.RunPropertiesBaseStyle.GetFontDecoretion() ?? FontDecoration.None; ;
         float size = runPropertiesDefault?.RunPropertiesBaseStyle?.FontSize.ToFloat(11) ?? 11;
-        Col brush = Col.Black; // runPropertiesDefault?.RunPropertiesBaseStyle?.Color.ToColor() ?? Col.Black;
+        Color brush = runPropertiesDefault?.RunPropertiesBaseStyle?.Color.ToColor() ?? Color.Black;
 
-        return new TextStyle(typeFace, size, fontDecoration, brush, Col.Empty);
+        return new TextStyle(typeFace, size, fontDecoration, brush, Color.Empty);
     }
 
-    private static string GetTypeFace(this RunPropertiesDefault? runPropertiesDefault, Drawing.Theme? theme)
+    private static string GetTypeFace(this Word.RunPropertiesDefault? runPropertiesDefault, Drawing.Theme? theme)
     {
         string? x = runPropertiesDefault?.RunPropertiesBaseStyle?.RunFonts?.Ascii;
         string? y = theme?.ThemeElements?.FontScheme?.MinorFont?.LatinFont?.Typeface;
@@ -73,7 +75,7 @@ internal static class TextStyleBuilder
         return typeface;
     }
 
-    private static FontDecoration GetFontDecoretion(this RunPropertiesBaseStyle? runPropertiesBase)
+    private static FontDecoration GetFontDecoretion(this Word.RunPropertiesBaseStyle? runPropertiesBase)
     {
         if (runPropertiesBase is null)
         {
@@ -91,8 +93,8 @@ internal static class TextStyleBuilder
 
     private static FontDecoration GetFontDecoration(
         this FontDecoration fontDecoration,
-        RunProperties? runProperties,
-        StyleRunProperties[] styles)
+        Word.RunProperties? runProperties,
+        Word.StyleRunProperties[] styles)
     {
         FontDecoration bold = styles
            .Select(s => s.Bold)
@@ -127,5 +129,14 @@ internal static class TextStyleBuilder
             | italic
             | underline
             | strike;
+    }
+
+    private static Color GetFontColor(this Word.RunProperties? runProperties, Word.StyleRunProperties[] styles, Color defaultColor)
+    {
+        Word.Color? c = styles.Select(s => s.Color)
+            .Prepend(runProperties?.Color)
+            .FirstOrDefault();
+
+        return c?.ToColor() ?? defaultColor;
     }
 }
