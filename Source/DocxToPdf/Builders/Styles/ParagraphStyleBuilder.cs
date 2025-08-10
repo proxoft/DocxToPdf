@@ -4,38 +4,42 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 using Proxoft.DocxToPdf.Documents.Styles.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Styles.Texts;
+using Drawing = DocumentFormat.OpenXml.Drawing;
 
 namespace Proxoft.DocxToPdf.Builders.Styles;
 
 internal static class ParagraphStyleBuilder
 {
-    public static ParagraphStyle CreateDefaultParagraphStyle(this DocDefaults? docDefaults)
+    public static ParagraphStyle CreateDefaultParagraphStyle(this DocDefaults? docDefaults, Drawing.Theme? theme)
     {
         if(docDefaults is null)
         {
             return ParagraphStyle.Default;
         }
 
+        TextStyle textStyle = docDefaults.CreateDefaultTextStyle(theme);
+
         ParagraphStyle? ps = docDefaults
             .ParagraphPropertiesDefault?
             .ParagraphPropertiesBaseStyle
-            .CreateDefaultParagraphStyle();
+            .CreateDefaultParagraphStyle(textStyle);
 
         return ps ?? ParagraphStyle.Default;
     }
 
-    private static ParagraphStyle CreateDefaultParagraphStyle(this ParagraphPropertiesBaseStyle? style)
+    private static ParagraphStyle CreateDefaultParagraphStyle(this ParagraphPropertiesBaseStyle? style, TextStyle textStyle)
     {
         LineAlignment lineAlignment = style?.Justification.GetLinesAlignment(LineAlignment.Left) ?? LineAlignment.Left;
         ParagraphSpacing spacing = style?.SpacingBetweenLines?.ToParagraphSpacing(ParagraphSpacing.Default) ?? ParagraphSpacing.Default;
-
-        return new ParagraphStyle(lineAlignment, spacing);
+        return new ParagraphStyle(lineAlignment, spacing, textStyle);
     }
 
     public static ParagraphStyle CreateParagraphStyle(
         this ParagraphStyle defaultStyle,
         ParagraphProperties? paragraphProperties,
-        StyleParagraphProperties[] styles)
+        StyleParagraphProperties[] styles,
+        StyleRunProperties[] runStyles)
     {
         Justification?[] justifications = [
             paragraphProperties?.Justification,
@@ -49,7 +53,9 @@ internal static class ParagraphStyleBuilder
             .GetLinesAlignment(defaultStyle.LineAlignment);
 
         ParagraphSpacing paragraphSpacing = defaultStyle.ParagraphSpacing.CreateParagraphSpacing(paragraphProperties, styles);
-        return new ParagraphStyle(lineAlignment, paragraphSpacing);
+        TextStyle textStyle = defaultStyle.TextStyle.CreateTextStyle(null, runStyles);
+
+        return new ParagraphStyle(lineAlignment, paragraphSpacing, textStyle);
     }
 
     private static ParagraphSpacing ToParagraphSpacing(
@@ -86,11 +92,11 @@ internal static class ParagraphStyleBuilder
 
     private static ParagraphSpacing CreateParagraphSpacing(
         this ParagraphSpacing defaultSpacing,
-        ParagraphProperties paragraphProperties,
+        ParagraphProperties? paragraphProperties,
         IEnumerable<StyleParagraphProperties> styles)
     {
         SpacingBetweenLines?[] spacingBetweenLines = [
-            paragraphProperties.SpacingBetweenLines, // ordering is important
+            paragraphProperties?.SpacingBetweenLines, // ordering is important
             ..styles.Select(s => s.SpacingBetweenLines)
         ];
 

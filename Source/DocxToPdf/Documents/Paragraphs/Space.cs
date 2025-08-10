@@ -1,3 +1,5 @@
-﻿namespace Proxoft.DocxToPdf.Documents.Paragraphs;
+﻿using Proxoft.DocxToPdf.Documents.Styles.Texts;
 
-internal record Space(ModelId Id): Element(Id);
+namespace Proxoft.DocxToPdf.Documents.Paragraphs;
+
+internal record Space(ModelId Id, TextStyle TextStyle): Element(Id, TextStyle);

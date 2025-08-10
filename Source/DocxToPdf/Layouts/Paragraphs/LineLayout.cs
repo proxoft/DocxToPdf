@@ -5,7 +5,7 @@ using Proxoft.DocxToPdf.Documents.Shared;
 namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal record LineLayout(
-    Layout[] Words,
+    ElementLayout[] Words,
     bool IsLastLineOfParagraph,
     Rectangle BoundingBox,
     Borders Borders

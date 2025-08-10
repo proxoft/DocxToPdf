@@ -9,6 +9,7 @@ public class ParagraphV2Test
         "Paragraphs/{0}_v2.pdf",
         new()
         {
+            // LineBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
             WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("458976"), 1, Documents.Styles.Borders.LineStyle.Solid)
         }
     );
@@ -50,6 +51,17 @@ public class ParagraphV2Test
     public void ParagraphOverPageSimple()
     {
         _executor.Convert("ParagraphOverPageSimple", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void ParagraphFontStyles()
+    {
+        _executor.Convert("ParagraphFontStyles", pages =>
         {
             pages
                 .Should()

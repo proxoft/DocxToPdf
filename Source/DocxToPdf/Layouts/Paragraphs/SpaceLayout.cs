@@ -1,10 +1,17 @@
 ﻿using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Documents.Styles.Texts;
 
 namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal record SpaceLayout(
-    Rectangle BoundingBox,
+    Size Size,
     float BaselineOffset,
-    Borders Borders
-) : ElementLayout(BoundingBox, Borders, LayoutPartition.StartEnd);
+    Rectangle BoundingBox,
+    float LineBaseLineOffset,
+    Borders Borders,
+    TextStyle  TextStyle
+) : ElementLayout(Size, BaselineOffset, BoundingBox, LineBaseLineOffset, Borders, LayoutPartition.StartEnd)
+{
+    public override TextStyle GetTextStyle() => this.TextStyle;
+}

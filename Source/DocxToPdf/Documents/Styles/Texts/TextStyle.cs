@@ -6,4 +6,7 @@ internal record TextStyle(
     FontDecoration FontDecoration,
     Color Brush,
     Color Background
-);
+)
+{
+    public static readonly TextStyle Default = new("Arial", 11, FontDecoration.None, Color.Black, Color.Empty);
+}

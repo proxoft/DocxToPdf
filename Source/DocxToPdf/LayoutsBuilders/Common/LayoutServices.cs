@@ -1,6 +1,5 @@
 ﻿using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
-using Proxoft.DocxToPdf.Documents.Styles;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
 using D = System.Drawing;
 
@@ -8,16 +7,14 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
 internal class LayoutServices
 {
-    private readonly TextStyle _default = new("Arial", 11, FontDecoration.Regular, new Color("000000"), Color.Empty);
-
     // result should contain additional info like: scalable for images
     public (Size boundingBox, float baseLineOffset) CalculateBoundingSizeAndBaseline(Element element)
     {
         (Size boundingBox, float baseLineOffset) = element switch
         {
-            Text t => XUnitCalculator.CalculateBoundingBox(t.Content, _default),
-            Space => XUnitCalculator.CalculateBoundingBox(" ", _default),
-            Tab => XUnitCalculator.CalculateBoundingBox('\t'.ToString(), _default),
+            Text t => XUnitCalculator.CalculateBoundingBox(t.Content, element.TextStyle),
+            Space => XUnitCalculator.CalculateBoundingBox(" ", element.TextStyle),
+            Tab => XUnitCalculator.CalculateBoundingBox('\t'.ToString(), element.TextStyle),
             _ => (Size.Zero, 0)
         };
 

@@ -36,7 +36,10 @@ internal record Rectangle(float X, float Y, float Width, float Height)
 
     public Rectangle MoveTo(Position position) =>
         new(position.X, position.Y, this.Width, this.Height);
-    
+
+    public Rectangle MoveY(float deltaY) =>
+        new(this.TopLeft.X, this.TopLeft.Y + deltaY, this.Width, this.Height);
+
     public Rectangle SetWidth(float width) =>
         new(this.X, this.Y, width, this.Height);
 

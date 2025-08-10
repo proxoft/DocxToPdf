@@ -163,11 +163,22 @@ internal static class ParagraphLayoutBuilder
     private static LineLayout CreateLine(this ElementLayout[] elements, bool isLast)
     {
         float height = elements
-            .Select(e => e.BoundingBox.Height)
+            .Select(e => e.Size.Height)
             .DefaultIfEmpty(_defaultLineHeight)
             .Max();
 
         Rectangle bb = elements.Select(e => e.BoundingBox).CalculateBoundingBox();
-        return new LineLayout(elements, isLast, bb, Borders.None);
+
+        float lineBaselineOffset = elements
+            .Select(e => e.BaselineOffset)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        ElementLayout[] e2 = [
+            ..elements
+            .Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
+        ];
+
+        return new LineLayout(e2, isLast, bb, Borders.None);
     }
 }

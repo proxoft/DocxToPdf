@@ -6,4 +6,4 @@ internal record Text(
     ModelId Id,
     string Content,
     TextStyle TextStyle
-) : Element(Id);
+) : Element(Id, TextStyle);

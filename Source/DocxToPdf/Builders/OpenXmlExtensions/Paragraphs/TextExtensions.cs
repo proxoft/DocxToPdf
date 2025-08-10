@@ -8,17 +8,17 @@ namespace Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 
 internal static class TextExtensions
 {
-    public static readonly TextStyle _default = new("Arial", 11, FontDecoration.Regular, new Color("000000"), Color.Empty);
+    public static readonly TextStyle _default = new("Arial", 11, FontDecoration.None, new Color("000000"), Color.Empty);
 
-    public static Element[] SplitToElements(this Word.Text text, BuilderServices services) =>
+    public static Element[] SplitToElements(this Word.Text text, BuilderServices services, TextStyle paragraphTextStyle) =>
         [..text.InnerText
             .SplitToWordsAndWhitechars()
             .Select(s =>
             {
                 Element e = s switch
                 {
-                    " " => new Space(services.IdFactory.NextWordId()),
-                    _ => new Text(services.IdFactory.NextWordId(), s, _default)
+                    " " => new Space(services.IdFactory.NextWordId(), paragraphTextStyle),
+                    _ => new Text(services.IdFactory.NextWordId(), s, paragraphTextStyle)
                 };
 
                 return e;

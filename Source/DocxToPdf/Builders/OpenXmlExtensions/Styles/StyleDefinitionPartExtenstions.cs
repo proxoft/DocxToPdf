@@ -28,6 +28,26 @@ internal static class StyleDefinitionPartExtenstions
         } while (styleId != null);
     }
 
+    public static IEnumerable<StyleRunProperties> GetRunStyles(this StyleDefinitionsPart? styleDefinitionsPart, StringValue? runStyleId)
+    {
+        if(string.IsNullOrWhiteSpace(runStyleId?.Value))
+        {
+            yield break;
+        }
+
+        StringValue? styleId = runStyleId;
+        do
+        {
+            Style? style = styleDefinitionsPart.FindStyle(styleId);
+            if (style?.StyleRunProperties != null)
+            {
+                yield return style.StyleRunProperties;
+            }
+
+            styleId = style?.BasedOn?.Val;
+        } while (styleId != null);
+    }
+
     public static Style? FindStyle(this StyleDefinitionsPart? styleDefinitionsPart, StringValue styleId) =>
         styleDefinitionsPart?
             .Styles?

@@ -16,11 +16,23 @@ internal static class ElementLayoutBuilder
         Rectangle boundingBox = new(onPosition, size);
         ElementLayout layout = element switch
         {
-            Text t => new TextLayout(boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
-            Space => new SpaceLayout(boundingBox, baseLineOffset, Borders.None),
-            _ => new EmptyLayout(boundingBox, Borders.None)
+            Text t => new TextLayout(size, baseLineOffset, boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
+            Space => new SpaceLayout(size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle),
+            _ => new EmptyLayout(boundingBox, Borders.None, element.TextStyle)
         };
 
         return layout;
+    }
+
+    public static ElementLayout UpdateBoudingBox(this ElementLayout layout, float lineHeight, float lineBaseLineOffset)
+    {
+        Rectangle bb = layout.BoundingBox
+            .SetHeight(lineHeight);
+
+        return layout with
+        {
+            BoundingBox = bb,
+            LineBaseLineOffset = lineBaseLineOffset,
+        };
     }
 }
