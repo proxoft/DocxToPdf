@@ -114,7 +114,7 @@ internal static class ParagraphLayoutBuilder
 
 
         ResultStatus status = 
-            lines.Count == 0 ? ResultStatus.IgnoreRequestDrawingArea
+            lines.Count == 0 ? ResultStatus.IgnoreAndRequestDrawingArea
             : unprocessed.Length > 0 ? ResultStatus.RequestDrawingArea
             : ResultStatus.Finished;
 
@@ -191,7 +191,7 @@ file static class Operations
     public static ElementLayout CreateLineCharacter(this TextStyle textStyle, bool isLastLine, Position position, LayoutServices services) =>
         isLastLine
             ? textStyle.CreateParagraphSpecialChar(position, services)
-            : textStyle.CreateEmptyElement(position, services);
+            : new EmptyLayout(new Rectangle(position, Size.Zero), Borders.None, textStyle);
 
     //public static ElementLayout CreateEndOfLineCharacter(this TextStyle textStyle, bool isLastLine, Position position, LayoutServices services)
     //{
@@ -203,10 +203,5 @@ file static class Operations
     {
         Text paragraphChar = new(ModelId.None, "¶", textStyle);
         return paragraphChar.CreateLayout(position, services);
-    }
-
-    private static ElementLayout CreateEmptyElement(this TextStyle textStyle, Position position, LayoutServices services)
-    {
-        return new EmptyLayout(new Rectangle(position, Size.Zero), Borders.None, textStyle);
     }
 }

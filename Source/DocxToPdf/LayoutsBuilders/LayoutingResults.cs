@@ -11,7 +11,7 @@ internal enum ResultStatus
 {
     Finished,
     RequestDrawingArea,
-    IgnoreRequestDrawingArea
+    IgnoreAndRequestDrawingArea
 }
 
 internal record LayoutingResult(
