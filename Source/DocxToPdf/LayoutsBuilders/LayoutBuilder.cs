@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
@@ -21,43 +23,53 @@ internal class LayoutBuilder
     private PageLayout[] CreatePages(Section[] sections)
     {
         List<PageLayout> pages = [];
-        PageLayout currentPage = sections[0].Properties.PageConfiguration.CreateNewPage(0);
+        PageLayout currentPage = sections[0].CreateNewPage(0);
         Rectangle remainingDrawingArea = currentPage.DrawingArea;
         SectionLayoutingResult layoutingResult = SectionLayoutingResult.None;
 
-        foreach (Section section in sections)
+        bool done = false;
+        int minimalTotalPages = 1;
+
+        while (!done)
         {
-            // if section needs new page, create new page
-            do
-            {
-                layoutingResult = section.Process(
+            Section section = sections
+                .SkipProcessed(layoutingResult)
+                .First();
+
+            FieldVariables fieldVariables = new(currentPage.PageNumber, Math.Max(minimalTotalPages, pages.Count + 1));
+            layoutingResult = section.Process(
                     layoutingResult,
                     remainingDrawingArea,
-                    new FieldVariables(currentPage.PageNumber, pages.Count + 1),
+                    fieldVariables,
                     _layoutServices
                 );
 
-                currentPage = currentPage with
-                {
-                    Content = [.. currentPage.Content, .. layoutingResult.Layouts]
-                };
+            currentPage = currentPage with
+            {
+                Content = [.. currentPage.Content, ..layoutingResult.Layouts]
+            };
 
-                remainingDrawingArea = layoutingResult.RemainingDrawingArea;
-                if (layoutingResult.Status
+            remainingDrawingArea = layoutingResult.RemainingDrawingArea;
+
+            if (layoutingResult.Status
                     is ResultStatus.RequestDrawingArea
                     or ResultStatus.NewPageRequired)
-                {
-                    pages.Add(currentPage);
+            {
+                minimalTotalPages++;
+                pages.Add(currentPage);
 
-                    // try update previous pages. Possible outcomes:
-                    // page not changed at all
-                    // page reshaped, all original layouts remain on the page
-                    // page reshaped, some original layouts must be moved to next page => restart layouting
+                // try update previous pages. Possible outcomes:
+                // page not changed at all
+                // page updated, changes do not exceed the page
+                // page update, some original layouts must be moved to next page => restart layouting
 
-                    currentPage = section.Properties.PageConfiguration.CreateNewPage(currentPage.PageNumber);
-                    remainingDrawingArea = currentPage.DrawingArea;
-                }
-            } while (layoutingResult.Status != ResultStatus.Finished);
+                currentPage = section.CreateNewPage(currentPage.PageNumber);
+                remainingDrawingArea = currentPage.DrawingArea;
+            }
+
+            // add a safeguard for maximum iterations equal to number of elements in DocumentModel
+            done = layoutingResult.Status == ResultStatus.Finished
+                && layoutingResult.ModelId == sections.Last().Id;
         }
 
         pages.Add(currentPage);
@@ -67,7 +79,10 @@ internal class LayoutBuilder
 
 file static class Functions
 {
-    public static PageLayout CreateNewPage(this PageConfiguration pageConfiguration, int currentPageNumber)
+    public static PageLayout CreateNewPage(this Section section, int currentPageNumber) =>
+        section.Properties.PageConfiguration.CreateNewPage(currentPageNumber);
+
+    private static PageLayout CreateNewPage(this PageConfiguration pageConfiguration, int currentPageNumber)
     {
         Rectangle boundingBox = pageConfiguration.CalculatePageBoundingBox();
         Rectangle drawingRegion = pageConfiguration.CalculatePageDrawingArea();
@@ -76,10 +91,10 @@ file static class Functions
         return page;
     }
 
-    public static Rectangle CalculatePageBoundingBox(this PageConfiguration pageConfiguration) =>
+    private static Rectangle CalculatePageBoundingBox(this PageConfiguration pageConfiguration) =>
         Rectangle.FromSize(pageConfiguration.Size);
 
-    public static Rectangle CalculatePageDrawingArea(this PageConfiguration pageConfiguration) =>
+    private static Rectangle CalculatePageDrawingArea(this PageConfiguration pageConfiguration) =>
         Rectangle.FromSize(pageConfiguration.Size)
             .CropFromLeft(pageConfiguration.Margin.Left)
             .CropFromTop(pageConfiguration.Margin.Top)
