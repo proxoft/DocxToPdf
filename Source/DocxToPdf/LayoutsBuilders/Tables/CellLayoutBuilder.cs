@@ -19,6 +19,7 @@ internal static class CellLayoutBuilder
         CellLayoutingResult[] previousLayoutingResults,
         GridLayout grid,
         Rectangle availableArea,
+        FieldVariables fieldVariables,
         LayoutServices services)
     {
         LayoutingResult lastChildResult= previousLayoutingResults.LastByOrder().LastModelLayoutingResult;
@@ -36,8 +37,8 @@ internal static class CellLayoutBuilder
         {
             LayoutingResult lr = model switch
             {
-                Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, services),
-                Table table => table.Process(lastModelResult, remainingArea, services),
+                Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, fieldVariables, services),
+                Table table => table.Process(lastModelResult, remainingArea, fieldVariables, services),
                 _ => NoLayoutingResult.Create(remainingArea)
             };
 

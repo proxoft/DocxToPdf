@@ -1,8 +1,12 @@
 ﻿using System.Linq;
+using System.Collections.Generic;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Styles.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
+using Proxoft.DocxToPdf.Extensions;
+using Proxoft.DocxToPdf.Documents.Paragraphs.Fields;
+using Proxoft.DocxToPdf.Documents;
 
 namespace Proxoft.DocxToPdf.Builders.Paragraphs;
 
@@ -13,14 +17,14 @@ internal static class ParagraphBuilder
         ParagraphStyle paragraphStyle = services.Styles.ForParagraph(paragraph.ParagraphProperties);
 
         Element[] elements = [
-             ..paragraph
-                .SelectRuns()
-                .SelectMany(run => run.SplitToElements(services, paragraphStyle))
+            ..paragraph
+                .ChunkRunsByFieldType()
+                .SelectMany(chunk => chunk.SplitToElements(services, paragraphStyle))
         ];
 
         return new Paragraph(
             services.IdFactory.NextParagraphId(),
-            elements,
+            [..elements],
             paragraphStyle
         );
     }
@@ -47,4 +51,78 @@ internal static class ParagraphBuilder
             Word.Break => [new PageBreak(services.IdFactory.NextWordId(), textStyle.ResizeFont(-2))],
             _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", textStyle)]
         };
+
+    private static IEnumerable<RunChunk> ChunkRunsByFieldType(this Word.Paragraph paragraph)
+    {
+        Stack<Word.Run> runs = paragraph.SelectRuns().ToStackReversed();
+        while(runs.Count > 0)
+        {
+            bool isField = runs.Peek().IsFieldStart();
+            Word.Run[] chunk = isField
+                ? [..runs.ReadFieldRuns()]
+                : [..runs.ReadNonFieldRuns()];
+
+            yield return new RunChunk(chunk, isField);
+        }
+    }
+
+    private static IEnumerable<Element> SplitToElements(this RunChunk runChunk, BuilderServices services, ParagraphStyle textStyle) =>
+        runChunk.IsField
+            ? runChunk.Runs.CreateField(services, textStyle)
+            : runChunk.Runs.SelectMany(r => r.SplitToElements(services, textStyle));
+
+    private static IEnumerable<Element> CreateField(this Word.Run[] runs, BuilderServices services, ParagraphStyle paragraphStyle)
+    {
+        if(runs.Length <= 1)
+        {
+            yield break;
+        }
+
+        Word.Run run = runs[1];
+
+        TextStyle textStyle = services.Styles.ForRun(run.RunProperties, paragraphStyle.TextStyle);
+        Word.FieldCode fieldCode = run
+            .ChildsOfType<Word.FieldCode>()
+            .Single();
+
+        Field field = fieldCode.Text.CreateField(services.IdFactory.NextWordId(), textStyle);
+        yield return field;
+    }
+
+    private static IEnumerable<Word.Run> ReadNonFieldRuns(this Stack<Word.Run> stack)
+    {
+        while(stack.Count > 0)
+        {
+            if (stack.Peek().IsFieldStart()) yield break;
+            yield return stack.Pop();
+        }
+    }
+
+    private static IEnumerable<Word.Run> ReadFieldRuns(this Stack<Word.Run> stack)
+    {
+        while (stack.Count > 0)
+        {
+            Word.Run run = stack.Pop();
+            yield return run;
+            if(run.IsFieldEnd()) yield break;
+        }
+    }
+
+    private record RunChunk(Word.Run[] Runs, bool IsField);
+
+    private static Field CreateField(this string text, ModelId modelId, TextStyle textStyle)
+    {
+        string[] items = text.Split("\\");
+        if (items.Length == 0)
+        {
+            return new EmptyField(modelId, textStyle);
+        }
+
+        return items[0].Trim() switch
+        {
+            "PAGE" => new PageNumberField(modelId, textStyle),
+            "NUMPAGES" => new TotalPagesField(modelId, textStyle),
+            _ => new EmptyField(modelId, textStyle),
+        };
+    }
 }

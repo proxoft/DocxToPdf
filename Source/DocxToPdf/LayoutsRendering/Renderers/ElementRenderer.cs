@@ -16,6 +16,7 @@ internal static class ElementRenderer
         {
             TextLayout t => t.Text.Content,
             SpaceLayout => renderOptions.RenderWhitespaceCharacters ? "·" : " ",
+            FieldLayout f => f.Content,
             _ => ""
         };
 
@@ -25,7 +26,7 @@ internal static class ElementRenderer
             graphics.DrawRectangle(backgroundBrush, layout.BoundingBox.ToXRect());
         }
 
-        Position p = new(layout.BoundingBox.X, layout.BoundingBox.Bottom - layout.LineBaseLineOffset);
-        graphics.DrawString(text, font, brush, p.ToXPoint());
+        Position position = new(layout.BoundingBox.X, layout.BoundingBox.Bottom - layout.LineBaseLineOffset);
+        graphics.DrawString(text, font, brush, position.ToXPoint());
     }
 }

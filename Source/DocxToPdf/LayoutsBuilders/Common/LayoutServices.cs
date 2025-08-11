@@ -1,5 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Paragraphs.Fields;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
 using D = System.Drawing;
 
@@ -8,13 +9,15 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Common;
 internal class LayoutServices
 {
     // result should contain additional info like: scalable for images
-    public (Size boundingBox, float baseLineOffset) CalculateBoundingSizeAndBaseline(Element element)
+    public (Size boundingBox, float baseLineOffset) CalculateBoundingSizeAndBaseline(Element element, FieldVariables fieldVariables)
     {
         (Size boundingBox, float baseLineOffset) = element switch
         {
             Text t => XUnitCalculator.CalculateBoundingBox(t.Content, element.TextStyle),
             Space => XUnitCalculator.CalculateBoundingBox(" ", element.TextStyle),
             Tab => XUnitCalculator.CalculateBoundingBox('\t'.ToString(), element.TextStyle),
+            PageNumberField => XUnitCalculator.CalculateBoundingBox(fieldVariables.CurrentPage.ToString(), element.TextStyle),
+            TotalPagesField => XUnitCalculator.CalculateBoundingBox(fieldVariables.TotalPages.ToString(), element.TextStyle),
             _ => (Size.Zero, 0)
         };
 

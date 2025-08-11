@@ -18,6 +18,7 @@ internal static class ParagraphLayoutBuilder
         this Paragraph paragraph,
         LayoutingResult previousLayoutingResult,
         Rectangle availableArea,
+        FieldVariables fieldVariables,
         LayoutServices services)
     {
         ParagraphLayoutingResult plr = previousLayoutingResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
@@ -30,19 +31,20 @@ internal static class ParagraphLayoutBuilder
             ? availableArea
             : availableArea.CropFromTop(paragraph.Style.ParagraphSpacing.Before);
 
-        return paragraph.ProcessInternal(plr, ar, services);
+        return paragraph.ProcessInternal(plr, ar, fieldVariables, services);
     }
 
     public static ParagraphLayoutingResult ProcessInternal(
         this Paragraph paragraph,
         ParagraphLayoutingResult previousLayoutingResult,
         Rectangle availableArea,
+        FieldVariables fieldVariables,
         LayoutServices services)
     {
         IEnumerable<Element> unprocessed = paragraph.Elements
             .SkipProcessed(previousLayoutingResult.LastProcessedModelId, finished: true);
 
-        (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) = unprocessed.CreateLines(availableArea, paragraph.Style, services);
+        (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) = unprocessed.CreateLines(availableArea, fieldVariables, paragraph.Style, services);
 
         Rectangle paragraphBb = lines
             .Select(l => l.BoundingBox)
@@ -72,6 +74,7 @@ internal static class ParagraphLayoutBuilder
     private static (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) CreateLines(
         this IEnumerable<Element> elements,
         Rectangle availableArea,
+        FieldVariables fieldVariables,
         ParagraphStyle style,
         LayoutServices services)
     {
@@ -88,7 +91,7 @@ internal static class ParagraphLayoutBuilder
         float spaceAfterLastLine = 0;
         do
         {
-            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentPosition, availableArea.Width, style.TextStyle, services);
+            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentPosition, availableArea.Width, fieldVariables, style.TextStyle, services);
             remainingHeight -= line.BoundingBox.Height;
 
             float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
@@ -127,6 +130,7 @@ internal static class ParagraphLayoutBuilder
         this Element[] elements,
         Position startPosition,
         float availableWidth,
+        FieldVariables fieldVariables,
         TextStyle textStyle,
         LayoutServices services)
     {
@@ -145,7 +149,7 @@ internal static class ParagraphLayoutBuilder
                 break;
             }
 
-            ElementLayout elementLayout = element.CreateLayout(currentPosition, services);
+            ElementLayout elementLayout = element.CreateLayout(currentPosition, fieldVariables, services);
             if (lineWidth + elementLayout.BoundingBox.Width > availableWidth)
             {
                 break;
@@ -210,11 +214,12 @@ file static class Operations
     public static ElementLayout CreateLineCharacter(
         this TextStyle textStyle,
         LineDecoration lineDecoration,
-        Position position, LayoutServices services) =>
+        Position position,
+        LayoutServices services) =>
         lineDecoration switch
         {
-            LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateLayout(position, services),
-            LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateLayout(position, services),
+            LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateLayout(position, FieldVariables.None, services),
+            LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateLayout(position, FieldVariables.None, services),
             _ => new EmptyLayout(new Rectangle(position, Size.Zero), textStyle),
         };
 

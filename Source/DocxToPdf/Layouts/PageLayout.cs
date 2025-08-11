@@ -5,6 +5,7 @@ using Proxoft.DocxToPdf.Documents.Shared;
 namespace Proxoft.DocxToPdf.Layouts;
 
 internal record PageLayout(
+    int PageNumber,
     Rectangle BoundingBox,
     Rectangle DrawingArea,
     Layout[] Content,

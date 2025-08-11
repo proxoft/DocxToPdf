@@ -17,6 +17,7 @@ internal static class SectionLayoutBuilder
             this Section section,
             SectionLayoutingResult previousLayoutingResult,
             Rectangle drawingPageArea,
+            FieldVariables fieldVariables,
             LayoutServices services)
     {
         Model[] unprocessed = section
@@ -32,8 +33,8 @@ internal static class SectionLayoutBuilder
         {
             LayoutingResult lr = model switch
             {
-                Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, services),
-                Table table => table.Process(lastModelResult, remainingArea, services),
+                Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, fieldVariables, services),
+                Table table => table.Process(lastModelResult, remainingArea, fieldVariables, services),
                 _ => NoLayoutingResult.Create(remainingArea)
             };
 

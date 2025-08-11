@@ -11,16 +11,17 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 internal static class TableLayoutBuilder
 {
-    public static TableLayoutingResult Process(this Table table, LayoutingResult previousResult, Rectangle remainingArea, LayoutServices services)
+    public static TableLayoutingResult Process(this Table table, LayoutingResult previousResult, Rectangle remainingArea, FieldVariables fieldVariables, LayoutServices services)
     {
         TableLayoutingResult tlr = previousResult.AsResultOfModel(table.Id, TableLayoutingResult.None);
-        return table.ProcessInternal(tlr, remainingArea, services);
+        return table.ProcessInternal(tlr, remainingArea, fieldVariables, services);
     }
 
     private static TableLayoutingResult ProcessInternal(
         this Table table,
         TableLayoutingResult previosLayoutingResult,
         Rectangle availableArea,
+        FieldVariables fieldVariables,
         LayoutServices services)
     {
         GridLayout gridLayout = table.Grid.InitializeGridLayout(table.Id);
@@ -37,7 +38,7 @@ internal static class TableLayoutBuilder
             ];
 
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
-            CellLayoutingResult result = cell.Process(previous, gridLayout, cellAvailableArea, services);
+            CellLayoutingResult result = cell.Process(previous, gridLayout, cellAvailableArea, fieldVariables, services);
 
             cellResults = [..cellResults, result];
             cellResults = cellResults.UpdateStatusByLastResult();

@@ -21,7 +21,7 @@ internal class LayoutBuilder
         }
 
         List<PageLayout> pages = [];
-        PageLayout currentPage = document.Sections[0].Properties.PageConfiguration.CreatePage();
+        PageLayout currentPage = document.Sections[0].Properties.PageConfiguration.CreateNewPage(0);
         Rectangle remainingDrawingArea = currentPage.DrawingArea;
         SectionLayoutingResult layoutingResult = SectionLayoutingResult.None;
 
@@ -33,6 +33,7 @@ internal class LayoutBuilder
                 layoutingResult = section.Process(
                     layoutingResult,
                     remainingDrawingArea,
+                    new FieldVariables(currentPage.PageNumber, pages.Count + 1),
                     _layoutServices
                 );
 
@@ -47,7 +48,7 @@ internal class LayoutBuilder
                     or ResultStatus.NewPageRequired)
                 {
                     pages.Add(currentPage);
-                    currentPage = section.Properties.PageConfiguration.CreatePage();
+                    currentPage = section.Properties.PageConfiguration.CreateNewPage(currentPage.PageNumber);
                     remainingDrawingArea = currentPage.DrawingArea;
                 }
             } while (layoutingResult.Status != ResultStatus.Finished);
@@ -60,12 +61,12 @@ internal class LayoutBuilder
 
 file static class Functions
 {
-    public static PageLayout CreatePage(this PageConfiguration pageConfiguration)
+    public static PageLayout CreateNewPage(this PageConfiguration pageConfiguration, int currentPageNumber)
     {
         Rectangle boundingBox = pageConfiguration.CalculatePageBoundingBox();
         Rectangle drawingRegion = pageConfiguration.CalculatePageDrawingArea();
 
-        PageLayout page = new(boundingBox, drawingRegion, [], pageConfiguration, Borders.None);
+        PageLayout page = new(currentPageNumber + 1, boundingBox, drawingRegion, [], pageConfiguration, Borders.None);
         return page;
     }
 
