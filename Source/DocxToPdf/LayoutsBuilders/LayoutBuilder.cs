@@ -13,19 +13,19 @@ internal class LayoutBuilder
 {
     private readonly LayoutServices _layoutServices = new();
 
-    public PageLayout[] CreatePages(DocumentModel document)
-    {
-        if(document.Sections.Length == 0)
-        {
-            return [];
-        }
+    public PageLayout[] CreatePages(DocumentModel document) =>
+        document.Sections.Length == 0
+            ? []
+            : this.CreatePages(document.Sections);
 
+    private PageLayout[] CreatePages(Section[] sections)
+    {
         List<PageLayout> pages = [];
-        PageLayout currentPage = document.Sections[0].Properties.PageConfiguration.CreateNewPage(0);
+        PageLayout currentPage = sections[0].Properties.PageConfiguration.CreateNewPage(0);
         Rectangle remainingDrawingArea = currentPage.DrawingArea;
         SectionLayoutingResult layoutingResult = SectionLayoutingResult.None;
 
-        foreach (Section section in document.Sections)
+        foreach (Section section in sections)
         {
             // if section needs new page, create new page
             do
@@ -48,6 +48,12 @@ internal class LayoutBuilder
                     or ResultStatus.NewPageRequired)
                 {
                     pages.Add(currentPage);
+
+                    // try update previous pages. Possible outcomes:
+                    // page not changed at all
+                    // page reshaped, all original layouts remain on the page
+                    // page reshaped, some original layouts must be moved to next page => restart layouting
+
                     currentPage = section.Properties.PageConfiguration.CreateNewPage(currentPage.PageNumber);
                     remainingDrawingArea = currentPage.DrawingArea;
                 }
@@ -55,7 +61,7 @@ internal class LayoutBuilder
         }
 
         pages.Add(currentPage);
-        return [..pages];
+        return [.. pages];
     }
 }
 
