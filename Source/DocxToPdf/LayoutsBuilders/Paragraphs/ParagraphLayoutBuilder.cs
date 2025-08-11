@@ -14,8 +14,6 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 
 internal static class ParagraphLayoutBuilder
 {
-    private static readonly float _defaultLineHeight = 12f; // Default line height, can be adjusted based on font size or other factors
-
     public static ParagraphLayoutingResult Process(
         this Paragraph paragraph,
         LayoutingResult previousLayoutingResult,
@@ -23,8 +21,12 @@ internal static class ParagraphLayoutBuilder
         LayoutServices services)
     {
         ParagraphLayoutingResult plr = previousLayoutingResult.AsResultOfModel(paragraph.Id, ParagraphLayoutingResult.None);
+        if(plr.Status == ResultStatus.NewPageRequired)
+        {
+            return new ParagraphLayoutingResult(paragraph.Id, ParagraphLayout.Empty, ModelId.None, availableArea, ResultStatus.Finished);
+        }
 
-        Rectangle ar = plr.StartFromElementId == ModelId.None
+        Rectangle ar = plr.LastProcessedModelId == ModelId.None
             ? availableArea
             : availableArea.CropFromTop(paragraph.Style.ParagraphSpacing.Before);
 
@@ -37,10 +39,8 @@ internal static class ParagraphLayoutBuilder
         Rectangle availableArea,
         LayoutServices services)
     {
-        ModelId continueFrom = previousLayoutingResult.StartFromElementId;
-
         IEnumerable<Element> unprocessed = paragraph.Elements
-            .SkipProcessed(continueFrom);
+            .SkipProcessed(previousLayoutingResult.LastProcessedModelId, finished: true);
 
         (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) = unprocessed.CreateLines(availableArea, paragraph.Style, services);
 
@@ -109,12 +109,14 @@ internal static class ParagraphLayoutBuilder
                 spaceAfterLastLine = lineSpaceAfterLine;
             }
 
-            keepProcessing = (remainingHeight > 0) && unprocessed.Length > 0;
+            keepProcessing = (remainingHeight > 0) && unprocessed.Length > 0
+                && line.Decoration == LineDecoration.None;
         } while (keepProcessing);
 
 
         ResultStatus status = 
             lines.Count == 0 ? ResultStatus.IgnoreAndRequestDrawingArea
+            : lines.Last().Decoration == LineDecoration.PageBreak ? ResultStatus.NewPageRequired
             : unprocessed.Length > 0 ? ResultStatus.RequestDrawingArea
             : ResultStatus.Finished;
 
@@ -131,15 +133,21 @@ internal static class ParagraphLayoutBuilder
         float lineWidth = 0;
         ElementLayout[] elementLayouts = [];
         ModelId lastElementId = ModelId.None;
-        bool interrupted = false;
         Position currentPosition = startPosition;
+        bool isPageBreak = false;
 
         foreach (Element element in elements)
         {
+            if (element is PageBreak)
+            {
+                isPageBreak = true;
+                lastElementId = element.Id;
+                break;
+            }
+
             ElementLayout elementLayout = element.CreateLayout(currentPosition, services);
             if (lineWidth + elementLayout.BoundingBox.Width > availableWidth)
             {
-                interrupted = true;
                 break;
             }
 
@@ -149,24 +157,35 @@ internal static class ParagraphLayoutBuilder
             lineWidth += elementLayout.BoundingBox.Width;
         }
 
+        bool isLastLine = elements.Length == 0
+            || lastElementId == elements.Last().Id
+            ;
+
+        LineDecoration lineDecoration = isPageBreak
+            ? LineDecoration.PageBreak
+            : isLastLine ? LineDecoration.Last
+            : LineDecoration.None;
+
         // TODO: known issue: if element does not fit in line, word wrap must be implemented
         return elementLayouts.Length == 0
-            ? (CreateEmptyLine(startPosition, textStyle, services), lastElementId)
-            : (elementLayouts.CreateLine(!interrupted, textStyle, services), lastElementId);
+            ? (CreateEmptyLine(startPosition, lineDecoration, textStyle, services), lastElementId)
+            : (elementLayouts.CreateLine(lineDecoration, textStyle, services), lastElementId);
     }
 
-    private static LineLayout CreateEmptyLine(Position position, TextStyle textStyle, LayoutServices services)
+    private static LineLayout CreateEmptyLine(Position position, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
     {
-        Rectangle bb = new(position, new Size(0, _defaultLineHeight));
-        ElementLayout specialChar = textStyle.CreateLineCharacter(true, bb.TopRight, services);
-        return new LineLayout([], true, bb, Borders.None, specialChar);
+        float defaultLineHeight = services.CalculateLineHeight(textStyle);
+        Rectangle bb = new(position, new Size(0, defaultLineHeight));
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight, services);
+        return new LineLayout([], lineDecoration, bb, Borders.None, specialChar);
     }
 
-    private static LineLayout CreateLine(this ElementLayout[] elements, bool isLast, TextStyle textStyle, LayoutServices services)
+    private static LineLayout CreateLine(this ElementLayout[] elements, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
     {
+        float defaultLineHeight = services.CalculateLineHeight(textStyle);
         float height = elements
             .Select(e => e.Size.Height)
-            .DefaultIfEmpty(_defaultLineHeight)
+            .DefaultIfEmpty(defaultLineHeight)
             .Max();
 
         Rectangle bb = elements.Select(e => e.BoundingBox).CalculateBoundingBox();
@@ -181,27 +200,27 @@ internal static class ParagraphLayoutBuilder
             .Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
         ];
 
-        ElementLayout specialChar = textStyle.CreateLineCharacter(isLast, bb.TopRight, services);
-        return new LineLayout(e2, isLast, bb, Borders.None, specialChar);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight, services);
+        return new LineLayout(e2, lineDecoration, bb, Borders.None, specialChar);
     }
 }
 
 file static class Operations
 {
-    public static ElementLayout CreateLineCharacter(this TextStyle textStyle, bool isLastLine, Position position, LayoutServices services) =>
-        isLastLine
-            ? textStyle.CreateParagraphSpecialChar(position, services)
-            : new EmptyLayout(new Rectangle(position, Size.Zero), Borders.None, textStyle);
+    public static ElementLayout CreateLineCharacter(
+        this TextStyle textStyle,
+        LineDecoration lineDecoration,
+        Position position, LayoutServices services) =>
+        lineDecoration switch
+        {
+            LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateLayout(position, services),
+            LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateLayout(position, services),
+            _ => new EmptyLayout(new Rectangle(position, Size.Zero), textStyle),
+        };
 
     //public static ElementLayout CreateEndOfLineCharacter(this TextStyle textStyle, bool isLastLine, Position position, LayoutServices services)
     //{
     //    Text endOfLineChar = new(ModelId.None, "⏎", textStyle);
     //    return endOfLineChar.CreateLayout(position, services);
     //}
-
-    private static ElementLayout CreateParagraphSpecialChar(this TextStyle textStyle, Position position, LayoutServices services)
-    {
-        Text paragraphChar = new(ModelId.None, "¶", textStyle);
-        return paragraphChar.CreateLayout(position, services);
-    }
 }

@@ -6,9 +6,8 @@ namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal record EmptyLayout(
     Rectangle BoundingBox,
-    Borders Borders,
     TextStyle TextStyle
-) : ElementLayout(Size.Zero, 0, BoundingBox, 0, Borders, LayoutPartition.StartEnd)
+) : ElementLayout(Size.Zero, 0, BoundingBox, 0, Borders.None, LayoutPartition.StartEnd)
 {
     public override TextStyle GetTextStyle() => this.TextStyle;
 }

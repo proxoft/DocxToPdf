@@ -18,7 +18,7 @@ internal static class ElementLayoutBuilder
         {
             Text t => new TextLayout(size, baseLineOffset, boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
             Space => new SpaceLayout(size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle),
-            _ => new EmptyLayout(boundingBox, Borders.None, element.TextStyle)
+            _ => new EmptyLayout(boundingBox, element.TextStyle)
         };
 
         return layout;

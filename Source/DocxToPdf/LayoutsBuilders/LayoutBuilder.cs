@@ -42,7 +42,9 @@ internal class LayoutBuilder
                 };
 
                 remainingDrawingArea = layoutingResult.RemainingDrawingArea;
-                if (layoutingResult.Status == ResultStatus.RequestDrawingArea)
+                if (layoutingResult.Status
+                    is ResultStatus.RequestDrawingArea
+                    or ResultStatus.NewPageRequired)
                 {
                     pages.Add(currentPage);
                     currentPage = section.Properties.PageConfiguration.CreatePage();

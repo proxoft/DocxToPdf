@@ -33,17 +33,18 @@ internal static class ParagraphBuilder
              ..run
                  .ChildElements
                  .Where(c => c is Word.Text || c is Word.TabChar || c is Word.Drawing || c is Word.Break || c is Word.CarriageReturn)
-                .SelectMany(c => {
-                     return c switch
-                     {
-                         Word.Text t => t.SplitToElements(services, textStyle),
-                         Word.TabChar t => [new Tab(services.IdFactory.NextWordId(), textStyle)],
-                         // Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
-                         // Word.CarriageReturn _ => [new NewLineElement(textStyle)],
-                         // Word.Break b => b.CreateBreakElement(textStyle),
-                         _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", textStyle)]
-                     };
-                 })
+                 .SelectMany(c => c.Split(services, textStyle))
         ] ;
     }
+
+    private static Element[] Split(this OpenXml.OpenXmlElement e, BuilderServices services, TextStyle textStyle) =>
+        e switch
+        {
+            Word.Text t => t.SplitToElements(services, textStyle),
+            Word.TabChar => [new Tab(services.IdFactory.NextWordId(), textStyle)],
+            // Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
+            // Word.CarriageReturn _ => [new NewLineElement(textStyle)],
+            Word.Break => [new PageBreak(services.IdFactory.NextWordId(), textStyle.ResizeFont(-2))],
+            _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", textStyle)]
+        };
 }

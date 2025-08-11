@@ -20,6 +20,12 @@ internal class LayoutServices
 
         return (boundingBox, baseLineOffset);
     }
+
+    public float CalculateLineHeight(TextStyle textStyle)
+    {
+        Size s = XUnitCalculator.CalculateBoundingBox("A", textStyle).boundingBox;
+        return s.Height;
+    }
 }
 
 file static class XUnitCalculator

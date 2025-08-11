@@ -37,7 +37,7 @@ internal static class SectionLayoutBuilder
                 _ => NoLayoutingResult.Create(remainingArea)
             };
 
-            if(lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea)
+            if(lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea or ResultStatus.NewPageRequired)
             {
                 remainingArea = lr.RemainingDrawingArea;
                 layouts = [.. layouts, .. lr.Layouts];

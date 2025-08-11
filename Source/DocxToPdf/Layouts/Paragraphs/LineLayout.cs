@@ -4,12 +4,19 @@ using Proxoft.DocxToPdf.Documents.Shared;
 
 namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
+internal enum LineDecoration
+{
+    None,
+    Last,
+    PageBreak,
+}
+
 internal record LineLayout(
     ElementLayout[] Words,
-    bool IsLastLineOfParagraph,
+    LineDecoration Decoration,
     Rectangle BoundingBox,
     Borders Borders,
-    ElementLayout SpecialCharacter
+    ElementLayout DecorationText
 ) : Layout(BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
 {
     public IEnumerable<Layout> InnerLayouts => this.Words;

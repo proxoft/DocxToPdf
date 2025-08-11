@@ -10,6 +10,7 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders;
 internal enum ResultStatus
 {
     Finished,
+    NewPageRequired,
     RequestDrawingArea,
     IgnoreAndRequestDrawingArea
 }
@@ -49,7 +50,7 @@ internal record SectionLayoutingResult(
 internal record ParagraphLayoutingResult(
     ModelId ModelId,
     ParagraphLayout ParagraphLayout,
-    ModelId StartFromElementId,
+    ModelId LastProcessedModelId,
     Rectangle RemainingDrawingArea,
     ResultStatus Status) : LayoutingResult(ModelId, [ParagraphLayout], RemainingDrawingArea, Status)
 {
