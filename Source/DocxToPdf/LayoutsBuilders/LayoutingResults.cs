@@ -1,8 +1,10 @@
-﻿using Proxoft.DocxToPdf.Documents;
+﻿using System.Collections.Generic;
+using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
+using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.Layouts.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders;
@@ -15,17 +17,21 @@ internal enum ResultStatus
     IgnoreAndRequestDrawingArea
 }
 
-internal record LayoutingResult(
+internal abstract record LayoutingResult(
     ModelId ModelId,
-    Layout[] Layouts,
     Rectangle RemainingDrawingArea,
-    ResultStatus Status);
-
-internal record NoLayoutingResult : LayoutingResult
+    ResultStatus Status)
 {
-    private NoLayoutingResult() : base(ModelId.None, [], Rectangle.Empty, ResultStatus.Finished)
+    public abstract IEnumerable<Layout> Layouts { get; }
+}
+
+internal sealed record NoLayoutingResult : LayoutingResult
+{
+    private NoLayoutingResult() : base(ModelId.None, Rectangle.Empty, ResultStatus.Finished)
     {
     }
+
+    public override IEnumerable<Layout> Layouts => [];
 
     public static NoLayoutingResult Create(Rectangle remainingDrawingArea) =>
         new() { RemainingDrawingArea = remainingDrawingArea };
@@ -33,18 +39,20 @@ internal record NoLayoutingResult : LayoutingResult
 
 internal record SectionLayoutingResult(
     ModelId ModelId,
-    Layout[] Layouts,
+    SectionLayout SectionLayout,
     LayoutingResult LastModelLayoutingResult, // TableOrParagraph
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult(ModelId, Layouts, RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, RemainingDrawingArea, Status)
 {
     public static readonly SectionLayoutingResult None = new(
         ModelId.None,
-        [],
+        SectionLayout.Empty,
         NoLayoutingResult.Create(Rectangle.Empty),
         Rectangle.Empty,
         ResultStatus.Finished
     );
+
+    public override IEnumerable<Layout> Layouts => [this.SectionLayout];
 }
 
 internal record ParagraphLayoutingResult(
@@ -52,10 +60,12 @@ internal record ParagraphLayoutingResult(
     ParagraphLayout ParagraphLayout,
     ModelId LastProcessedModelId,
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult(ModelId, [ParagraphLayout], RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, RemainingDrawingArea, Status)
 {
     public static ParagraphLayoutingResult None =>
         new(ModelId.None, ParagraphLayout.Empty, ModelId.None, Rectangle.Empty, ResultStatus.Finished);
+
+    public override IEnumerable<Layout> Layouts => [this.ParagraphLayout];
 }
 
 internal record CellLayoutingResult(
@@ -65,7 +75,7 @@ internal record CellLayoutingResult(
     GridPosition GridPosition,
     LayoutingResult LastModelLayoutingResult, // TableOrParagraph
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult(ModelId, [CellLayout], RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, RemainingDrawingArea, Status)
 {
     public static readonly CellLayoutingResult None = new(
         ModelId.None,
@@ -76,6 +86,8 @@ internal record CellLayoutingResult(
         Rectangle.Empty,
         ResultStatus.Finished
     );
+
+    public override IEnumerable<Layout> Layouts => [this.CellLayout];
 }
 
 internal record TableLayoutingResult(
@@ -84,7 +96,7 @@ internal record TableLayoutingResult(
     GridLayout Grid,
     CellLayoutingResult[] CellsLayoutingResults,
     Rectangle RemainingDrawingArea,
-    ResultStatus Status) : LayoutingResult(ModelId, [TableLayout], RemainingDrawingArea, Status)
+    ResultStatus Status) : LayoutingResult(ModelId, RemainingDrawingArea, Status)
 {
     public static TableLayoutingResult None = new(
         ModelId.None,
@@ -93,6 +105,8 @@ internal record TableLayoutingResult(
         [],
         Rectangle.Empty,
         ResultStatus.Finished);
+
+    public override IEnumerable<Layout> Layouts => [this.TableLayout];
 }
 
 internal static class LayoutingResultFunctions

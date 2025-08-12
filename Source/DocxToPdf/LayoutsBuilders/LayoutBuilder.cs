@@ -25,7 +25,7 @@ internal class LayoutBuilder
         List<PageLayout> pages = [];
         PageLayout currentPage = sections[0].CreateNewPage(0);
         Rectangle remainingDrawingArea = currentPage.DrawingArea;
-        SectionLayoutingResult layoutingResult = SectionLayoutingResult.None;
+        SectionLayoutingResult lastSectionLayoutingResult = SectionLayoutingResult.None;
 
         bool done = false;
         int minimalTotalPages = 1;
@@ -33,12 +33,12 @@ internal class LayoutBuilder
         while (!done)
         {
             Section section = sections
-                .SkipProcessed(layoutingResult)
+                .SkipProcessed(lastSectionLayoutingResult)
                 .First();
 
             FieldVariables fieldVariables = new(currentPage.PageNumber, Math.Max(minimalTotalPages, pages.Count + 1));
-            layoutingResult = section.Process(
-                    layoutingResult,
+            lastSectionLayoutingResult = section.Process(
+                    lastSectionLayoutingResult,
                     remainingDrawingArea,
                     fieldVariables,
                     _layoutServices
@@ -46,12 +46,12 @@ internal class LayoutBuilder
 
             currentPage = currentPage with
             {
-                Content = [.. currentPage.Content, ..layoutingResult.Layouts]
+                Content = [.. currentPage.Content, ..lastSectionLayoutingResult.Layouts]
             };
 
-            remainingDrawingArea = layoutingResult.RemainingDrawingArea;
+            remainingDrawingArea = lastSectionLayoutingResult.RemainingDrawingArea;
 
-            if (layoutingResult.Status
+            if (lastSectionLayoutingResult.Status
                     is ResultStatus.RequestDrawingArea
                     or ResultStatus.NewPageRequired)
             {
@@ -68,8 +68,8 @@ internal class LayoutBuilder
             }
 
             // add a safeguard for maximum iterations equal to number of elements in DocumentModel
-            done = layoutingResult.Status == ResultStatus.Finished
-                && layoutingResult.ModelId == sections.Last().Id;
+            done = lastSectionLayoutingResult.Status == ResultStatus.Finished
+                && lastSectionLayoutingResult.ModelId == sections.Last().Id;
         }
 
         pages.Add(currentPage);

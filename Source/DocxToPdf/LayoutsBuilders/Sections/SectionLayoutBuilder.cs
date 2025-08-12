@@ -8,6 +8,9 @@ using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
+using Proxoft.DocxToPdf.Layouts.Sections;
+using Proxoft.DocxToPdf.Documents.Shared;
+using System.Linq;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
@@ -52,9 +55,16 @@ internal static class SectionLayoutBuilder
             }
         }
 
+        Rectangle boudingBox = layouts
+            .Select(l => l.BoundingBox)
+            .DefaultIfEmpty(new Rectangle(drawingPageArea.TopLeft, Size.Zero))
+            .CalculateBoundingBox();
+
+        LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResult);
+
         return new SectionLayoutingResult(
             section.Id,
-            layouts,
+            new SectionLayout(section.Id, layouts, boudingBox, Borders.None, partition),
             lastModelResult,
             remainingArea,
             resultStatus

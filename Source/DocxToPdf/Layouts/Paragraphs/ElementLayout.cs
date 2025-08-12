@@ -1,4 +1,5 @@
-﻿using Proxoft.DocxToPdf.Documents.Common;
+﻿using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
 

@@ -1,7 +1,6 @@
 ﻿using PdfSharp.Drawing;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 namespace Proxoft.DocxToPdf.LayoutsRendering.Renderers;
 

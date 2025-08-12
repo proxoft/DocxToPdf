@@ -55,7 +55,7 @@ internal static class ParagraphLayoutBuilder
 
         Rectangle remainingArea = Rectangle.FromCorners(paragraphBb.BottomLeft, availableArea.BottomRight);
         LayoutPartition partition = status.CalculateLayoutPartition(previousLayoutingResult);
-        ParagraphLayout pl = new([.. lines], paragraphBb, Borders.None, partition);
+        ParagraphLayout pl = new(paragraph.Id, [.. lines], paragraphBb, Borders.None, partition);
 
         if(status == ResultStatus.Finished)
         {

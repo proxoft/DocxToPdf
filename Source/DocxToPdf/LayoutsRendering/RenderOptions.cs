@@ -1,6 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
+using Proxoft.DocxToPdf.Layouts.Sections;
 
 namespace Proxoft.DocxToPdf.LayoutsRendering;
 
@@ -30,6 +31,7 @@ internal static class Operators
     public static BorderStyle GetBorderStyle(this RenderOptions options, Layout forLayout) =>
         forLayout switch
         {
+            SectionLayout => options.SectionBorder,
             ParagraphLayout => options.ParagraphBorder,
             LineLayout => options.LineBorder,
             TextLayout => options.WordBorder,

@@ -3,17 +3,16 @@ using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
 
-namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
+namespace Proxoft.DocxToPdf.Layouts.Sections;
 
-internal record ParagraphLayout(
+internal record SectionLayout(
     ModelId ModelId,
-    LineLayout[] Lines,
+    Layout[] Layouts,
     Rectangle BoundingBox,
     Borders Borders,
-    LayoutPartition Partition
-) : Layout(BoundingBox, Borders, Partition), IComposedLayout
+    LayoutPartition Partition) : Layout(BoundingBox, Borders, Partition), IComposedLayout
 {
-    public static readonly ParagraphLayout Empty = new(
+    public static readonly SectionLayout Empty = new(
         ModelId.None,
         [],
         Rectangle.Empty,
@@ -21,5 +20,5 @@ internal record ParagraphLayout(
         LayoutPartition.StartEnd
     );
 
-    public IEnumerable<Layout> InnerLayouts => this.Lines;
+    public IEnumerable<Layout> InnerLayouts => this.Layouts;
 }
