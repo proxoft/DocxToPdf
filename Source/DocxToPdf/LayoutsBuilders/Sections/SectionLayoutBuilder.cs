@@ -1,16 +1,17 @@
-﻿using Proxoft.DocxToPdf.Documents;
+﻿using System.Linq;
+using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Tables;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 using Proxoft.DocxToPdf.Layouts.Sections;
-using Proxoft.DocxToPdf.Documents.Shared;
-using System.Linq;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
@@ -69,5 +70,31 @@ internal static class SectionLayoutBuilder
             remainingArea,
             resultStatus
         );
+    }
+
+    public static SectionLayoutingResult UpdateLayout(
+        this SectionLayout sectionLayout,
+        Section section,
+        Rectangle drawingPageArea,
+        FieldVariables fieldVariables,
+        LayoutServices services)
+    {
+        foreach(Layout layout in sectionLayout.Layouts)
+        {
+            switch(layout)
+            {
+                case ParagraphLayout paragraphLayout:
+                    Paragraph paragraph = section.Elements
+                        .OfType<Paragraph>()
+                        .Single(e => e.Id == paragraphLayout.ModelId);
+                    // paragraphLayout.UpdateLayout(section, drawingPageArea, fieldVariables, services);
+                    break;
+                // case TableLayout tableLayout:
+                    // tableLayout.UpdateLayout(section, drawingPageArea, fieldVariables, services);
+                    // break;
+            }
+            
+        }
+        return SectionLayoutingResult.None;
     }
 }

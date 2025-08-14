@@ -22,13 +22,14 @@ internal class LayoutBuilder
 
     private PageLayout[] CreatePages(Section[] sections)
     {
-        List<PageLayout> pages = [];
-        PageLayout currentPage = sections[0].CreateNewPage(0);
+        PageLayout[] pages = [];
+        PageLayout currentPage = sections[0].CreateNewPage();
         Rectangle remainingDrawingArea = currentPage.DrawingArea;
         SectionLayoutingResult lastSectionLayoutingResult = SectionLayoutingResult.None;
 
         bool done = false;
         int minimalTotalPages = 1;
+        int currentPageNumber = 1;
 
         while (!done)
         {
@@ -36,7 +37,7 @@ internal class LayoutBuilder
                 .SkipProcessed(lastSectionLayoutingResult)
                 .First();
 
-            FieldVariables fieldVariables = new(currentPage.PageNumber, Math.Max(minimalTotalPages, pages.Count + 1));
+            FieldVariables fieldVariables = new(currentPageNumber, Math.Max(minimalTotalPages, minimalTotalPages));
             lastSectionLayoutingResult = section.Process(
                     lastSectionLayoutingResult,
                     remainingDrawingArea,
@@ -46,7 +47,7 @@ internal class LayoutBuilder
 
             currentPage = currentPage with
             {
-                Content = [.. currentPage.Content, ..lastSectionLayoutingResult.Layouts]
+                Content = [.. currentPage.Content, lastSectionLayoutingResult.SectionLayout]
             };
 
             remainingDrawingArea = lastSectionLayoutingResult.RemainingDrawingArea;
@@ -56,14 +57,16 @@ internal class LayoutBuilder
                     or ResultStatus.NewPageRequired)
             {
                 minimalTotalPages++;
-                pages.Add(currentPage);
+                pages = [..pages, currentPage];
 
-                // try update previous pages. Possible outcomes:
-                // page not changed at all
-                // page updated, changes do not exceed the page
-                // page update, some original layouts must be moved to next page => restart layouting
+                //(pages, lastSectionLayoutingResult) = pages.Update(sections, lastSectionLayoutingResult, _layoutServices);
 
-                currentPage = section.CreateNewPage(currentPage.PageNumber);
+                //section = sections
+                //    .SkipProcessed(lastSectionLayoutingResult)
+                //    .First();
+
+                currentPage = section.CreateNewPage();
+                currentPageNumber++;
                 remainingDrawingArea = currentPage.DrawingArea;
             }
 
@@ -72,22 +75,22 @@ internal class LayoutBuilder
                 && lastSectionLayoutingResult.ModelId == sections.Last().Id;
         }
 
-        pages.Add(currentPage);
-        return [.. pages];
+        pages = [..pages, currentPage];
+        return pages;
     }
 }
 
 file static class Functions
 {
-    public static PageLayout CreateNewPage(this Section section, int currentPageNumber) =>
-        section.Properties.PageConfiguration.CreateNewPage(currentPageNumber);
+    public static PageLayout CreateNewPage(this Section section) =>
+        section.Properties.PageConfiguration.CreateNewPage();
 
-    private static PageLayout CreateNewPage(this PageConfiguration pageConfiguration, int currentPageNumber)
+    private static PageLayout CreateNewPage(this PageConfiguration pageConfiguration)
     {
         Rectangle boundingBox = pageConfiguration.CalculatePageBoundingBox();
         Rectangle drawingRegion = pageConfiguration.CalculatePageDrawingArea();
 
-        PageLayout page = new(currentPageNumber + 1, boundingBox, drawingRegion, [], pageConfiguration, Borders.None);
+        PageLayout page = new(boundingBox, drawingRegion, [], pageConfiguration, Borders.None);
         return page;
     }
 
