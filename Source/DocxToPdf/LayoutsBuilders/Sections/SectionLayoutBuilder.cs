@@ -29,7 +29,7 @@ internal static class SectionLayoutBuilder
                 .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult);
 
         Layout[] layouts = [];
-        Rectangle remainingArea = drawingPageArea;
+        Rectangle remainingArea = drawingPageArea.MoveTo(Position.Zero);
         LayoutingResult lastModelResult = previousLayoutingResult.LastModelLayoutingResult;
         ResultStatus resultStatus = ResultStatus.Finished;
 
@@ -63,11 +63,14 @@ internal static class SectionLayoutBuilder
 
         LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResult);
 
+        Rectangle remArea = drawingPageArea
+            .CropFromTop(boudingBox.Height);
+
         return new SectionLayoutingResult(
             section.Id,
             new SectionLayout(section.Id, layouts, boudingBox, Borders.None, partition),
             lastModelResult,
-            remainingArea,
+            remArea,
             resultStatus
         );
     }

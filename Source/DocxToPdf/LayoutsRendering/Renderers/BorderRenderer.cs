@@ -8,23 +8,27 @@ namespace Proxoft.DocxToPdf.LayoutsRendering.Renderers;
 
 internal static class BorderRenderer
 {
-    public static void RenderBorder(this Layout layout, XGraphics graphics)
+    public static void RenderBorder(this Layout layout, Position offset, XGraphics graphics)
     {
         if (layout.Borders == Borders.None)
         {
             return;
         }
 
-        layout.BoundingBox.LeftLine.RenderBorder(layout.Borders.Left, graphics);
+        Rectangle bb = layout.BoundingBox
+            .MoveX(offset.X)
+            .MoveY(offset.Y);
+
+        bb.LeftLine.RenderBorder(layout.Borders.Left, graphics);
         if (layout.Partition is LayoutPartition.Start or LayoutPartition.StartEnd)
         {
-            layout.BoundingBox.TopLine.RenderBorder(layout.Borders.Top, graphics);
+            bb.TopLine.RenderBorder(layout.Borders.Top, graphics);
         }
 
-        layout.BoundingBox.RightLine.RenderBorder(layout.Borders.Right, graphics);
+        bb.RightLine.RenderBorder(layout.Borders.Right, graphics);
         if (layout.Partition is LayoutPartition.End or LayoutPartition.StartEnd)
         {
-            layout.BoundingBox.BottomLine.RenderBorder(layout.Borders.Bottom, graphics);
+            bb.BottomLine.RenderBorder(layout.Borders.Bottom, graphics);
         }
     }
 

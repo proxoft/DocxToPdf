@@ -1,4 +1,5 @@
 ﻿using PdfSharp.Drawing;
+using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 
@@ -8,12 +9,13 @@ internal static class SpecialCharactersRenderer
 {
     public static void RenderSpecialCharacter(
         this Layout layout,
+        Position offset,
         XGraphics graphics,
         RenderOptions options)
     {
         if (options.RenderParagraphCharacter && layout is LineLayout lineLayout && lineLayout.Decoration != LineDecoration.None)
         {
-            lineLayout.DecorationText.RenderText(graphics, options);
+            lineLayout.DecorationText.RenderText(offset, graphics, options);
         }
     }
 }

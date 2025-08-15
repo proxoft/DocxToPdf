@@ -25,7 +25,7 @@ internal static class CellLayoutBuilder
         LayoutingResult lastChildResult= previousLayoutingResults.LastByOrder().LastModelLayoutingResult;
         Model[] unprocessed = cell.ParagraphsOrTables.SkipProcessed(lastChildResult);
 
-        Rectangle remainingArea = availableArea.Clip(cell.Padding);
+        Rectangle remainingArea = availableArea.MoveTo(Position.Zero).Clip(cell.Padding);
         LayoutingResult lastModelResult = previousLayoutingResults.Length == 0
             ? NoLayoutingResult.Create(remainingArea)
             : lastChildResult;
@@ -64,7 +64,7 @@ internal static class CellLayoutBuilder
             0 // cell height cannot exceed available area
         );
 
-        Rectangle minSize = new Rectangle(availableArea.X, availableArea.Y, minWidth, minHeight)
+        Rectangle minSize = new Rectangle(Position.Zero, new Size(minWidth, minHeight))
             .Clip(cell.Padding);
 
         Rectangle boundingBox = layouts
@@ -72,6 +72,7 @@ internal static class CellLayoutBuilder
             .Append(minSize) // append mininum bounding box if there are no elements or the elements have smaller width than the cell default
             .CalculateBoundingBox()
             .Expand(cell.Padding)
+            .MoveTo(availableArea.TopLeft)
             ;
 
         LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResults.LastByOrder());
@@ -84,13 +85,16 @@ internal static class CellLayoutBuilder
             partition
         );
 
+        Rectangle remArea = availableArea
+            .CropFromTop(boundingBox.Height);
+
         return new CellLayoutingResult(
             cell.Id,
             previousLayoutingResults.LastByOrder().Order + 1,
             cellLayout,
             cell.GridPosition,
             lastModelResult,
-            remainingArea,
+            remArea,
             resultStatus
         );
     }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts.Tables;
@@ -8,21 +7,20 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 internal static class GridLayoutOperators
 {
-    public static Rectangle[] GridAvailableAreas(this GridLayout grid, Rectangle totalAvailableArea)
+    public static Rectangle[] GridAvailableAreas(this GridLayout grid, Size totalAvailableArea)
     {
         float[] columnWidths = grid.TotalGridWidth() <= totalAvailableArea.Width
             ? grid.Columns
             : grid.RecalculateWidthsToFitIn(totalAvailableArea.Width);
 
-        float x = totalAvailableArea.X;
-        float y = totalAvailableArea.Y;
+        float x = 0;
         float height = totalAvailableArea.Height;
 
         float offset = 0;
         Rectangle[] areas = [
             ..columnWidths
                 .Select(width => {
-                    Rectangle r = new(x + offset, y, width, height);
+                    Rectangle r = new(x + offset, 0, width, height);
                     offset += width;
                     return r;
                 })

@@ -3,6 +3,7 @@ using System.Text;
 using PdfSharp;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
+using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsRendering.Renderers;
@@ -51,30 +52,30 @@ internal static class LayoutRenderer
     }
 
     private static void Render(this PageLayout page, XGraphics graphics, RenderOptions options) =>
-        page.Content.Render(graphics, options);
+        page.Content.Render(page.DrawingArea.TopLeft, graphics, options);
 
-    private static void Render(this IEnumerable<Layout> layouts, XGraphics graphics, RenderOptions options)
+    private static void Render(this IEnumerable<Layout> layouts, Position offset, XGraphics graphics, RenderOptions options)
     {
         foreach (Layout layout in layouts)
         {
-            layout.Render(graphics, options);
+            layout.Render(offset, graphics, options);
         }
     }
 
-    private static void Render(this Layout layout, XGraphics graphics, RenderOptions options)
+    private static void Render(this Layout layout, Position offset, XGraphics graphics, RenderOptions options)
     {
         switch (layout)
         {
             case ElementLayout element:
-                element.RenderText(graphics, options);
+                element.RenderText(offset, graphics, options);
                 break;
             case IComposedLayout composedLayout:
-                composedLayout.InnerLayouts.Render(graphics, options);
+                composedLayout.InnerLayouts.Render(offset.Shift(layout.BoundingBox.TopLeft.X, layout.BoundingBox.TopLeft.Y), graphics, options);
                 break;
         }
 
-        layout.RenderBorder(graphics);
-        layout.RenderSpecialCharacter(graphics, options);
-        layout.RenderDebuggingBorder(graphics, options);
+        layout.RenderBorder(offset, graphics);
+        layout.RenderSpecialCharacter(offset.Shift(layout.BoundingBox.TopLeft.X, layout.BoundingBox.TopLeft.Y), graphics, options);
+        layout.RenderDebuggingBorder(offset, graphics, options);
     }
 }

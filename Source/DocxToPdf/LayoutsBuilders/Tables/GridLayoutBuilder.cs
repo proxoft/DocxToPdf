@@ -18,19 +18,19 @@ internal static class GridLayoutBuilder
     public static GridLayout JustifyGridRows(
         this GridLayout gridLayout,
         ModelId modelId,
-        Rectangle cellBoundingBox,
+        Size cellSize,
         GridPosition gridPosition,
         Grid grid) =>
         gridLayout
             .EnsureRows(modelId, gridPosition, grid)
-            .JustifyGridRows(cellBoundingBox, gridPosition);
+            .JustifyGridRows(cellSize, gridPosition);
 
     private static GridLayout JustifyGridRows(
         this GridLayout gridLayout,
-        Rectangle cellBoundingBox,
+        Size cellSize,
         GridPosition gridPosition)
     {
-        float toDistribute = cellBoundingBox.Height - gridLayout.CalculateCellAvailableHeight(gridPosition);
+        float toDistribute = cellSize.Height - gridLayout.CalculateCellAvailableHeight(gridPosition);
         if (toDistribute <= 0)
         {
             return gridLayout;
@@ -87,6 +87,7 @@ internal static class GridLayoutBuilder
                 continue; // row already exists
             }
 
+            // TODO: initialize row height to default value
             RowLayout row = new(ri, 0, grid.RowHeights[ri].HeightRule);
             layout = new GridLayout(
                 modelId,

@@ -29,11 +29,11 @@ internal static class LineLayoutBuilder
         bool keepProcessing = true;
         float remainingHeight = availableArea.Height;
 
-        Position currentPosition = availableArea.TopLeft;
+        float currentY = availableArea.Y;
         float spaceAfterLastLine = 0;
         do
         {
-            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentPosition, availableArea.Width, fieldVariables, style.TextStyle, services);
+            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentY, availableArea.Width, fieldVariables, style.TextStyle, services);
             remainingHeight -= line.BoundingBox.Height;
 
             float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
@@ -43,11 +43,13 @@ internal static class LineLayoutBuilder
                 lines.Add(line);
                 lastProcessed = lastElementId;
                 unprocessed = [.. unprocessed.SkipWhile(e => e.Id != lastElementId).Skip(1)];
-                currentPosition = currentPosition.ShiftY(line.BoundingBox.Height);
+                currentY += line.BoundingBox.Height;
+                // currentPosition = currentPosition.ShiftY(line.BoundingBox.Height);
             }
 
             remainingHeight -= lineSpaceAfterLine;
-            currentPosition = currentPosition.ShiftY(lineSpaceAfterLine);
+            currentY += lineSpaceAfterLine;
+            // currentPosition = currentPosition.ShiftY(lineSpaceAfterLine);
 
             if (unprocessed.Length == 0)
             {
@@ -70,7 +72,8 @@ internal static class LineLayoutBuilder
 
     private static (LineLayout line, ModelId lastElementId) CreateLine(
         this Element[] elements,
-        Position startPosition,
+        float YPosition,
+        // Position startPosition,
         float availableWidth,
         FieldVariables fieldVariables,
         TextStyle textStyle,
@@ -79,7 +82,7 @@ internal static class LineLayoutBuilder
         float lineWidth = 0;
         ElementLayout[] elementLayouts = [];
         ModelId lastElementId = ModelId.None;
-        Position currentPosition = startPosition;
+        Position currentPosition = Position.Zero;
         bool isPageBreak = false;
 
         foreach (Element element in elements)
@@ -113,28 +116,27 @@ internal static class LineLayoutBuilder
             : LineDecoration.None;
 
         // TODO: known issue: if element does not fit in line, word wrap must be implemented
-        return elementLayouts.Length == 0
-            ? (CreateEmptyLine(startPosition, lineDecoration, textStyle, services), lastElementId)
-            : (elementLayouts.CreateLine(lineDecoration, textStyle, services), lastElementId);
+        LineLayout ll = elementLayouts.CreateLine(YPosition, lineDecoration, textStyle, services);
+        return (ll, lastElementId);
     }
 
-    private static LineLayout CreateEmptyLine(Position position, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
+    private static LineLayout CreateLine(this ElementLayout[] elements, float YPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
     {
-        float defaultLineHeight = services.CalculateLineHeight(textStyle);
-        Rectangle bb = new(position, new Size(0, defaultLineHeight));
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight, services);
-        return new LineLayout([], lineDecoration, bb, Borders.None, specialChar);
-    }
+        if(elements.Length == 0)
+        {
+            return CreateEmptyLine(YPosition, lineDecoration, textStyle, services);
+        }
 
-    private static LineLayout CreateLine(this ElementLayout[] elements, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
-    {
         float defaultLineHeight = services.CalculateLineHeight(textStyle);
         float height = elements
             .Select(e => e.Size.Height)
             .DefaultIfEmpty(defaultLineHeight)
             .Max();
 
-        Rectangle bb = elements.Select(e => e.BoundingBox).CalculateBoundingBox();
+        Rectangle bb = elements
+            .Select(e => e.BoundingBox)
+            .CalculateBoundingBox()
+            ;
 
         float lineBaselineOffset = elements
             .Select(e => e.BaselineOffset)
@@ -147,7 +149,15 @@ internal static class LineLayoutBuilder
         ];
 
         ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight, services);
-        return new LineLayout(e2, lineDecoration, bb, Borders.None, specialChar);
+        return new LineLayout(e2, lineDecoration, bb.MoveY(YPosition), Borders.None, specialChar);
+    }
+
+    private static LineLayout CreateEmptyLine(float YPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
+    {
+        float defaultLineHeight = services.CalculateLineHeight(textStyle);
+        Rectangle bb = new(new Position(0, YPosition), new Size(0, defaultLineHeight));
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight, services);
+        return new LineLayout([], lineDecoration, bb, Borders.None, specialChar);
     }
 
     private static ElementLayout CreateLineCharacter(
@@ -161,10 +171,4 @@ internal static class LineLayoutBuilder
            LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateLayout(position, FieldVariables.None, services),
            _ => new EmptyLayout(new Rectangle(position, Size.Zero), textStyle),
        };
-
-    //public static ElementLayout CreateEndOfLineCharacter(this TextStyle textStyle, bool isLastLine, Position position, LayoutServices services)
-    //{
-    //    Text endOfLineChar = new(ModelId.None, "⏎", textStyle);
-    //    return endOfLineChar.CreateLayout(position, services);
-    //}
 }

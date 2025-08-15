@@ -8,7 +8,10 @@ public class TableV2Test
     private readonly DocxToPdfExecutor _executor = new(
         "Tables/{0}.docx",
         "Tables/{0}_v2.pdf",
-        RenderOptions.Default
+        new RenderOptions()
+        {
+            // RenderParagraphCharacter = true
+        }
     );
 
     [Fact]

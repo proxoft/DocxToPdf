@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
@@ -14,13 +15,14 @@ internal static class TableLayoutBuilder
     public static TableLayoutingResult Process(this Table table, LayoutingResult previousResult, Rectangle remainingArea, FieldVariables fieldVariables, LayoutServices services)
     {
         TableLayoutingResult tlr = previousResult.AsResultOfModel(table.Id, TableLayoutingResult.None);
-        return table.ProcessInternal(tlr, remainingArea, fieldVariables, services);
+        return table.ProcessInternal(tlr, remainingArea.TopLeft, remainingArea.Size, fieldVariables, services);
     }
 
     private static TableLayoutingResult ProcessInternal(
         this Table table,
         TableLayoutingResult previosLayoutingResult,
-        Rectangle availableArea,
+        Position parentOffset,
+        Size availableArea,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
@@ -43,7 +45,7 @@ internal static class TableLayoutBuilder
             cellResults = [..cellResults, result];
             cellResults = cellResults.UpdateStatusByLastResult();
 
-            gridLayout = gridLayout.JustifyGridRows(table.Id, result.CellLayout.BoundingBox, cell.GridPosition, table.Grid);
+            gridLayout = gridLayout.JustifyGridRows(table.Id, result.CellLayout.BoundingBox.Size, cell.GridPosition, table.Grid);
 
             cellResults = cellResults.UpdateByGrid(gridLayout);
             columnsAvailableArea = gridLayout
@@ -60,7 +62,11 @@ internal static class TableLayoutBuilder
         Rectangle boundingBox = cellResults
             .Select(r => r.CellLayout)
             .Select(c => c.BoundingBox)
-            .CalculateBoundingBox();
+            .CalculateBoundingBox()
+            .MoveTo(parentOffset);
+
+        float cropFromHeight = boundingBox.Height;
+        float remainingHeight = Math.Max(0, availableArea.Height - cropFromHeight);
 
         ResultStatus status = cellResults.Any(r => r.Status == ResultStatus.RequestDrawingArea)
             ? ResultStatus.RequestDrawingArea
@@ -81,7 +87,7 @@ internal static class TableLayoutBuilder
             tableLayout,
             gridLayout,
             [..previosLayoutingResult.CellsLayoutingResults, ..cellResults], // collect all results
-            Rectangle.FromCorners(boundingBox.BottomLeft, availableArea.BottomRight),
+            new Rectangle(parentOffset.ShiftY(cropFromHeight), new Size(availableArea.Width, remainingHeight)),
             status
         );
     }

@@ -7,7 +7,7 @@ namespace Proxoft.DocxToPdf.LayoutsRendering.Renderers;
 
 internal static class ElementRenderer
 {
-    public static void RenderText(this ElementLayout layout, XGraphics graphics, RenderOptions renderOptions)
+    public static void RenderText(this ElementLayout layout, Position offset, XGraphics graphics, RenderOptions renderOptions)
     {
         XFont font = layout.GetTextStyle().ToXFont();
         XBrush brush = layout.GetTextStyle().Brush.ToXBrush();
@@ -26,7 +26,9 @@ internal static class ElementRenderer
             graphics.DrawRectangle(backgroundBrush, layout.BoundingBox.ToXRect());
         }
 
-        Position position = new(layout.BoundingBox.X, layout.BoundingBox.Bottom - layout.LineBaseLineOffset);
+        Position position = new Position(layout.BoundingBox.X, layout.BoundingBox.Bottom - layout.LineBaseLineOffset)
+            .Shift(offset.X, offset.Y);
+
         graphics.DrawString(text, font, brush, position.ToXPoint());
     }
 }
