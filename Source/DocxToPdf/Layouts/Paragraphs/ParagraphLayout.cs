@@ -11,7 +11,7 @@ internal record ParagraphLayout(
     Rectangle BoundingBox,
     Borders Borders,
     LayoutPartition Partition
-) : Layout(BoundingBox, Borders, Partition), IComposedLayout
+) : Layout(BoundingBox, Borders, Partition), IIdLayout, IComposedLayout
 {
     public static readonly ParagraphLayout Empty = new(
         ModelId.None,

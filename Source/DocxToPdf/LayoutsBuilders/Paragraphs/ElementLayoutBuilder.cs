@@ -10,18 +10,18 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 
 internal static class ElementLayoutBuilder
 {
-    public static ElementLayout CreateLayout(this Element element, Position onPosition, FieldVariables fieldVariables, LayoutServices services)
+    public static ElementLayout CreateElementLayout(this Element element, float xPosition, FieldVariables fieldVariables, LayoutServices services)
     {
         (Size size, float baseLineOffset) = services.CalculateBoundingSizeAndBaseline(element, fieldVariables);
 
-        Rectangle boundingBox = new(onPosition, size);
+        Rectangle boundingBox = new(new Position(xPosition, 0), size);
         ElementLayout layout = element switch
         {
-            Text t => new TextLayout(size, baseLineOffset, boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
-            Space => new SpaceLayout(size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle),
-            PageNumberField => new PageNumberLayout(fieldVariables.CurrentPage.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
-            TotalPagesField => new TotalPagesLayout(fieldVariables.TotalPages.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
-            _ => new EmptyLayout(boundingBox, element.TextStyle)
+            Text t => new TextLayout(element.Id, size, baseLineOffset, boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
+            Space => new SpaceLayout(element.Id, size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle),
+            PageNumberField => new PageNumberLayout(element.Id, fieldVariables.CurrentPage.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
+            TotalPagesField => new TotalPagesLayout(element.Id, fieldVariables.TotalPages.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
+            _ => new EmptyLayout(element.Id, boundingBox, element.TextStyle)
         };
 
         return layout;
@@ -37,5 +37,17 @@ internal static class ElementLayoutBuilder
             BoundingBox = bb,
             LineBaseLineOffset = lineBaseLineOffset,
         };
+    }
+
+    public static ElementLayout Update(this ElementLayout layout,  Element element, float xPosition, FieldVariables fieldVariables, LayoutServices services)
+    {
+        if (layout is not TotalPagesLayout)
+        {
+            return layout;
+        }
+
+        // TODO: check situations when element gets smaller than previously
+        ElementLayout el = element.CreateElementLayout(xPosition, fieldVariables, services);
+        return el;
     }
 }

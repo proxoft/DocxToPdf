@@ -45,7 +45,7 @@ internal static class SectionLayoutBuilder
             if(lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea or ResultStatus.NewPageRequired)
             {
                 remainingArea = lr.RemainingDrawingArea;
-                layouts = [.. layouts, .. lr.Layouts];
+                layouts = [.. layouts, .. lr.Layouts.OfType<IIdLayout>().Where(l => l.IsNotEmpty).Cast<Layout>()];
                 lastModelResult = lr;
             }
 
@@ -82,7 +82,11 @@ internal static class SectionLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        foreach(Layout layout in sectionLayout.Layouts)
+        Rectangle remainingArea = drawingPageArea.MoveTo(Position.Zero);
+        Layout[] updatedLayouts = [];
+        LayoutingResult layoutingResult = NoLayoutingResult.Create(remainingArea);
+
+        foreach (Layout layout in sectionLayout.Layouts)
         {
             switch(layout)
             {
@@ -90,14 +94,30 @@ internal static class SectionLayoutBuilder
                     Paragraph paragraph = section.Elements
                         .OfType<Paragraph>()
                         .Single(e => e.Id == paragraphLayout.ModelId);
-                    // paragraphLayout.UpdateLayout(section, drawingPageArea, fieldVariables, services);
+                    ParagraphLayoutingResult plr = paragraphLayout.Update(paragraph, remainingArea, fieldVariables, services);
+                    updatedLayouts = [.. updatedLayouts, plr.ParagraphLayout];
+                    remainingArea = remainingArea.CropFromTop(plr.ParagraphLayout.BoundingBox.Height);
                     break;
                 // case TableLayout tableLayout:
                     // tableLayout.UpdateLayout(section, drawingPageArea, fieldVariables, services);
                     // break;
             }
-            
         }
-        return SectionLayoutingResult.None;
+
+        Rectangle bb = updatedLayouts
+            .Select(l => l.BoundingBox)
+            .DefaultIfEmpty(Rectangle.Empty)
+            .CalculateBoundingBox()
+            .MoveTo(drawingPageArea.TopLeft);
+
+        SectionLayout sl = new(
+            section.Id,
+            updatedLayouts,
+            bb,
+            Borders.None,
+            LayoutPartition.StartEnd
+        );
+
+        return new SectionLayoutingResult(section.Id, sl, layoutingResult, remainingArea, ResultStatus.Finished);
     }
 }

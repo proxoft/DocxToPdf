@@ -51,7 +51,7 @@ internal sealed class ModelIdFactory
         _ignored.Next();
 
     public ModelId NextSectionId() =>
-        _ignored.Next();
+        _section.Next();
 
     public ModelId NextParagraphId() =>
         _paragraph.Next();

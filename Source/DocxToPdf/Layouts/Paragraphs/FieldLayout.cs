@@ -1,10 +1,12 @@
-﻿using Proxoft.DocxToPdf.Documents.Common;
+﻿using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
 
 namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal record FieldLayout(
+    ModelId Id,
     string Content,
     Size Size,
     float BaselineOffset,
@@ -12,7 +14,7 @@ internal record FieldLayout(
     float LineBaseLineOffset,
     Borders Borders,
     TextStyle TextStyle,
-    LayoutPartition Partition) : ElementLayout(Size, BaselineOffset, BoundingBox, LineBaseLineOffset, Borders, Partition)
+    LayoutPartition Partition) : ElementLayout(Id, Size, BaselineOffset, BoundingBox, LineBaseLineOffset, Borders, Partition)
 {
     public override TextStyle GetTextStyle() => this.TextStyle;
 }

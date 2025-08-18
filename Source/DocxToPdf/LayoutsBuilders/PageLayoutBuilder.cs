@@ -11,17 +11,17 @@ internal static class PageLayoutBuilder
 {
     public static (PageLayout[] updatedPages, SectionLayoutingResult sectionLayoutingResult) Update(
         this PageLayout[] pages,
+        int minimalTotalPages,
         Section[] sections,
         SectionLayoutingResult lastLayoutingResult,
         LayoutServices services)
     {
-        int totalPages = pages.Length;
         int currentPage = 1;
 
         PageLayout[] updatedPages = [];
         foreach (PageLayout page in pages)
         {
-            FieldVariables fieldVariables = new(currentPage, totalPages);
+            FieldVariables fieldVariables = new(currentPage, minimalTotalPages);
             (PageLayout updatedPage, _) = Update(page, sections, fieldVariables, services);
             updatedPages = [.. updatedPages, updatedPage];
             currentPage++;

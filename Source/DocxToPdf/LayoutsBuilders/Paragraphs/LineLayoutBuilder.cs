@@ -44,12 +44,10 @@ internal static class LineLayoutBuilder
                 lastProcessed = lastElementId;
                 unprocessed = [.. unprocessed.SkipWhile(e => e.Id != lastElementId).Skip(1)];
                 currentY += line.BoundingBox.Height;
-                // currentPosition = currentPosition.ShiftY(line.BoundingBox.Height);
             }
 
             remainingHeight -= lineSpaceAfterLine;
             currentY += lineSpaceAfterLine;
-            // currentPosition = currentPosition.ShiftY(lineSpaceAfterLine);
 
             if (unprocessed.Length == 0)
             {
@@ -70,10 +68,31 @@ internal static class LineLayoutBuilder
         return ([.. lines], spaceAfterLastLine, lastProcessed, status);
     }
 
+    public static (LineLayout, bool) Update(
+        this LineLayout line,
+        Element[] elements,
+        Rectangle availableArea,
+        FieldVariables fieldVariables,
+        LayoutServices services)
+    {
+        if (!line.ContainsUpdatableField())
+        {
+            LineLayout l = line with
+            {
+                BoundingBox = line.BoundingBox.MoveTo(availableArea.TopLeft)
+            };
+
+            return(l, true);
+        }
+
+        LineLayout updatedLine = line.UpdateLine(elements, availableArea.Width, fieldVariables, services);
+        bool containsAllPreviousWords = line.Words.Last().Id == updatedLine.Words.Last().Id;
+        return (line, containsAllPreviousWords);
+    }
+
     private static (LineLayout line, ModelId lastElementId) CreateLine(
         this Element[] elements,
-        float YPosition,
-        // Position startPosition,
+        float yPosition,
         float availableWidth,
         FieldVariables fieldVariables,
         TextStyle textStyle,
@@ -82,7 +101,7 @@ internal static class LineLayoutBuilder
         float lineWidth = 0;
         ElementLayout[] elementLayouts = [];
         ModelId lastElementId = ModelId.None;
-        Position currentPosition = Position.Zero;
+        float xPosition = 0;
         bool isPageBreak = false;
 
         foreach (Element element in elements)
@@ -94,7 +113,7 @@ internal static class LineLayoutBuilder
                 break;
             }
 
-            ElementLayout elementLayout = element.CreateLayout(currentPosition, fieldVariables, services);
+            ElementLayout elementLayout = element.CreateElementLayout(xPosition, fieldVariables, services);
             if (lineWidth + elementLayout.BoundingBox.Width > availableWidth)
             {
                 break;
@@ -102,7 +121,7 @@ internal static class LineLayoutBuilder
 
             lastElementId = element.Id;
             elementLayouts = [.. elementLayouts, elementLayout];
-            currentPosition = new Position(elementLayout.BoundingBox.Right, currentPosition.Y);
+            xPosition = elementLayout.BoundingBox.Right;
             lineWidth += elementLayout.BoundingBox.Width;
         }
 
@@ -116,21 +135,19 @@ internal static class LineLayoutBuilder
             : LineDecoration.None;
 
         // TODO: known issue: if element does not fit in line, word wrap must be implemented
-        LineLayout ll = elementLayouts.CreateLine(YPosition, lineDecoration, textStyle, services);
+        LineLayout ll = elementLayouts.CreateLine(yPosition, lineDecoration, textStyle, services);
         return (ll, lastElementId);
     }
 
-    private static LineLayout CreateLine(this ElementLayout[] elements, float YPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
+    private static LineLayout CreateLine(this ElementLayout[] elements, float yPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
     {
         if(elements.Length == 0)
         {
-            return CreateEmptyLine(YPosition, lineDecoration, textStyle, services);
+            return CreateEmptyLine(yPosition, lineDecoration, textStyle, services);
         }
 
-        float defaultLineHeight = services.CalculateLineHeight(textStyle);
         float height = elements
             .Select(e => e.Size.Height)
-            .DefaultIfEmpty(defaultLineHeight)
             .Max();
 
         Rectangle bb = elements
@@ -148,27 +165,86 @@ internal static class LineLayoutBuilder
             .Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
         ];
 
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight, services);
-        return new LineLayout(e2, lineDecoration, bb.MoveY(YPosition), Borders.None, specialChar);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight.X, services);
+        return new LineLayout(e2, lineDecoration, bb.MoveY(yPosition), Borders.None, specialChar);
     }
 
     private static LineLayout CreateEmptyLine(float YPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
     {
         float defaultLineHeight = services.CalculateLineHeight(textStyle);
         Rectangle bb = new(new Position(0, YPosition), new Size(0, defaultLineHeight));
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight, services);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, 0, services);
         return new LineLayout([], lineDecoration, bb, Borders.None, specialChar);
+    }
+
+    private static LineLayout UpdateLine(
+        this LineLayout line,
+        Element[] allElements,
+        float availableWidth,
+        FieldVariables fieldVariables,
+        LayoutServices services)
+    {
+        if (!line.InnerLayouts.Any())
+        {
+            return line;
+        }
+
+        ElementLayout[] updatedWords = [];
+        float currentLineWidth = 0;
+
+        foreach(ElementLayout old in line.Words)
+        {
+            Element element = allElements.Single(e => e.Id == old.Id);
+            ElementLayout newLayout = old.Update(element, currentLineWidth, fieldVariables, services);
+            if (currentLineWidth + newLayout.BoundingBox.Width > availableWidth)
+            {
+                break;
+            }
+
+            currentLineWidth += newLayout.BoundingBox.Width;
+            updatedWords = [.. updatedWords, newLayout];
+        }
+
+        float height = updatedWords
+            .Select(e => e.Size.Height)
+            .Max();
+
+        Rectangle bb = updatedWords
+            .Select(e => e.BoundingBox)
+            .CalculateBoundingBox()
+            ;
+
+        float lineBaselineOffset = updatedWords
+            .Select(e => e.BaselineOffset)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        ElementLayout[] e2 = [
+             ..updatedWords
+            .Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
+        ];
+
+        return new LineLayout(
+            e2,
+            line.Decoration,
+            bb,
+            line.Borders,
+            line.DecorationText with
+            {
+                BoundingBox = line.DecorationText.BoundingBox.MoveTo(new Position(bb.TopRight.X, 0)),
+            }
+        );
     }
 
     private static ElementLayout CreateLineCharacter(
        this TextStyle textStyle,
        LineDecoration lineDecoration,
-       Position position,
+       float xPosition,
        LayoutServices services) =>
        lineDecoration switch
        {
-           LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateLayout(position, FieldVariables.None, services),
-           LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateLayout(position, FieldVariables.None, services),
-           _ => new EmptyLayout(new Rectangle(position, Size.Zero), textStyle),
+           LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateElementLayout(xPosition, FieldVariables.None, services),
+           LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(xPosition, FieldVariables.None, services),
+           _ => new EmptyLayout(ModelId.None, new Rectangle(new Position(xPosition, 0), Size.Zero), textStyle),
        };
 }

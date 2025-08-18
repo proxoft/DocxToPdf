@@ -6,6 +6,7 @@ using Proxoft.DocxToPdf.Documents.Styles.Texts;
 namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 internal abstract record ElementLayout(
+    ModelId Id,
     Size Size,
     float BaselineOffset,
     Rectangle BoundingBox,

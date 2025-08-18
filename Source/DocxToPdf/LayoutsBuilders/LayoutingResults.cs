@@ -14,7 +14,8 @@ internal enum ResultStatus
     Finished,
     NewPageRequired,
     RequestDrawingArea,
-    IgnoreAndRequestDrawingArea
+    IgnoreAndRequestDrawingArea,
+    ReconstructRequired
 }
 
 internal abstract record LayoutingResult(

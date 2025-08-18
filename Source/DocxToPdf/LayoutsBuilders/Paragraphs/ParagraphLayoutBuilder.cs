@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml.ExtendedProperties;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
@@ -42,12 +43,7 @@ internal static class ParagraphLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        LineLayout[] lines = [];
-
-        return ParagraphLayoutingResult.None with
-        {
-            ModelId = paragraph.Id
-        };
+        return paragraphLayout.UpdateInternal(paragraph, availableArea.TopLeft, availableArea.Size, fieldVariables, services);
     }
 
     private static ParagraphLayoutingResult ProcessInternal(
@@ -87,6 +83,61 @@ internal static class ParagraphLayoutBuilder
             pl,
             lastProcessedElementId,
             new Rectangle(parentOffset.ShiftY(cropFromHeight), new Size(availableArea.Width, remainingHeight)),
+            status
+        );
+    }
+
+    private static ParagraphLayoutingResult UpdateInternal(
+        this ParagraphLayout paragraphLayout,
+        Paragraph paragraph,
+        Position parentOffset,
+        Size availableArea,
+        FieldVariables fieldVariables,
+        LayoutServices services)
+    {
+        LineLayout[] updatedLines = [];
+        float currentHeight = 0;
+
+        foreach (LineLayout line in paragraphLayout.Lines)
+        {
+            (LineLayout ul, bool containsAll) = line.Update(paragraph.Elements, new Rectangle(Position.Zero, availableArea), fieldVariables, services);
+            if(ul.BoundingBox.Height + currentHeight > availableArea.Height)
+            {
+                break;
+            }
+
+            updatedLines = [.. updatedLines, ul];
+            currentHeight += ul.BoundingBox.Height;
+        }
+
+        ResultStatus status = updatedLines.Length == paragraphLayout.Lines.Length
+            ? ResultStatus.Finished
+            : ResultStatus.ReconstructRequired;
+
+        float spaceAfterLastLine = paragraphLayout.Partition is LayoutPartition.StartEnd or LayoutPartition.End
+            && status == ResultStatus.Finished
+            ? paragraph.Style.ParagraphSpacing.After
+            : 0;
+
+        Rectangle paragraphBb = updatedLines
+            .Select(l => l.BoundingBox)
+            .DefaultIfEmpty(Rectangle.Empty)
+            .CalculateBoundingBox()
+            .ExpandHeight(spaceAfterLastLine)
+            .MoveTo(parentOffset)
+            ;
+
+        return new ParagraphLayoutingResult(
+            paragraph.Id,
+            new ParagraphLayout(
+                paragraph.Id,
+                updatedLines,
+                paragraphBb,
+                Borders.None,
+                paragraphLayout.Partition
+            ),
+            ModelId.None, // TODO: fix
+            new Rectangle(parentOffset, availableArea).CropFromTop(paragraphBb.Height),
             status
         );
     }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
 
@@ -13,4 +14,11 @@ internal record Layout(
 internal interface IComposedLayout
 {
     IEnumerable<Layout> InnerLayouts { get; }
+}
+
+internal interface IIdLayout
+{
+    ModelId ModelId { get; }
+
+    bool IsNotEmpty => this.ModelId != ModelId.None;
 }

@@ -12,6 +12,10 @@ internal record Rectangle(float X, float Y, float Width, float Height)
     {
     }
 
+    public float Left => this.X;
+
+    public float Top => this.Y;
+
     public float Right => this.X + this.Width;
 
     public float Bottom => this.Y + this.Height;

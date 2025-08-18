@@ -59,7 +59,12 @@ internal class LayoutBuilder
                 minimalTotalPages++;
                 pages = [..pages, currentPage];
 
-                //(pages, lastSectionLayoutingResult) = pages.Update(sections, lastSectionLayoutingResult, _layoutServices);
+                //(pages, lastSectionLayoutingResult) = pages.Update(
+                //    minimalTotalPages,
+                //    sections,
+                //    lastSectionLayoutingResult,
+                //    _layoutServices
+                //);
 
                 //section = sections
                 //    .SkipProcessed(lastSectionLayoutingResult)
