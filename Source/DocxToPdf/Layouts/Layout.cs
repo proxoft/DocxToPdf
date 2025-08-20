@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using DocumentFormat.OpenXml.Vml.Spreadsheet;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
@@ -36,6 +38,17 @@ internal interface IIdLayout
 
 internal static class LayoutOperators
 {
+    public static Rectangle CalculateBoundingBox(this IEnumerable<Layout> layouts) =>
+        layouts
+            .Select(l => l.BoundingBox)
+            .CalculateBoundingBox();
+
+    public static Rectangle CalculateBoundingBox(this IEnumerable<Layout> layouts, Rectangle ifEmpty) =>
+        layouts
+            .Select(l => l.BoundingBox)
+            .DefaultIfEmpty(ifEmpty)
+            .CalculateBoundingBox();
+
     public static T SetOffset<T>(this T layout, Position offset) where T: Layout =>
         layout with
         {

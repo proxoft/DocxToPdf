@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.ExtendedProperties;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Shared;
-using Proxoft.DocxToPdf.Documents.Styles.Paragraphs;
-using Proxoft.DocxToPdf.Documents.Styles.Texts;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
@@ -40,11 +35,12 @@ internal static class ParagraphLayoutBuilder
     public static (ParagraphLayout, ProcessingInfo) Update(
         this ParagraphLayout layout,
         Paragraph paragraph,
+        ParagraphLayout previousLayout,
         Size availableArea,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        (LineLayout[] lines, float spaceAfterLastLine, ProcessingInfo processingInfo) = layout.Lines.UpdateLineLayouts(
+        (LineLayout[] lines, ProcessingInfo processingInfo) = layout.Lines.UpdateLineLayouts(
             paragraph,
             availableArea,
             fieldVariables,
@@ -53,13 +49,11 @@ internal static class ParagraphLayoutBuilder
         );
 
         Rectangle bb = lines
-            .Select(l => l.BoundingBox)
-            .Append(new Rectangle(Position.Zero, new Size(availableArea.Width, 0))) // ensure full width size of paragraph
-            .CalculateBoundingBox()
-            .ExpandHeight(spaceAfterLastLine);
+            .CalculateBoundingBox(Rectangle.Empty)
+            .SetWidth(availableArea.Width);
 
-        // fix cases when ReconstructionRequired is returned. or unlike originally now DrawingAreaRequired (removes the End value)
-        LayoutPartition lp = processingInfo.CalculateParagraphLayoutPartition(layout.Partition);
+        bool allDone = paragraph.Elements.Select(e => e.Id).LastOrDefault(ModelId.None) == lines.LastProcessedElement();
+        LayoutPartition lp = processingInfo.CalculateLayoutPartitionAfterUpdate(previousLayout.Partition, allDone);
 
         ParagraphLayout pl = new(
             paragraph.Id,
@@ -101,13 +95,12 @@ internal static class ParagraphLayoutBuilder
         LayoutServices services)
     {
         Element[] unprocessed = [..paragraph.Elements.SkipProcessed(lastProcessed, true)];
-        (LineLayout[] lines, float spaceAfter, ProcessingInfo processingInfo) = unprocessed.CreateLineLayouts(availableSize, fieldVariables, paragraph.Style, services);
+        (LineLayout[] lines, ProcessingInfo processingInfo) = unprocessed.CreateLineLayouts(availableSize, fieldVariables, paragraph.Style, services);
 
         Rectangle bb = lines
-            .Select(l => l.BoundingBox)
-            .Append(new Rectangle(Position.Zero, new Size(availableSize.Width, 0))) // ensure full width size of paragraph
-            .CalculateBoundingBox()
-            .ExpandHeight(spaceAfter);
+            .CalculateBoundingBox(Rectangle.Empty)
+            .SetWidth(availableSize.Width) // ensure full width size of paragraph
+            ;
 
         LayoutPartition layoutPartition = processingInfo.CalculateParagraphLayoutPartition(previousPartition);
         ParagraphLayout paragraphLayout = new(
@@ -161,73 +154,10 @@ internal static class ParagraphLayoutBuilder
             status
         );
     }
-
-    //private static ParagraphLayoutingResult UpdateInternal(
-    //    this ParagraphLayout paragraphLayout,
-    //    Paragraph paragraph,
-    //    Position parentOffset,
-    //    Size availableArea,
-    //    FieldVariables fieldVariables,
-    //    LayoutServices services)
-    //{
-    //    LineLayout[] updatedLines = [];
-    //    float currentHeight = 0;
-
-    //    foreach (LineLayout line in paragraphLayout.Lines)
-    //    {
-    //        (LineLayout ul, ProcessingInfo processingInfo) = line.Update(paragraph.Elements, new Rectangle(Position.Zero, availableArea), fieldVariables, services);
-    //        if(ul.BoundingBox.Height + currentHeight > availableArea.Height)
-    //        {
-    //            break;
-    //        }
-
-    //        updatedLines = [.. updatedLines, ul];
-    //        currentHeight += ul.BoundingBox.Height;
-    //    }
-
-    //    ResultStatus status = updatedLines.Length == paragraphLayout.Lines.Length
-    //        ? ResultStatus.Finished
-    //        : ResultStatus.ReconstructRequired;
-
-    //    float spaceAfterLastLine = paragraphLayout.Partition is LayoutPartition.StartEnd or LayoutPartition.End
-    //        && status == ResultStatus.Finished
-    //        ? paragraph.Style.ParagraphSpacing.After
-    //        : 0;
-
-    //    Rectangle paragraphBb = updatedLines
-    //        .Select(l => l.BoundingBox)
-    //        .DefaultIfEmpty(Rectangle.Empty)
-    //        .CalculateBoundingBox()
-    //        .ExpandHeight(spaceAfterLastLine)
-    //        .MoveTo(parentOffset)
-    //        ;
-
-    //    return new ParagraphLayoutingResult(
-    //        paragraph.Id,
-    //        new ParagraphLayout(
-    //            paragraph.Id,
-    //            updatedLines,
-    //            paragraphBb,
-    //            Borders.None,
-    //            paragraphLayout.Partition
-    //        ),
-    //        ModelId.None, // TODO: fix
-    //        new Rectangle(parentOffset, availableArea).CropFromTop(paragraphBb.Height),
-    //        status
-    //    );
-    //}
 }
 
 file static class ParagraphOperators
 {
     public static ModelId LastProcessedElement(this ParagraphLayout paragraphLayout) =>
-        paragraphLayout.Lines.Length == 0
-            ? ModelId.None
-            : paragraphLayout.Lines.Last().LastProcessedElement();
-
-
-    public static ModelId LastProcessedElement(this LineLayout lineLayout) =>
-        lineLayout.Words.Length == 0
-            ? ModelId.None
-            : lineLayout.Words.Last().ModelId;
+        paragraphLayout.Lines.LastProcessedElement();
 }

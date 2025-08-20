@@ -36,7 +36,7 @@ internal static class SectionLayoutBuilder
         {
             (Layout layout, ProcessingInfo processingInfo) result = model switch
             {
-                Paragraph p => p.CreateLayout(previousSectionLayout.PreviousParagraphLayout(p.Id), remainingArea, fieldVariables, services),
+                Paragraph p => p.CreateLayout(previousSectionLayout.TryFindParagraphLayout(p.Id), remainingArea, fieldVariables, services),
                 _ => (NoLayout.Instance, ProcessingInfo.Ignore)
             };
 
@@ -94,11 +94,18 @@ internal static class SectionLayoutBuilder
         Layout[] updatedLayouts = [];
         ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
         float yOffset = 0;
+
         foreach (Layout layout in sectionLayout.Layouts)
         {
             (Layout layout, ProcessingInfo processingInfo) result = layout switch
             {
-                ParagraphLayout pl => pl.Update(section.Elements.OfType<Paragraph>().Single(p => p.Id == pl.ModelId), remainingArea, fieldVariables, services),
+                ParagraphLayout pl => pl.Update(
+                    section.Find<Paragraph>(pl.ModelId),
+                    previousSectionLayout.Layouts.LastOfTypeOr(ParagraphLayout.Empty), // try find in previous section
+                    remainingArea,
+                    fieldVariables,
+                    services
+                ),
                 _ => (NoLayout.Instance, ProcessingInfo.Ignore)
             };
 
@@ -107,9 +114,7 @@ internal static class SectionLayoutBuilder
         }
 
         Rectangle boudingBox = updatedLayouts
-           .Select(l => l.BoundingBox)
-           .DefaultIfEmpty(Rectangle.Empty)
-           .CalculateBoundingBox();
+            .CalculateBoundingBox(Rectangle.Empty);
 
         bool isSectionFinished = updatedLayouts.Last().ModelId == section.Elements.Last().Id
             && updatedLayouts.Last().Partition.IsFinished();
@@ -234,7 +239,17 @@ internal static class SectionLayoutBuilder
 
 file static class SectionOperators
 {
-    public static ParagraphLayout PreviousParagraphLayout(this SectionLayout sectionLayout, ModelId modelId) =>
+    public static T Find<T>(this Section section, ModelId id) where T : Model =>
+        section.Elements.OfType<T>().Single(e => e.Id == id);
+
+    public static T LastOfTypeOr<T>(this Layout[] layouts, T ifNone) where T : Layout =>
+        layouts switch
+        {
+            [.., T last] => last,
+            _ => ifNone,
+        };
+
+    public static ParagraphLayout TryFindParagraphLayout(this SectionLayout sectionLayout, ModelId modelId) =>
         sectionLayout.Layouts.OfType<ParagraphLayout>().SingleOrDefault(p => p.ModelId == modelId, ParagraphLayout.Empty);
 
     public static Model[] Unprocessed(this Section section, Layout[] previousLayouts) =>

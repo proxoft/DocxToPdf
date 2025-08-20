@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
@@ -7,6 +6,7 @@ using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
+using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
@@ -14,7 +14,7 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 
 internal static class LineLayoutBuilder
 {
-    public static (LineLayout[] lines, float spaceAfter, ProcessingInfo processingInfo) CreateLineLayouts(
+    public static (LineLayout[] lines, ProcessingInfo processingInfo) CreateLineLayouts(
         this IEnumerable<Element> elements,
         Size availableArea,
         FieldVariables fieldVariables,
@@ -25,29 +25,23 @@ internal static class LineLayoutBuilder
         LineLayout[] lines = [];
         float currentY = 0;
         float remainingHeight = availableArea.Height;
-        float spaceAfterLastLine = 0;
         bool keepProcessing;
 
         do
         {
-            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentY, availableArea.Width, fieldVariables, style.TextStyle, services);
+            LineLayout line  = unprocessed.CreateLine(currentY, availableArea.Width, fieldVariables, style.TextStyle, services);
             remainingHeight -= line.BoundingBox.Height;
             float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
 
             if (remainingHeight >= 0)
             {
                 lines = [.. lines, line];
-                unprocessed = [.. unprocessed.SkipProcessed(lastElementId, true)];
+                unprocessed = [.. unprocessed.SkipProcessed(line.Words.LastOrDefault()?.Id ?? ModelId.None, true)];
                 currentY += line.BoundingBox.Height;
             }
 
             remainingHeight -= lineSpaceAfterLine;
             currentY += lineSpaceAfterLine;
-
-            if (unprocessed.Length == 0)
-            {
-                spaceAfterLastLine = lineSpaceAfterLine;
-            }
 
             keepProcessing = (remainingHeight > 0) && unprocessed.Length > 0
                 && line.Decoration == LineDecoration.None;
@@ -58,7 +52,7 @@ internal static class LineLayoutBuilder
             : unprocessed.Length > 0 ? ProcessingInfo.RequestDrawingArea
             : ProcessingInfo.Done;
 
-        return (lines, spaceAfterLastLine, processingInfo);
+        return (lines, processingInfo);
     }
 
     public static (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) CreateLines(
@@ -81,7 +75,7 @@ internal static class LineLayoutBuilder
         float spaceAfterLastLine = 0;
         do
         {
-            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentY, availableArea.Width, fieldVariables, style.TextStyle, services);
+            LineLayout line = unprocessed.CreateLine(currentY, availableArea.Width, fieldVariables, style.TextStyle, services);
             remainingHeight -= line.BoundingBox.Height;
 
             float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
@@ -89,8 +83,8 @@ internal static class LineLayoutBuilder
             if (remainingHeight >= 0)
             {
                 lines.Add(line);
-                lastProcessed = lastElementId;
-                unprocessed = [.. unprocessed.SkipWhile(e => e.Id != lastElementId).Skip(1)];
+                lastProcessed = line.Words.LastOrDefault()?.Id ?? ModelId.None;
+                unprocessed = [.. unprocessed.SkipProcessed(lastProcessed, true)];
                 currentY += line.BoundingBox.Height;
             }
 
@@ -116,8 +110,7 @@ internal static class LineLayoutBuilder
         return ([.. lines], spaceAfterLastLine, lastProcessed, status);
     }
 
-
-    public static (LineLayout[] lines, float spaceAfterLastLine, ProcessingInfo) UpdateLineLayouts(
+    public static (LineLayout[] lines, ProcessingInfo) UpdateLineLayouts(
         this LineLayout[] lines,
         Paragraph paragraph,
         Size availableArea,
@@ -158,12 +151,16 @@ internal static class LineLayoutBuilder
             }
         }
 
-        if(processingInfo == ProcessingInfo.ReconstructRequired)
+        if (processingInfo == ProcessingInfo.ReconstructRequired)
         {
-            // Try to reconstruct remaining lines
+            ModelId lastProcesseId = updatedLines.LastProcessedElement();
+            Element[] unprocessed = [.. paragraph.Elements.SkipProcessed(lastProcesseId, true)];
+
+            (LineLayout[] reconstructedLines, processingInfo) = unprocessed.CreateLineLayouts(new Size(availableArea.Width, remainingHeight), fieldVariables, paragraph.Style, services);
+            updatedLines = [.. updatedLines, .. reconstructedLines];
         }
 
-        return (updatedLines, 0, processingInfo);
+        return (updatedLines, processingInfo);
     }
 
     private static (LineLayout, ProcessingInfo) Update(
@@ -193,7 +190,7 @@ internal static class LineLayoutBuilder
         return (updatedLine, processingInfo);
     }
 
-    private static (LineLayout line, ModelId lastElementId) CreateLine(
+    private static LineLayout CreateLine(
         this Element[] elements,
         float yPosition,
         float availableWidth,
@@ -211,6 +208,7 @@ internal static class LineLayoutBuilder
         {
             if (element is PageBreak)
             {
+                elementLayouts = [.. elementLayouts, new PageBreakLayout(element.Id, textStyle)];
                 isPageBreak = true;
                 lastElementId = element.Id;
                 break;
@@ -239,7 +237,7 @@ internal static class LineLayoutBuilder
 
         // TODO: known issue: if element does not fit in line, word wrap must be implemented
         LineLayout ll = elementLayouts.CreateLine(yPosition, lineDecoration, textStyle, services);
-        return (ll, lastElementId);
+        return ll;
     }
 
     private static LineLayout CreateLine(this ElementLayout[] elements, float yPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
@@ -253,23 +251,18 @@ internal static class LineLayoutBuilder
             .Select(e => e.Size.Height)
             .Max();
 
-        Rectangle bb = elements
-            .Select(e => e.BoundingBox)
-            .CalculateBoundingBox()
-            ;
+        Rectangle boundingBox = elements.CalculateBoundingBox();
 
         float lineBaselineOffset = elements
             .Select(e => e.BaselineOffset)
-            .DefaultIfEmpty(0)
             .Max();
 
-        ElementLayout[] e2 = [
-            ..elements
-            .Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
+        ElementLayout[] justifiedElements = [
+            ..elements.Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
         ];
 
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight.X, services);
-        return new LineLayout(e2, lineDecoration, bb.MoveY(yPosition), Borders.None, specialChar);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, boundingBox.TopRight.X, services);
+        return new LineLayout(justifiedElements, lineDecoration, boundingBox.MoveY(yPosition), Borders.None, specialChar);
     }
 
     private static LineLayout CreateEmptyLine(float YPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
@@ -288,7 +281,7 @@ internal static class LineLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        if (!line.InnerLayouts.Any())
+        if (!line.Words.Any())
         {
             return line;
         }
