@@ -1,9 +1,19 @@
-﻿namespace Proxoft.DocxToPdf.Layouts;
+﻿using System;
 
+namespace Proxoft.DocxToPdf.Layouts;
+
+[Flags]
 internal enum LayoutPartition
 {
-    Start,
-    Middle,
-    End,
-    StartEnd
+    Middle = 0,
+    Start = 1,
+    // Middle,
+    End = 2,
+    StartEnd = 3
+}
+
+internal static class LayoutPartitionOperators
+{
+    public static bool IsFinished(this LayoutPartition layoutPartition) =>
+        layoutPartition.HasFlag(LayoutPartition.End);
 }

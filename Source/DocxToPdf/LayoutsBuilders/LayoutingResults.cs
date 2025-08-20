@@ -18,6 +18,16 @@ internal enum ResultStatus
     ReconstructRequired
 }
 
+internal enum ProcessingInfo
+{
+    Ignore,
+    Done,
+    NewPageRequired,
+    RequestDrawingArea,
+    IgnoreAndRequestDrawingArea,
+    ReconstructRequired
+}
+
 internal abstract record LayoutingResult(
     ModelId ModelId,
     Rectangle RemainingDrawingArea,

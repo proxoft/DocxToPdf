@@ -11,7 +11,7 @@ internal record CellLayout(
     Rectangle BoundingBox,
     Borders Borders,
     LayoutPartition Partition
-) : Layout(BoundingBox, Borders, Partition), IComposedLayout
+) : Layout(ModelId, BoundingBox, Borders, Partition), IComposedLayout
 {
     public static readonly CellLayout Empty = new(
         ModelId.None,

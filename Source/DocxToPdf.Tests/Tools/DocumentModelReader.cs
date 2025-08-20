@@ -38,6 +38,13 @@ internal static class DocumentModelReader
     {
         using MemoryStream ms = new();
         pdfDocument.Save(ms);
+        string filePath = $"{_outputFolder}/{pdfSubpath}";
+        string directory = Path.GetDirectoryName(filePath) ?? throw new DirectoryNotFoundException("Output directory not found.");
+        if(!Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
         File.WriteAllBytes($"{_outputFolder}/{pdfSubpath}", ms.ToArray());
     }
 }

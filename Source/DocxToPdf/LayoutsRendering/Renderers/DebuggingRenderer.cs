@@ -1,5 +1,6 @@
 ﻿using PdfSharp.Drawing;
 using Proxoft.DocxToPdf.Documents.Common;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Layouts;
 
@@ -19,12 +20,10 @@ internal static class DebuggingRenderer
             return;
         }
 
-        XPen pen = borderStyle.ToXPen();
-        XRect rect = layout.BoundingBox
+        Rectangle bb = layout.BoundingBox
             .MoveX(offset.X)
-            .MoveY(offset.Y)
-            .ToXRect();
+            .MoveY(offset.Y);
 
-        graphics.DrawRectangle(pen, rect);
+        bb.RenderBorder(layout.Partition, Borders.All(borderStyle), graphics);
     }
 }

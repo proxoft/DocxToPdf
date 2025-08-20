@@ -11,4 +11,7 @@ internal record Borders(
 {
     public static readonly Borders None = new(BorderStyle.None, BorderStyle.None, BorderStyle.None, BorderStyle.None);
     public static readonly Borders SolidBlack = new(BorderStyle.SolidBlack, BorderStyle.SolidBlack, BorderStyle.SolidBlack, BorderStyle.SolidBlack);
+
+    public static Borders All(BorderStyle borderStyle) =>
+        new(borderStyle, borderStyle, borderStyle, borderStyle);
 }

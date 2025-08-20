@@ -19,16 +19,25 @@ internal static class BorderRenderer
             .MoveX(offset.X)
             .MoveY(offset.Y);
 
-        bb.LeftLine.RenderBorder(layout.Borders.Left, graphics);
-        if (layout.Partition is LayoutPartition.Start or LayoutPartition.StartEnd)
+        bb.RenderBorder(layout.Partition, layout.Borders, graphics);
+    }
+
+    public static void RenderBorder(
+        this Rectangle rectangle,
+        LayoutPartition layoutPartition,
+        Borders borders,
+        XGraphics graphics)
+    {
+        rectangle.LeftLine.RenderBorder(borders.Left, graphics);
+        if (layoutPartition.HasFlag(LayoutPartition.Start))
         {
-            bb.TopLine.RenderBorder(layout.Borders.Top, graphics);
+            rectangle.TopLine.RenderBorder(borders.Top, graphics);
         }
 
-        bb.RightLine.RenderBorder(layout.Borders.Right, graphics);
-        if (layout.Partition is LayoutPartition.End or LayoutPartition.StartEnd)
+        rectangle.RightLine.RenderBorder(borders.Right, graphics);
+        if (layoutPartition.HasFlag(LayoutPartition.End))
         {
-            bb.BottomLine.RenderBorder(layout.Borders.Bottom, graphics);
+            rectangle.BottomLine.RenderBorder(borders.Bottom, graphics);
         }
     }
 

@@ -43,7 +43,7 @@ internal static class ElementLayoutBuilder
     {
         if (layout is not TotalPagesLayout)
         {
-            return layout;
+            return layout.SetOffset(new Position(xPosition, 0));
         }
 
         // TODO: check situations when element gets smaller than previously

@@ -23,7 +23,11 @@ internal static class ElementRenderer
         if(layout.GetTextStyle().Background != Color.Empty)
         {
             XBrush backgroundBrush = layout.GetTextStyle().Background.ToXBrush();
-            graphics.DrawRectangle(backgroundBrush, layout.BoundingBox.ToXRect());
+            XRect rect = layout.BoundingBox
+                .Move(offset.X, offset.Y)
+                .ToXRect();
+
+            graphics.DrawRectangle(backgroundBrush, rect);
         }
 
         Position position = new Position(layout.BoundingBox.X, layout.BoundingBox.Bottom - layout.LineBaseLineOffset)

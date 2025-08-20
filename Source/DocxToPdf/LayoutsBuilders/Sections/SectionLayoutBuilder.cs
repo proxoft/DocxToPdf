@@ -12,112 +12,236 @@ using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
+using System.Collections.Generic;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 internal static class SectionLayoutBuilder
 {
-    public static SectionLayoutingResult Process(
-            this Section section,
-            SectionLayoutingResult previousLayoutingResult,
-            Rectangle drawingPageArea,
-            FieldVariables fieldVariables,
-            LayoutServices services)
+    public static (SectionLayout, ProcessingInfo) CreateLayout(
+        this Section section,
+        SectionLayout previousSectionLayout,
+        Size availableArea,
+        FieldVariables fieldVariables,
+        LayoutServices services)
     {
-        Model[] unprocessed = section
-                .Elements
-                .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult);
-
+        Model[] unprocessed = section.Unprocessed(previousSectionLayout.Layouts);
         Layout[] layouts = [];
-        Rectangle remainingArea = drawingPageArea.MoveTo(Position.Zero);
-        LayoutingResult lastModelResult = previousLayoutingResult.LastModelLayoutingResult;
-        ResultStatus resultStatus = ResultStatus.Finished;
+        Size remainingArea = availableArea;
+        ProcessingInfo sectionProcessingInfo = ProcessingInfo.Ignore;
+        float yOffset = 0;
+        ModelId lastProcessed = ModelId.None;
 
         foreach (Model model in unprocessed)
         {
-            LayoutingResult lr = model switch
+            (Layout layout, ProcessingInfo processingInfo) result = model switch
             {
-                Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, fieldVariables, services),
-                Table table => table.Process(lastModelResult, remainingArea, fieldVariables, services),
-                _ => NoLayoutingResult.Create(remainingArea)
+                Paragraph p => p.CreateLayout(previousSectionLayout.PreviousParagraphLayout(p.Id), remainingArea, fieldVariables, services),
+                _ => (NoLayout.Instance, ProcessingInfo.Ignore)
             };
 
-            if(lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea or ResultStatus.NewPageRequired)
+            if (result.processingInfo == ProcessingInfo.Ignore)
             {
-                remainingArea = lr.RemainingDrawingArea;
-                layouts = [.. layouts, .. lr.Layouts.OfType<IIdLayout>().Where(l => l.IsNotEmpty).Cast<Layout>()];
-                lastModelResult = lr;
+                continue;
+            }
+            else
+            {
+                sectionProcessingInfo = result.processingInfo;
             }
 
-            if(lr.Status != ResultStatus.Finished)
+            if(result.processingInfo is not ProcessingInfo.IgnoreAndRequestDrawingArea)
             {
-                resultStatus = ResultStatus.RequestDrawingArea;
+                remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
+                layouts = [.. layouts, result.layout.SetOffset(new Position(0, yOffset))];
+                yOffset += result.layout.BoundingBox.Height;
+            }
+
+            if (sectionProcessingInfo is ProcessingInfo.NewPageRequired
+                or ProcessingInfo.RequestDrawingArea
+                or ProcessingInfo.IgnoreAndRequestDrawingArea)
+            {
                 break;
             }
         }
 
         Rectangle boudingBox = layouts
-            .Select(l => l.BoundingBox)
-            .DefaultIfEmpty(new Rectangle(drawingPageArea.TopLeft, Size.Zero))
-            .CalculateBoundingBox();
+           .Select(l => l.BoundingBox)
+           .DefaultIfEmpty(Rectangle.Empty)
+           .CalculateBoundingBox();
 
-        LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResult);
+        LayoutPartition layoutPartition = sectionProcessingInfo.CalculateLayoutPartition(previousSectionLayout.Partition);
 
-        Rectangle remArea = drawingPageArea
-            .CropFromTop(boudingBox.Height);
-
-        return new SectionLayoutingResult(
+        SectionLayout sectionLayout = new(
             section.Id,
-            new SectionLayout(section.Id, layouts, boudingBox, Borders.None, partition),
-            lastModelResult,
-            remArea,
-            resultStatus
+            layouts,
+            boudingBox,
+            Borders.None,
+            layoutPartition
         );
+
+        return (sectionLayout, sectionProcessingInfo);
     }
 
-    public static SectionLayoutingResult UpdateLayout(
+    public static (SectionLayout, ProcessingInfo) Update(
         this SectionLayout sectionLayout,
         Section section,
-        Rectangle drawingPageArea,
+        SectionLayout previousSectionLayout,
+        Size availableArea,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Rectangle remainingArea = drawingPageArea.MoveTo(Position.Zero);
+        Size remainingArea = availableArea;
         Layout[] updatedLayouts = [];
-        LayoutingResult layoutingResult = NoLayoutingResult.Create(remainingArea);
-
+        ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
+        float yOffset = 0;
         foreach (Layout layout in sectionLayout.Layouts)
         {
-            switch(layout)
+            (Layout layout, ProcessingInfo processingInfo) result = layout switch
             {
-                case ParagraphLayout paragraphLayout:
-                    Paragraph paragraph = section.Elements
-                        .OfType<Paragraph>()
-                        .Single(e => e.Id == paragraphLayout.ModelId);
-                    ParagraphLayoutingResult plr = paragraphLayout.Update(paragraph, remainingArea, fieldVariables, services);
-                    updatedLayouts = [.. updatedLayouts, plr.ParagraphLayout];
-                    remainingArea = remainingArea.CropFromTop(plr.ParagraphLayout.BoundingBox.Height);
-                    break;
-                // case TableLayout tableLayout:
-                    // tableLayout.UpdateLayout(section, drawingPageArea, fieldVariables, services);
-                    // break;
-            }
+                ParagraphLayout pl => pl.Update(section.Elements.OfType<Paragraph>().Single(p => p.Id == pl.ModelId), remainingArea, fieldVariables, services),
+                _ => (NoLayout.Instance, ProcessingInfo.Ignore)
+            };
+
+            updatedLayouts = [.. updatedLayouts, result.layout.SetOffset(new Position(0, yOffset))];
+            yOffset += result.layout.BoundingBox.Height;
         }
 
-        Rectangle bb = updatedLayouts
-            .Select(l => l.BoundingBox)
-            .DefaultIfEmpty(Rectangle.Empty)
-            .CalculateBoundingBox()
-            .MoveTo(drawingPageArea.TopLeft);
+        Rectangle boudingBox = updatedLayouts
+           .Select(l => l.BoundingBox)
+           .DefaultIfEmpty(Rectangle.Empty)
+           .CalculateBoundingBox();
 
-        SectionLayout sl = new(
+        bool isSectionFinished = updatedLayouts.Last().ModelId == section.Elements.Last().Id
+            && updatedLayouts.Last().Partition.IsFinished();
+
+        LayoutPartition lp = sectionProcessingInfo.CalculateLayoutPartitionAfterUpdate(previousSectionLayout.Partition, isSectionFinished);
+
+        SectionLayout updatedSection = new(
             section.Id,
             updatedLayouts,
-            bb,
+            boudingBox,
             Borders.None,
-            LayoutPartition.StartEnd
+            lp
         );
 
-        return new SectionLayoutingResult(section.Id, sl, layoutingResult, remainingArea, ResultStatus.Finished);
+        return (updatedSection, sectionProcessingInfo);
     }
+
+    //public static SectionLayoutingResult Process(
+    //        this Section section,
+    //        SectionLayoutingResult previousLayoutingResult,
+    //        Rectangle drawingPageArea,
+    //        FieldVariables fieldVariables,
+    //        LayoutServices services)
+    //{
+    //    Model[] unprocessed = section
+    //            .Elements
+    //            .SkipProcessed(previousLayoutingResult.LastModelLayoutingResult);
+
+    //    Layout[] layouts = [];
+    //    Rectangle remainingArea = drawingPageArea.MoveTo(Position.Zero);
+    //    LayoutingResult lastModelResult = previousLayoutingResult.LastModelLayoutingResult;
+    //    ResultStatus resultStatus = ResultStatus.Finished;
+
+    //    foreach (Model model in unprocessed)
+    //    {
+    //        LayoutingResult lr = model switch
+    //        {
+    //            Paragraph paragraph => paragraph.Process(lastModelResult, remainingArea, fieldVariables, services),
+    //            Table table => table.Process(lastModelResult, remainingArea, fieldVariables, services),
+    //            _ => NoLayoutingResult.Create(remainingArea)
+    //        };
+
+    //        if(lr.Status is ResultStatus.Finished or ResultStatus.RequestDrawingArea or ResultStatus.NewPageRequired)
+    //        {
+    //            remainingArea = lr.RemainingDrawingArea;
+    //            layouts = [.. layouts, .. lr.Layouts.OfType<IIdLayout>().Where(l => l.IsNotEmpty).Cast<Layout>()];
+    //            lastModelResult = lr;
+    //        }
+
+    //        if(lr.Status != ResultStatus.Finished)
+    //        {
+    //            resultStatus = ResultStatus.RequestDrawingArea;
+    //            break;
+    //        }
+    //    }
+
+    //    Rectangle boudingBox = layouts
+    //        .Select(l => l.BoundingBox)
+    //        .DefaultIfEmpty(new Rectangle(drawingPageArea.TopLeft, Size.Zero))
+    //        .CalculateBoundingBox();
+
+    //    LayoutPartition partition = resultStatus.CalculateLayoutPartition(previousLayoutingResult);
+
+    //    Rectangle remArea = drawingPageArea
+    //        .CropFromTop(boudingBox.Height);
+
+    //    return new SectionLayoutingResult(
+    //        section.Id,
+    //        new SectionLayout(section.Id, layouts, boudingBox, Borders.None, partition),
+    //        lastModelResult,
+    //        remArea,
+    //        resultStatus
+    //    );
+    //}
+
+    //public static SectionLayoutingResult UpdateLayout(
+    //    this SectionLayout sectionLayout,
+    //    Section section,
+    //    Rectangle drawingPageArea,
+    //    FieldVariables fieldVariables,
+    //    LayoutServices services)
+    //{
+    //    Rectangle remainingArea = drawingPageArea.MoveTo(Position.Zero);
+    //    Layout[] updatedLayouts = [];
+    //    LayoutingResult layoutingResult = NoLayoutingResult.Create(remainingArea);
+
+    //    foreach (Layout layout in sectionLayout.Layouts)
+    //    {
+    //        switch(layout)
+    //        {
+    //            case ParagraphLayout paragraphLayout:
+    //                Paragraph paragraph = section.Elements
+    //                    .OfType<Paragraph>()
+    //                    .Single(e => e.Id == paragraphLayout.ModelId);
+    //                ParagraphLayoutingResult plr = paragraphLayout.Update(paragraph, remainingArea, fieldVariables, services);
+    //                updatedLayouts = [.. updatedLayouts, plr.ParagraphLayout];
+    //                remainingArea = remainingArea.CropFromTop(plr.ParagraphLayout.BoundingBox.Height);
+    //                break;
+    //            // case TableLayout tableLayout:
+    //                // tableLayout.UpdateLayout(section, drawingPageArea, fieldVariables, services);
+    //                // break;
+    //        }
+    //    }
+
+    //    Rectangle bb = updatedLayouts
+    //        .Select(l => l.BoundingBox)
+    //        .DefaultIfEmpty(Rectangle.Empty)
+    //        .CalculateBoundingBox()
+    //        .MoveTo(drawingPageArea.TopLeft);
+
+    //    SectionLayout sl = new(
+    //        section.Id,
+    //        updatedLayouts,
+    //        bb,
+    //        Borders.None,
+    //        LayoutPartition.StartEnd
+    //    );
+
+    //    return new SectionLayoutingResult(section.Id, sl, layoutingResult, remainingArea, ResultStatus.Finished);
+    //}
+}
+
+file static class SectionOperators
+{
+    public static ParagraphLayout PreviousParagraphLayout(this SectionLayout sectionLayout, ModelId modelId) =>
+        sectionLayout.Layouts.OfType<ParagraphLayout>().SingleOrDefault(p => p.ModelId == modelId, ParagraphLayout.Empty);
+
+    public static Model[] Unprocessed(this Section section, Layout[] previousLayouts) =>
+        previousLayouts.Length == 0
+            ? section.Elements
+            : [..section.Elements.SkipFinished(previousLayouts.Last())];
+
+    private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
+        models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());
 }

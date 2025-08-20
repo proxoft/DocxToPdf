@@ -13,7 +13,7 @@ internal abstract record ElementLayout(
     float LineBaseLineOffset,
     Borders Borders,
     LayoutPartition Partition
-) : Layout(BoundingBox, Borders, Partition)
+) : Layout(Id, BoundingBox, Borders, Partition)
 {
     public abstract TextStyle GetTextStyle();
 }

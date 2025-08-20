@@ -11,7 +11,7 @@ internal record TableLayout(
     Rectangle BoundingBox,
     Borders Borders,
     LayoutPartition Partition
-) : Layout(BoundingBox, Borders, Partition), IIdLayout, IComposedLayout
+) : Layout(ModelId, BoundingBox, Borders, Partition), IIdLayout, IComposedLayout
 {
     public static readonly TableLayout Empty = new(
         ModelId.None,

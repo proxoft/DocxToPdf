@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
@@ -13,6 +14,53 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 
 internal static class LineLayoutBuilder
 {
+    public static (LineLayout[] lines, float spaceAfter, ProcessingInfo processingInfo) CreateLineLayouts(
+        this IEnumerable<Element> elements,
+        Size availableArea,
+        FieldVariables fieldVariables,
+        ParagraphStyle style,
+        LayoutServices services)
+    {
+        Element[] unprocessed = [.. elements];
+        LineLayout[] lines = [];
+        float currentY = 0;
+        float remainingHeight = availableArea.Height;
+        float spaceAfterLastLine = 0;
+        bool keepProcessing;
+
+        do
+        {
+            (LineLayout line, ModelId lastElementId) = unprocessed.CreateLine(currentY, availableArea.Width, fieldVariables, style.TextStyle, services);
+            remainingHeight -= line.BoundingBox.Height;
+            float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
+
+            if (remainingHeight >= 0)
+            {
+                lines = [.. lines, line];
+                unprocessed = [.. unprocessed.SkipProcessed(lastElementId, true)];
+                currentY += line.BoundingBox.Height;
+            }
+
+            remainingHeight -= lineSpaceAfterLine;
+            currentY += lineSpaceAfterLine;
+
+            if (unprocessed.Length == 0)
+            {
+                spaceAfterLastLine = lineSpaceAfterLine;
+            }
+
+            keepProcessing = (remainingHeight > 0) && unprocessed.Length > 0
+                && line.Decoration == LineDecoration.None;
+        } while (keepProcessing);
+
+        ProcessingInfo processingInfo = lines.Length == 0 ? ProcessingInfo.IgnoreAndRequestDrawingArea
+            : lines.Last().Decoration == LineDecoration.PageBreak ? ProcessingInfo.NewPageRequired
+            : unprocessed.Length > 0 ? ProcessingInfo.RequestDrawingArea
+            : ProcessingInfo.Done;
+
+        return (lines, spaceAfterLastLine, processingInfo);
+    }
+
     public static (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) CreateLines(
         this IEnumerable<Element> elements,
         Rectangle availableArea,
@@ -68,26 +116,81 @@ internal static class LineLayoutBuilder
         return ([.. lines], spaceAfterLastLine, lastProcessed, status);
     }
 
-    public static (LineLayout, bool) Update(
+
+    public static (LineLayout[] lines, float spaceAfterLastLine, ProcessingInfo) UpdateLineLayouts(
+        this LineLayout[] lines,
+        Paragraph paragraph,
+        Size availableArea,
+        FieldVariables fieldVariables,
+        ParagraphStyle style,
+        LayoutServices services)
+    {
+        LineLayout[] updatedLines = [];
+        float currentY = 0;
+        float remainingHeight = availableArea.Height;
+
+        ProcessingInfo processingInfo = ProcessingInfo.Done;
+
+        foreach (LineLayout line in lines)
+        {
+            (LineLayout updatedLine, processingInfo) = line.Update(
+                paragraph.Elements,
+                currentY,
+                availableArea.Width,
+                fieldVariables,
+                style.TextStyle,
+                services
+            );
+
+            if(remainingHeight - updatedLine.BoundingBox.Height < 0)
+            {
+                processingInfo = ProcessingInfo.RequestDrawingArea;
+                break;
+            }
+
+            remainingHeight -= updatedLine.BoundingBox.Height;
+            currentY += updatedLine.BoundingBox.Height;
+
+            updatedLines = [.. updatedLines, updatedLine];
+            if(processingInfo == ProcessingInfo.ReconstructRequired)
+            {
+                break;
+            }
+        }
+
+        if(processingInfo == ProcessingInfo.ReconstructRequired)
+        {
+            // Try to reconstruct remaining lines
+        }
+
+        return (updatedLines, 0, processingInfo);
+    }
+
+    private static (LineLayout, ProcessingInfo) Update(
         this LineLayout line,
         Element[] elements,
-        Rectangle availableArea,
+        float yPosition,
+        float availableWidth,
         FieldVariables fieldVariables,
+        TextStyle textStyle,
         LayoutServices services)
     {
         if (!line.ContainsUpdatableField())
         {
             LineLayout l = line with
             {
-                BoundingBox = line.BoundingBox.MoveTo(availableArea.TopLeft)
+                BoundingBox = line.BoundingBox.MoveY(yPosition)
             };
 
-            return(l, true);
+            return(l, ProcessingInfo.Done);
         }
 
-        LineLayout updatedLine = line.UpdateLine(elements, availableArea.Width, fieldVariables, services);
-        bool containsAllPreviousWords = line.Words.Last().Id == updatedLine.Words.Last().Id;
-        return (line, containsAllPreviousWords);
+        LineLayout updatedLine = line.UpdateLine(elements, yPosition, availableWidth, fieldVariables, services);
+        ProcessingInfo processingInfo = line.Words.Last().Id == updatedLine.Words.Last().Id
+            ? ProcessingInfo.Done
+            : ProcessingInfo.ReconstructRequired;
+
+        return (updatedLine, processingInfo);
     }
 
     private static (LineLayout line, ModelId lastElementId) CreateLine(
@@ -180,6 +283,7 @@ internal static class LineLayoutBuilder
     private static LineLayout UpdateLine(
         this LineLayout line,
         Element[] allElements,
+        float yPosition,
         float availableWidth,
         FieldVariables fieldVariables,
         LayoutServices services)

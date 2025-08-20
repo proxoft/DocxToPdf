@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Shared;
@@ -12,7 +13,9 @@ internal record PageLayout(
     SectionLayout[] Content,
     PageConfiguration Configuration,
     Borders Borders
-) : Layout(BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
+) : Layout(ModelId.None, BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
 {
+    public static readonly PageLayout None = new(Rectangle.Empty, Rectangle.Empty, [], PageConfiguration.None, Borders.None);
+
     public IEnumerable<Layout> InnerLayouts => this.Content;
 }

@@ -7,6 +7,46 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal static class LayoutingResultOperations
 {
+    public static LayoutPartition CalculateParagraphLayoutPartition(this ProcessingInfo processingInfo, LayoutPartition previous) =>
+        processingInfo switch
+        {
+            ProcessingInfo.NewPageRequired when previous.IsFinished() => LayoutPartition.Start | LayoutPartition.End,
+            ProcessingInfo.NewPageRequired when !previous.IsFinished() => LayoutPartition.End,
+            _ => processingInfo.CalculateLayoutPartition(previous)
+        };
+
+    public static LayoutPartition CalculateLayoutPartition(this ProcessingInfo processingInfo, LayoutPartition previous)
+    {
+        LayoutPartition layoutPartition = LayoutPartition.Middle;
+        if(previous.IsFinished())
+        {
+            layoutPartition |= LayoutPartition.Start;
+        }
+
+        if (processingInfo == ProcessingInfo.Done)
+        {
+            layoutPartition |= LayoutPartition.End;
+        }
+
+        return layoutPartition;
+    }
+
+    public static LayoutPartition CalculateLayoutPartitionAfterUpdate(this ProcessingInfo updateProcessingInfo, LayoutPartition previous, bool allElementsDone)
+    {
+        LayoutPartition layoutPartition = LayoutPartition.Middle;
+        if(previous.IsFinished())
+        {
+            layoutPartition |= LayoutPartition.Start;
+        }
+
+        if(allElementsDone)
+        {
+            layoutPartition |= LayoutPartition.End;
+        }
+
+        return layoutPartition;
+    }
+
     public static LayoutPartition CalculateLayoutPartition(this ResultStatus resultStatus, LayoutingResult previousResult) =>
         resultStatus switch
         {
@@ -18,12 +58,7 @@ internal static class LayoutingResultOperations
         };
 
     public static LayoutPartition RemoveEnd(this LayoutPartition layoutPartition) =>
-        layoutPartition switch
-        {
-            LayoutPartition.End => LayoutPartition.Middle,
-            LayoutPartition.StartEnd => LayoutPartition.Start,
-            _ => layoutPartition
-        };
+        layoutPartition & ~LayoutPartition.End;
 
     public static CellLayoutingResult LastByOrder(this IEnumerable<CellLayoutingResult> results) =>
         results.OrderByDescending(r => r.Order).FirstOrDefault(CellLayoutingResult.None);

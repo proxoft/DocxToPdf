@@ -10,7 +10,7 @@ internal record SectionLayout(
     Layout[] Layouts,
     Rectangle BoundingBox,
     Borders Borders,
-    LayoutPartition Partition) : Layout(BoundingBox, Borders, Partition), IComposedLayout
+    LayoutPartition Partition) : Layout(ModelId, BoundingBox, Borders, Partition), IComposedLayout
 {
     public static readonly SectionLayout Empty = new(
         ModelId.None,

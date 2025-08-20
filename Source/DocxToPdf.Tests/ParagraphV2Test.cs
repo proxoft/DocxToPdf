@@ -12,6 +12,7 @@ public class ParagraphV2Test
             // SectionBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
             // LineBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
             // WordBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("458976"), 1, Documents.Styles.Borders.LineStyle.Solid)
+            ParagraphBorder = new Documents.Styles.Borders.BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
             RenderParagraphCharacter = true,
         }
     );

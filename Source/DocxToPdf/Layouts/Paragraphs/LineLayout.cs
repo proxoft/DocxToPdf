@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
 
@@ -17,7 +18,7 @@ internal record LineLayout(
     Rectangle BoundingBox,
     Borders Borders,
     ElementLayout DecorationText
-) : Layout(BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
+) : Layout(ModelId.None, BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
 {
     public IEnumerable<Layout> InnerLayouts => this.Words;
 }
