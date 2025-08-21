@@ -78,7 +78,7 @@ internal record Rectangle(float X, float Y, float Width, float Height)
            .CropFromBottom(padding.Bottom);
 
     public Rectangle ExpandHeight(float delta) =>
-        new Rectangle(this.TopLeft, new Size(this.Width, this.Height + delta));
+        new (this.TopLeft, new Size(this.Width, this.Height + delta));
 
     public Rectangle Expand(Padding padding) =>
        this.CropFromLeft(-padding.Left)

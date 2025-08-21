@@ -14,6 +14,7 @@ using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using System.Collections.Generic;
 using System;
+using Proxoft.DocxToPdf.Layouts.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
@@ -38,6 +39,11 @@ internal static class SectionLayoutBuilder
             {
                 Paragraph p => p.CreateLayout(
                     previousSectionLayout.TryFindParagraphLayout(p.Id),
+                    remainingArea,
+                    fieldVariables,
+                    services),
+                Table t => t.CreateTableLayout(
+                    previousSectionLayout.TryFindTableLayout(t.Id),
                     remainingArea,
                     fieldVariables,
                     services),
@@ -267,9 +273,6 @@ file static class SectionOperators
             _ => ifNone,
         };
 
-    public static ParagraphLayout TryFindParagraphLayout(this SectionLayout sectionLayout, ModelId modelId) =>
-        sectionLayout.Layouts.OfType<ParagraphLayout>().SingleOrDefault(p => p.ModelId == modelId, ParagraphLayout.Empty);
-
     public static Model[] Unprocessed(this Section section, Layout[] previousLayouts) =>
         previousLayouts.Length == 0
             ? section.Elements
@@ -277,36 +280,4 @@ file static class SectionOperators
 
     private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
         models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());
-}
-
-file static class SpaceBetweenCalculator
-{
-    public static Model Next(this Model[] models, ModelId current) =>
-        models
-            .SkipWhile(m => m.Id != current)
-            .Skip(1)
-            .FirstOrDefault(NoneModel.Instance);
-
-    public static float CalculateSpaceAfter(this Model model, LayoutPartition layoutPartition, Model next)
-    {
-        if(!layoutPartition.HasFlag(LayoutPartition.End)) return 0;
-        float minSpaceAfter = model.SpaceAfter();
-        float minSpaceBefore = next.SpaceBefore();
-
-        return Math.Max(minSpaceAfter, minSpaceBefore);
-    }
-
-    private static float SpaceBefore(this Model model) =>
-        model switch
-        {
-            Paragraph p => p.Style.ParagraphSpacing.Before,
-            _ => 0
-        };
-
-    private static float SpaceAfter(this Model model) =>
-        model switch
-        {
-            Paragraph p => p.Style.ParagraphSpacing.After,
-            _ => 0
-        };
 }

@@ -1,11 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
+using Proxoft.DocxToPdf.Layouts.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal static class ModelExtensions
 {
+    public static Model Next(this Model[] models, ModelId current) =>
+        models
+            .SkipWhile(m => m.Id != current)
+            .Skip(1)
+            .FirstOrDefault(NoneModel.Instance);
+
+    public static ParagraphLayout TryFindParagraphLayout(this IComposedLayout parent, ModelId paragraphId) =>
+        parent.InnerLayouts.OfType<ParagraphLayout>().SingleOrDefault(p => p.ModelId == paragraphId, ParagraphLayout.Empty);
+
+    public static TableLayout TryFindTableLayout(this IComposedLayout parent, ModelId tableId) =>
+        parent.InnerLayouts.OfType<TableLayout>().SingleOrDefault(p => p.ModelId == tableId, TableLayout.Empty);
+
     public static TModel[] SkipProcessed<TModel>(this IEnumerable<TModel> models, LayoutingResult lastResult) where TModel : Model
     {
         bool lastWasFinished = lastResult.Status == ResultStatus.Finished;

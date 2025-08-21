@@ -9,11 +9,136 @@ using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
+using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 internal static class CellLayoutBuilder
 {
+    public static (CellLayout, ProcessingInfo) CreateLayout(
+        this Cell cell,
+        Size availableArea,
+        FieldVariables fieldVariables,
+        GridLayout grid,
+        CellLayout previousLayout,
+        LayoutServices services)
+    {
+        Model[] unprocessed = cell.Unprocessed(previousLayout.ParagraphsOrTables);
+        Layout[] layouts = [];
+
+        Size remainingArea = availableArea
+            .DecreaseWidth(cell.Padding.Horizontal)
+            .DecreaseHeight(cell.Padding.Vertical);
+
+        ProcessingInfo cellProcessingInfo = ProcessingInfo.Ignore;
+
+        float yOffset = cell.Padding.Top;
+        float xOffset = cell.Padding.Left;
+
+        foreach (Model model in unprocessed)
+        {
+            (Layout layout, ProcessingInfo processingInfo) result = model switch
+            {
+                Paragraph p => p.CreateLayout(
+                    previousLayout.TryFindParagraphLayout(p.Id),
+                    remainingArea,
+                    fieldVariables,
+                    services),
+                //Table t => t.CreateTableLayout(
+                //    previousSectionLayout.TryFindTableLayout(t.Id),
+                //    remainingArea,
+                //    fieldVariables,
+                //    services),
+                _ => (NoLayout.Instance, ProcessingInfo.Ignore)
+            };
+
+            if (result.processingInfo == ProcessingInfo.Ignore)
+            {
+                continue;
+            }
+            else
+            {
+                cellProcessingInfo = result.processingInfo;
+            }
+
+            if (result.processingInfo is not ProcessingInfo.IgnoreAndRequestDrawingArea)
+            {
+                remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
+                layouts = [.. layouts, result.layout.SetOffset(new Position(xOffset, yOffset))];
+                yOffset += result.layout.BoundingBox.Height;
+            }
+
+            if (cellProcessingInfo is ProcessingInfo.NewPageRequired
+                or ProcessingInfo.RequestDrawingArea
+                or ProcessingInfo.IgnoreAndRequestDrawingArea)
+            {
+                break;
+            }
+
+            Model nextModel = unprocessed.Next(model.Id);
+            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, nextModel);
+            yOffset += spaceAfter;
+            remainingArea = remainingArea.DecreaseHeight(spaceAfter);
+        }
+
+        Rectangle boudingBox = layouts
+           .CalculateBoundingBox(Rectangle.Empty)
+           .Expand(cell.Padding)
+           ;
+
+        LayoutPartition layoutPartition = cellProcessingInfo.CalculateLayoutPartition(previousLayout.Partition);
+
+        CellLayout cellLayout = new(
+            cell.Id,
+            layouts,
+            boudingBox,
+            cell.Borders,
+            cell.GridPosition,
+            layoutPartition
+        );
+
+        return (cellLayout, cellProcessingInfo);
+    }
+
+    public static CellLayout[] AlignCellHeights(this CellLayout[] cellLayouts, GridLayout grid) =>
+        [..cellLayouts.Select(cl => cl.AlignHeight(grid))];
+
+    public static CellLayout[] AlignLayoutPartitions(this CellLayout[] cellLayouts)
+    {
+        if(cellLayouts.Length <= 1)
+        {
+            return cellLayouts;
+        }
+
+        CellLayout last = cellLayouts[^1];
+        CellLayout[] others = [.. cellLayouts.SkipLast(1)];
+
+        return last.Partition.IsFinished()
+            ? last.AlignLastWithOthers(others)
+            : last.AlignOthersWithLast(others);
+    }
+
+    private static CellLayout[] AlignLastWithOthers(this CellLayout last, CellLayout[] others)
+    {
+        bool existsUnfinishedCell = others
+                .Where(c => c.GridPosition.ContainsRowIndex(last.GridPosition.BottomRow()))
+                .Any(c => !c.Partition.IsFinished());
+
+        CellLayout updated = existsUnfinishedCell
+            ? last.ForceLayoutPartitionNotFinished()
+            : last;
+
+        return [..others, updated];
+    }
+
+    private static CellLayout[] AlignOthersWithLast(this CellLayout last, CellLayout[] others) =>
+        [
+            ..others
+                .Select(cl => cl.GridPosition.BottomRow() != last.GridPosition.BottomRow()
+                    ? cl
+                    : cl.ForceLayoutPartitionNotFinished())
+        ];
+
     public static CellLayoutingResult Process(
         this Cell cell,
         CellLayoutingResult[] previousLayoutingResults,
@@ -82,6 +207,7 @@ internal static class CellLayoutBuilder
             layouts,
             boundingBox,
             cell.Borders,
+            cell.GridPosition,
             partition
         );
 
@@ -166,6 +292,19 @@ internal static class CellLayoutBuilder
         };
     }
 
+    private static CellLayout AlignHeight(this CellLayout cellLayout, GridLayout grid)
+    {
+        float height = grid.CalculateCellAvailableHeight(cellLayout.GridPosition);
+        if (cellLayout.BoundingBox.Height >= height)
+        {
+            return cellLayout;
+        }
+
+        return cellLayout with
+        {
+            BoundingBox = cellLayout.BoundingBox.SetHeight(height)
+        };
+    }
     private static CellLayoutingResult ForceRequestDrawingAreaStatus(this CellLayoutingResult result)
     {
         CellLayout cellLayout = result.CellLayout with
@@ -182,6 +321,12 @@ internal static class CellLayoutBuilder
         return r;
     }
 
+    private static CellLayout ForceLayoutPartitionNotFinished(this CellLayout cellLayout) =>
+        cellLayout with
+        {
+            Partition = cellLayout.Partition.RemoveEnd()
+        };
+
     private static float MinWidth(this Cell cell, GridLayout grid) =>
         grid.CalculateCellWidth(cell.GridPosition);
 
@@ -194,4 +339,15 @@ internal static class CellLayoutBuilder
         bool isFinished = lastResult.LastModelLayoutingResult.Status == ResultStatus.Finished;
         return [.. models.SkipProcessed(lastResult.LastModelLayoutingResult.ModelId, isFinished)];
     }
+}
+
+file static class CellOperators
+{
+    public static Model[] Unprocessed(this Cell cell, Layout[] previousLayouts) =>
+       previousLayouts.Length == 0
+           ? cell.ParagraphsOrTables
+           : [.. cell.ParagraphsOrTables.SkipFinished(previousLayouts.Last())];
+
+    private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
+        models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());
 }

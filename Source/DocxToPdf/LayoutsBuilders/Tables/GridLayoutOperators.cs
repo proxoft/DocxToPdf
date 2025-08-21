@@ -7,7 +7,7 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 internal static class GridLayoutOperators
 {
-    public static Rectangle[] GridAvailableAreas(this GridLayout grid, Size totalAvailableArea)
+    public static Rectangle[] SplitToColumnAreas(this GridLayout grid, Size totalAvailableArea)
     {
         float[] columnWidths = grid.TotalGridWidth() <= totalAvailableArea.Width
             ? grid.Columns

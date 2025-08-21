@@ -2,6 +2,7 @@
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Documents.Tables;
 
 namespace Proxoft.DocxToPdf.Layouts.Tables;
 
@@ -10,6 +11,7 @@ internal record CellLayout(
     Layout[] ParagraphsOrTables,
     Rectangle BoundingBox,
     Borders Borders,
+    GridPosition GridPosition,
     LayoutPartition Partition
 ) : Layout(ModelId, BoundingBox, Borders, Partition), IComposedLayout
 {
@@ -18,6 +20,7 @@ internal record CellLayout(
         [],
         Rectangle.Empty,
         Borders.None,
+        GridPosition.None,
         LayoutPartition.StartEnd
     );
 
