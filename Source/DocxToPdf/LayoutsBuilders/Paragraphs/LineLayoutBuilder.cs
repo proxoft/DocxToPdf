@@ -176,13 +176,13 @@ internal static class LineLayoutBuilder
         {
             LineLayout l = line with
             {
-                BoundingBox = line.BoundingBox.MoveY(yPosition)
+                BoundingBox = line.BoundingBox.MoveTo(new Position(line.BoundingBox.Left, yPosition))
             };
 
             return(l, ProcessingInfo.Done);
         }
 
-        LineLayout updatedLine = line.UpdateLine(elements, yPosition, availableWidth, fieldVariables, services);
+        LineLayout updatedLine = line.UpdateLine(elements, yPosition, availableWidth, fieldVariables, textStyle, services);
         ProcessingInfo processingInfo = line.Words.Last().Id == updatedLine.Words.Last().Id
             ? ProcessingInfo.Done
             : ProcessingInfo.ReconstructRequired;
@@ -200,17 +200,13 @@ internal static class LineLayoutBuilder
     {
         float lineWidth = 0;
         ElementLayout[] elementLayouts = [];
-        ModelId lastElementId = ModelId.None;
         float xPosition = 0;
-        bool isPageBreak = false;
 
         foreach (Element element in elements)
         {
             if (element is PageBreak)
             {
                 elementLayouts = [.. elementLayouts, new PageBreakLayout(element.Id, textStyle)];
-                isPageBreak = true;
-                lastElementId = element.Id;
                 break;
             }
 
@@ -220,21 +216,12 @@ internal static class LineLayoutBuilder
                 break;
             }
 
-            lastElementId = element.Id;
             elementLayouts = [.. elementLayouts, elementLayout];
             xPosition = elementLayout.BoundingBox.Right;
             lineWidth += elementLayout.BoundingBox.Width;
         }
 
-        bool isLastLine = elements.Length == 0
-            || lastElementId == elements.Last().Id
-            ;
-
-        LineDecoration lineDecoration = isPageBreak
-            ? LineDecoration.PageBreak
-            : isLastLine ? LineDecoration.Last
-            : LineDecoration.None;
-
+        LineDecoration lineDecoration = elementLayouts.CalculateLineDecoration(elements);
         // TODO: known issue: if element does not fit in line, word wrap must be implemented
         LineLayout ll = elementLayouts.CreateLine(yPosition, lineDecoration, textStyle, services);
         return ll;
@@ -262,7 +249,7 @@ internal static class LineLayoutBuilder
         ];
 
         ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, boundingBox.TopRight.X, services);
-        return new LineLayout(justifiedElements, lineDecoration, boundingBox.MoveY(yPosition), Borders.None, specialChar);
+        return new LineLayout(justifiedElements, lineDecoration, boundingBox.MoveYBy(yPosition), Borders.None, specialChar);
     }
 
     private static LineLayout CreateEmptyLine(float YPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
@@ -279,6 +266,7 @@ internal static class LineLayoutBuilder
         float yPosition,
         float availableWidth,
         FieldVariables fieldVariables,
+        TextStyle textStyle,
         LayoutServices services)
     {
         if (!line.Words.Any())
@@ -321,15 +309,14 @@ internal static class LineLayoutBuilder
             .Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
         ];
 
+        LineDecoration lineDecoration = e2.CalculateLineDecoration(allElements);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, bb.TopRight.X, services);
         return new LineLayout(
             e2,
             line.Decoration,
             bb,
             line.Borders,
-            line.DecorationText with
-            {
-                BoundingBox = line.DecorationText.BoundingBox.MoveTo(new Position(bb.TopRight.X, 0)),
-            }
+            specialChar
         );
     }
 
@@ -344,4 +331,14 @@ internal static class LineLayoutBuilder
            LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(xPosition, FieldVariables.None, services),
            _ => new EmptyLayout(ModelId.None, new Rectangle(new Position(xPosition, 0), Size.Zero), textStyle),
        };
+
+
+    private static LineDecoration CalculateLineDecoration(this ElementLayout[] elementLayouts, Element[] allElements)
+    {
+        if (allElements.Length == 0) return LineDecoration.Last;    // empty line
+        if (elementLayouts.Length == 0) return LineDecoration.None;
+        if (elementLayouts.Last() is PageBreakLayout) return LineDecoration.PageBreak;
+        if (elementLayouts.Last().Id == allElements.Last().Id) return LineDecoration.Last;
+        return LineDecoration.None;
+    }
 }

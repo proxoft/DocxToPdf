@@ -16,8 +16,8 @@ internal static class BorderRenderer
         }
 
         Rectangle bb = layout.BoundingBox
-            .MoveX(offset.X)
-            .MoveY(offset.Y);
+            .MoveXBy(offset.X)
+            .MoveYBy(offset.Y);
 
         bb.RenderBorder(layout.Partition, layout.Borders, graphics);
     }

@@ -41,13 +41,13 @@ internal record Rectangle(float X, float Y, float Width, float Height)
     public Rectangle MoveTo(Position position) =>
         new(position.X, position.Y, this.Width, this.Height);
 
-    public Rectangle MoveX(float deltaX) =>
-        this.Move(deltaX, 0);
+    public Rectangle MoveXBy(float deltaX) =>
+        this.MoveBy(deltaX, 0);
 
-    public Rectangle MoveY(float deltaY) =>
-        this.Move(0, deltaY);
+    public Rectangle MoveYBy(float deltaY) =>
+        this.MoveBy(0, deltaY);
 
-    public Rectangle Move(float deltaX, float deltaY) => 
+    public Rectangle MoveBy(float deltaX, float deltaY) => 
         new(this.TopLeft.X + deltaX, this.TopLeft.Y + deltaY, this.Width, this.Height);
 
     public Rectangle SetWidth(float width) =>

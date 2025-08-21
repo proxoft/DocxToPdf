@@ -24,7 +24,7 @@ internal static class ElementRenderer
         {
             XBrush backgroundBrush = layout.GetTextStyle().Background.ToXBrush();
             XRect rect = layout.BoundingBox
-                .Move(offset.X, offset.Y)
+                .MoveBy(offset.X, offset.Y)
                 .ToXRect();
 
             graphics.DrawRectangle(backgroundBrush, rect);
