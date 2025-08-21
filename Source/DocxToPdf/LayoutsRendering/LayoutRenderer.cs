@@ -51,8 +51,8 @@ internal static class LayoutRenderer
         page.Render(graphics, options);
     }
 
-    private static void Render(this PageLayout page, XGraphics graphics, RenderOptions options) =>
-        page.Content.Render(page.DrawingArea.TopLeft, graphics, options);
+    private static void Render(this PageLayout page, XGraphics graphics, RenderOptions options) => 
+        page.PageContent.Render(Position.Zero, graphics, options);
 
     private static void Render(this IEnumerable<Layout> layouts, Position offset, XGraphics graphics, RenderOptions options)
     {

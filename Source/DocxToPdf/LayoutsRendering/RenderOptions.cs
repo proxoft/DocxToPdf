@@ -9,6 +9,8 @@ internal class RenderOptions
 {
     public static readonly RenderOptions Default = new();
 
+    public BorderStyle PageContentBorder { get; set; } = BorderStyle.None;
+
     public BorderStyle SectionBorder { get; set; } = BorderStyle.None;
 
     public BorderStyle SectionColumnBorder { get; set; } = BorderStyle.None;
@@ -31,6 +33,7 @@ internal static class Operators
     public static BorderStyle GetBorderStyle(this RenderOptions options, Layout forLayout) =>
         forLayout switch
         {
+            PageContentLayout => options.PageContentBorder,
             SectionLayout => options.SectionBorder,
             ParagraphLayout => options.ParagraphBorder,
             LineLayout => options.LineBorder,

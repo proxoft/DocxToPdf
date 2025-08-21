@@ -13,6 +13,7 @@ using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using System.Collections.Generic;
+using System;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
@@ -30,13 +31,16 @@ internal static class SectionLayoutBuilder
         Size remainingArea = availableArea;
         ProcessingInfo sectionProcessingInfo = ProcessingInfo.Ignore;
         float yOffset = 0;
-        ModelId lastProcessed = ModelId.None;
 
         foreach (Model model in unprocessed)
         {
             (Layout layout, ProcessingInfo processingInfo) result = model switch
             {
-                Paragraph p => p.CreateLayout(previousSectionLayout.TryFindParagraphLayout(p.Id), remainingArea, fieldVariables, services),
+                Paragraph p => p.CreateLayout(
+                    previousSectionLayout.TryFindParagraphLayout(p.Id),
+                    remainingArea,
+                    fieldVariables,
+                    services),
                 _ => (NoLayout.Instance, ProcessingInfo.Ignore)
             };
 
@@ -62,12 +66,15 @@ internal static class SectionLayoutBuilder
             {
                 break;
             }
+
+            Model nextModel = unprocessed.Next(model.Id);
+            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, nextModel);
+            yOffset += spaceAfter;
+            remainingArea = remainingArea.DecreaseHeight(spaceAfter);
         }
 
         Rectangle boudingBox = layouts
-           .Select(l => l.BoundingBox)
-           .DefaultIfEmpty(Rectangle.Empty)
-           .CalculateBoundingBox();
+            .CalculateBoundingBox(Rectangle.Empty);
 
         LayoutPartition layoutPartition = sectionProcessingInfo.CalculateLayoutPartition(previousSectionLayout.Partition);
 
@@ -111,6 +118,17 @@ internal static class SectionLayoutBuilder
 
             updatedLayouts = [.. updatedLayouts, result.layout.SetOffset(new Position(0, yOffset))];
             yOffset += result.layout.BoundingBox.Height;
+
+            if(yOffset > remainingArea.Height)
+            {
+                sectionProcessingInfo = ProcessingInfo.ReconstructRequired;
+                break;
+            }
+
+            Model model = section.Find<Model>(layout.ModelId);
+            Model next = section.Elements.Next(model.Id);
+            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, next);
+            yOffset += spaceAfter;
         }
 
         Rectangle boudingBox = updatedLayouts
@@ -259,4 +277,36 @@ file static class SectionOperators
 
     private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
         models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());
+}
+
+file static class SpaceBetweenCalculator
+{
+    public static Model Next(this Model[] models, ModelId current) =>
+        models
+            .SkipWhile(m => m.Id != current)
+            .Skip(1)
+            .FirstOrDefault(NoneModel.Instance);
+
+    public static float CalculateSpaceAfter(this Model model, LayoutPartition layoutPartition, Model next)
+    {
+        if(!layoutPartition.HasFlag(LayoutPartition.End)) return 0;
+        float minSpaceAfter = model.SpaceAfter();
+        float minSpaceBefore = next.SpaceBefore();
+
+        return Math.Max(minSpaceAfter, minSpaceBefore);
+    }
+
+    private static float SpaceBefore(this Model model) =>
+        model switch
+        {
+            Paragraph p => p.Style.ParagraphSpacing.Before,
+            _ => 0
+        };
+
+    private static float SpaceAfter(this Model model) =>
+        model switch
+        {
+            Paragraph p => p.Style.ParagraphSpacing.After,
+            _ => 0
+        };
 }

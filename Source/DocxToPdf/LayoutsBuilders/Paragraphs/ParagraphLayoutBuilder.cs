@@ -28,7 +28,10 @@ internal static class ParagraphLayoutBuilder
             ? ModelId.None
             : previousLayout.LastProcessedElement();
 
-        (ParagraphLayout, ProcessingInfo) result = paragraph.CreateLayout(lastProcessed, availableSize, previousLayout.Partition, fieldVariables, services);
+        float spaceBefore = paragraph.Style.ParagraphSpacing.Before;
+        Size remainingArea = availableArea;
+
+        (ParagraphLayout, ProcessingInfo) result = paragraph.CreateLayout(lastProcessed, remainingArea, previousLayout.Partition, fieldVariables, services);
         return result;
     }
 

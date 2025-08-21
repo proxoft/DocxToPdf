@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
@@ -25,19 +27,57 @@ internal static class PageLayoutBuilder
         }
 
         PageLayout page = unprocessed[0].CreateNewPage();
+        (PageContentLayout pageContent, ProcessingInfo processingInfo) = unprocessed.CreatePageContent(
+            page.PageContent.BoundingBox,
+            previousPage.PageContent,
+            fieldVariables,
+            services
+        );
 
+        return (
+            page with
+            {
+                PageContent = pageContent,
+            },
+            processingInfo
+        );
+    }
+
+    public static (PageLayout, ProcessingInfo) UpdatePage(
+        this PageLayout pageLayout,
+        Section[] sections,
+        FieldVariables fieldVariables,
+        LayoutServices services)
+    {
+        (PageContentLayout content, ProcessingInfo processingInfo) = pageLayout.PageContent.UpdatePageContent(sections, fieldVariables, services);
+
+        PageLayout updatedPage = pageLayout with
+        {
+            PageContent = content,
+        };
+
+        return (updatedPage, processingInfo);
+    }
+
+    private static (PageContentLayout pageContent, ProcessingInfo processingInfo) CreatePageContent(
+        this Section[] sections,
+        Rectangle drawingArea,
+        PageContentLayout previousPageContent,
+        FieldVariables fieldVariables,
+        LayoutServices services)
+    {
         SectionLayout[] sectionLayouts = [];
-        Size remainingArea = page.DrawingArea.Size;
+        Size remainingArea = drawingArea.Size;
         ProcessingInfo pageProcessingInfo = ProcessingInfo.Done;
         float yOffset = 0;
 
-        foreach (Section section in sections.Unprocessed(previousPage))
+        foreach (Section section in sections)
         {
-            SectionLayout lastSectionLayout = previousPage.Content
+            SectionLayout lastSectionLayout = previousPageContent.Sections
                 .Where(l => l.ModelId == section.Id)
                 .LastOrDefault(SectionLayout.Empty);
 
-            (SectionLayout sectionLayout , ProcessingInfo processingInfo) = section.CreateLayout(
+            (SectionLayout sectionLayout, ProcessingInfo processingInfo) = section.CreateLayout(
                 lastSectionLayout,
                 remainingArea,
                 fieldVariables,
@@ -59,33 +99,27 @@ internal static class PageLayoutBuilder
                 break;
             }
         }
-
-        return (
-            page with
-            {
-                Content = sectionLayouts
-            },
-            pageProcessingInfo
-        );
+        PageContentLayout pageContent = new(sectionLayouts, drawingArea);
+        return (pageContent, pageProcessingInfo);
     }
 
-    public static (PageLayout, ProcessingInfo) UpdatePage(
-        this PageLayout pageLayout,
+    private static (PageContentLayout, ProcessingInfo) UpdatePageContent(
+        this PageContentLayout pageContent,
         Section[] sections,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Size remainingArea = pageLayout.DrawingArea.Size;
+        Size remainingArea = pageContent.BoundingBox.Size;
         SectionLayout[] sectionLayouts = [];
         ProcessingInfo pageProcessingInfo = ProcessingInfo.Done;
 
         SectionLayout lastSectionLayout = SectionLayout.Empty;
 
         float yOffset = 0;
-        foreach (SectionLayout sectionLayout in pageLayout.Content)
+        foreach (SectionLayout sectionLayout in pageContent.Sections)
         {
             Section section = sections.Single(s => s.Id == sectionLayout.ModelId);
-            (SectionLayout updatedLayout, ProcessingInfo processingInfo) =  sectionLayout.Update(section, lastSectionLayout, remainingArea, fieldVariables, services);
+            (SectionLayout updatedLayout, ProcessingInfo processingInfo) = sectionLayout.Update(section, lastSectionLayout, remainingArea, fieldVariables, services);
             sectionLayouts = [.. sectionLayouts, updatedLayout.SetOffset(new Position(0, yOffset))];
             remainingArea = remainingArea.DecreaseHeight(updatedLayout.BoundingBox.Height);
             yOffset += updatedLayout.BoundingBox.Height;
@@ -97,12 +131,12 @@ internal static class PageLayoutBuilder
             }
         }
 
-        PageLayout updatedPage = pageLayout with
+        PageContentLayout updatedContent = pageContent with
         {
-            Content = sectionLayouts
+            Sections = sectionLayouts
         };
 
-        return (updatedPage, pageProcessingInfo);
+        return (updatedContent, pageProcessingInfo);
     }
 }
 
@@ -114,9 +148,9 @@ file static class Functions
     private static PageLayout CreateNewPage(this PageConfiguration pageConfiguration)
     {
         Rectangle boundingBox = pageConfiguration.CalculatePageBoundingBox();
-        Rectangle drawingRegion = pageConfiguration.CalculatePageDrawingArea();
-
-        PageLayout page = new(boundingBox, drawingRegion, [], pageConfiguration, Borders.None);
+        Rectangle contentRegion = pageConfiguration.CalculatePageDrawingArea();
+        PageContentLayout pageContent = new([], contentRegion);
+        PageLayout page = new(boundingBox, pageContent, pageConfiguration);
         return page;
     }
 
@@ -135,9 +169,9 @@ file static class Functions
 file static class PageLayoutOperators
 {
     public static Section[] Unprocessed(this Section[] sections, PageLayout lastPage) =>
-        lastPage.Content.Length == 0
+        lastPage.PageContent.Sections.Length == 0
             ? sections
-            : [.. sections.FilterProcessed(lastPage.Content)];
+            : [.. sections.FilterProcessed(lastPage.PageContent.Sections)];
 
     private static IEnumerable<Section> FilterProcessed(this Section[] sections, SectionLayout[] sectionLayouts)
     {

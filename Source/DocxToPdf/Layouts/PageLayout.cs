@@ -9,13 +9,18 @@ namespace Proxoft.DocxToPdf.Layouts;
 
 internal record PageLayout(
     Rectangle BoundingBox,
-    Rectangle DrawingArea,
-    SectionLayout[] Content,
-    PageConfiguration Configuration,
-    Borders Borders
-) : Layout(ModelId.None, BoundingBox, Borders, LayoutPartition.StartEnd), IComposedLayout
+    PageContentLayout PageContent,
+    PageConfiguration Configuration
+) : Layout(ModelId.None, BoundingBox, Borders.None, LayoutPartition.StartEnd)
 {
-    public static readonly PageLayout None = new(Rectangle.Empty, Rectangle.Empty, [], PageConfiguration.None, Borders.None);
+    public static readonly PageLayout None = new(Rectangle.Empty, PageContentLayout.Empty, PageConfiguration.None);
+}
 
-    public IEnumerable<Layout> InnerLayouts => this.Content;
+internal record PageContentLayout(
+    SectionLayout[] Sections,
+    Rectangle BoundingBox) : Layout(ModelId.None, BoundingBox, Borders.None, LayoutPartition.StartEnd), IComposedLayout
+{
+    public static readonly PageContentLayout Empty = new([], Rectangle.Empty);
+
+    public IEnumerable<Layout> InnerLayouts => this.Sections;
 }
