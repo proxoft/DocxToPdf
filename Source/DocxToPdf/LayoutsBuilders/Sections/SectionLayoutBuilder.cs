@@ -119,6 +119,7 @@ internal static class SectionLayoutBuilder
                     fieldVariables,
                     services
                 ),
+                TableLayout tl => tl.Update(),
                 _ => (NoLayout.Instance, ProcessingInfo.Ignore)
             };
 

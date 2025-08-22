@@ -136,7 +136,8 @@ internal static class CellLayoutBuilder
             ..others
                 .Select(cl => cl.GridPosition.BottomRow() != last.GridPosition.BottomRow()
                     ? cl
-                    : cl.ForceLayoutPartitionNotFinished())
+                    : cl.ForceLayoutPartitionNotFinished()),
+            last
         ];
 
     public static CellLayoutingResult Process(

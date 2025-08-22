@@ -78,7 +78,6 @@ internal static class GridLayoutBuilder
         GridPosition gridPosition,
         Grid grid)
     {
-        // create missing rows
         GridLayout layout = gridLayout;
         for (int ri = gridPosition.Row; ri < gridPosition.Row + gridPosition.RowSpan; ri++)
         {
@@ -87,8 +86,7 @@ internal static class GridLayoutBuilder
                 continue; // row already exists
             }
 
-            // TODO: initialize row height to default value
-            RowLayout row = new(ri, 0, grid.RowHeights[ri].HeightRule);
+            RowLayout row = new(ri, grid.RowHeights[ri].Height, grid.RowHeights[ri].HeightRule);
             layout = new GridLayout(
                 modelId,
                 layout.Columns,

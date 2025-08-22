@@ -70,6 +70,13 @@ internal static class TableLayoutBuilder
         return (tableLayout, tableProcessingInfo);
     }
 
+    public static (TableLayout, ProcessingInfo) Update(
+        this TableLayout tableLayout)
+    {
+
+        return (tableLayout, ProcessingInfo.Done);
+    }
+
     public static TableLayoutingResult Process(this Table table, LayoutingResult previousResult, Rectangle remainingArea, FieldVariables fieldVariables, LayoutServices services)
     {
         TableLayoutingResult tlr = previousResult.AsResultOfModel(table.Id, TableLayoutingResult.None);
