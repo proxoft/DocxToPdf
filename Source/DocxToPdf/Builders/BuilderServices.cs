@@ -15,4 +15,10 @@ internal class BuilderServices(
     public ModelIdFactory IdFactory { get; } = modelIdFactory;
 
     public StyleFactory Styles { get; } = styleFactory;
+
+    public BuilderServices ForTable(Word.TableProperties tableProperties)
+    {
+        StyleFactory sf = this.Styles.ForTable(tableProperties);
+        return new BuilderServices(this.IdFactory, sf);
+    }
 }

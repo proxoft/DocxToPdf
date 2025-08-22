@@ -14,10 +14,16 @@ internal static class TableBuilder
 
     public static Table ToTable(this Word.Table table, BuilderServices services)
     {
+        BuilderServices forTable = services.ForTable(table.Properties());
+        return table.ToTableInternal(forTable);
+    }
+
+    private static Table ToTableInternal(this Word.Table table, BuilderServices services)
+    {
         ModelId tableId = services.IdFactory.NextTableId();
         Grid grid = table.CreateTableGrid();
         CellBorderPattern cellBorderPattern = table.CreateCellBorderPattern();
-        Cell[] cells = [..table.CreateCells(cellBorderPattern, services)];
+        Cell[] cells = [.. table.CreateCells(cellBorderPattern, services)];
 
         return new Table(
             tableId,

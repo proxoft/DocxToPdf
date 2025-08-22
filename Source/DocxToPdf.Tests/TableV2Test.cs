@@ -10,7 +10,7 @@ public class TableV2Test
         "Tables/{0}_v2.pdf",
         new RenderOptions()
         {
-            // RenderParagraphCharacter = true
+            RenderParagraphCharacter = true
         }
     );
 

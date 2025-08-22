@@ -73,7 +73,6 @@ internal static class TableLayoutBuilder
     public static (TableLayout, ProcessingInfo) Update(
         this TableLayout tableLayout)
     {
-
         return (tableLayout, ProcessingInfo.Done);
     }
 
@@ -281,7 +280,7 @@ file static class CellOperators
 file static class ProcessingInfoOperators
 {
     public static ProcessingInfo CalculateProcessingInfo(this ProcessingInfo[] cellProcessingInfos) =>
-        cellProcessingInfos.Any(ip => ip == ProcessingInfo.RequestDrawingArea)
+        cellProcessingInfos.Any(ip => ip is ProcessingInfo.RequestDrawingArea or ProcessingInfo.IgnoreAndRequestDrawingArea)
             ? ProcessingInfo.RequestDrawingArea
             : ProcessingInfo.Done;
 }

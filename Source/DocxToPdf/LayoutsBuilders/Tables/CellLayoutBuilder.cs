@@ -44,11 +44,11 @@ internal static class CellLayoutBuilder
                     remainingArea,
                     fieldVariables,
                     services),
-                //Table t => t.CreateTableLayout(
-                //    previousSectionLayout.TryFindTableLayout(t.Id),
-                //    remainingArea,
-                //    fieldVariables,
-                //    services),
+                Table t => t.CreateTableLayout(
+                    previousLayout.TryFindTableLayout(t.Id),
+                    remainingArea,
+                    fieldVariables,
+                    services),
                 _ => (NoLayout.Instance, ProcessingInfo.Ignore)
             };
 

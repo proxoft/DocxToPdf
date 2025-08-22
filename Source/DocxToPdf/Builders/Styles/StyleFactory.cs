@@ -11,16 +11,13 @@ internal class StyleFactory
 {
     private readonly StyleDefinitionsPart? _styleDefinitionsPart;
     private readonly ParagraphStyle _paragraph;
-    private readonly TextStyle _textStyle;
 
     private StyleFactory(
         StyleDefinitionsPart? styleDefinitionsPart,
-        ParagraphStyle paragraph,
-        TextStyle textStyle)
+        ParagraphStyle paragraph)
     {
         _styleDefinitionsPart = styleDefinitionsPart;
         _paragraph = paragraph;
-        _textStyle = textStyle;
     }
 
     public static StyleFactory Create(MainDocumentPart mainDocumentPart)
@@ -29,9 +26,9 @@ internal class StyleFactory
         Drawing.Theme? theme = mainDocumentPart?.ThemePart?.Theme;
 
         ParagraphStyle paragraph = docDefaults.CreateDefaultParagraphStyle(theme);
-        TextStyle textStyle = docDefaults.CreateDefaultTextStyle(theme);
+        // TextStyle textStyle = docDefaults.CreateDefaultTextStyle(theme);
 
-        return new(mainDocumentPart?.StyleDefinitionsPart, paragraph, textStyle);
+        return new(mainDocumentPart?.StyleDefinitionsPart, paragraph);
     }
 
     public ParagraphStyle ForParagraph(ParagraphProperties? paragraphProperties)
@@ -46,5 +43,14 @@ internal class StyleFactory
         StyleRunProperties[] styles = [.._styleDefinitionsPart.GetRunStyles(runProperties?.RunStyle?.Val)];
         TextStyle textStyle = paragraphTextStyle.CreateTextStyle(runProperties, styles);
         return textStyle;
+    }
+
+    public StyleFactory ForTable(TableProperties tableProperties)
+    {
+        StyleParagraphProperties[] paragraphStyles = [.._styleDefinitionsPart.GetParagraphStyles(tableProperties?.TableStyle?.Val)];
+        StyleRunProperties[] runStyles = [.._styleDefinitionsPart.GetRunStyles(tableProperties?.TableStyle?.Val)];
+
+        ParagraphStyle ps = _paragraph.CreateParagraphStyle(null, paragraphStyles, runStyles);
+        return new(_styleDefinitionsPart, ps);
     }
 }
