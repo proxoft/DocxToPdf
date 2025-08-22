@@ -98,7 +98,7 @@ internal static class ParagraphLayoutBuilder
         LayoutServices services)
     {
         Element[] unprocessed = [..paragraph.Elements.SkipProcessed(lastProcessed, true)];
-        (LineLayout[] lines, ProcessingInfo processingInfo) = unprocessed.CreateLineLayouts(availableSize, fieldVariables, paragraph.Style, services);
+        (LineLayout[] lines, ProcessingInfo processingInfo) = unprocessed.CreateLineLayouts(0, availableSize, fieldVariables, paragraph.Style, services);
 
         Rectangle bb = lines
             .CalculateBoundingBox(Rectangle.Empty)

@@ -7,7 +7,7 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 internal static class LineLayoutOperators
 {
     public static bool ContainsUpdatableField(this LineLayout line) =>
-        line.Words.Any(w => w is PageNumberLayout);
+        line.Words.Any(w => w is FieldLayout);
 
     public static ModelId LastProcessedElement(this LineLayout[] lines) =>
         lines.Length == 0

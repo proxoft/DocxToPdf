@@ -8,6 +8,7 @@ namespace Proxoft.DocxToPdf.Layouts.Tables;
 internal record TableLayout(
     ModelId ModelId,
     CellLayout[] Cells,
+    GridLayout GridLayout,
     Rectangle BoundingBox,
     Borders Borders,
     LayoutPartition Partition
@@ -16,6 +17,7 @@ internal record TableLayout(
     public static readonly TableLayout Empty = new(
         ModelId.None,
         [],
+        GridLayout.Empty,
         Rectangle.Empty,
         Borders.None,
         LayoutPartition.StartEnd

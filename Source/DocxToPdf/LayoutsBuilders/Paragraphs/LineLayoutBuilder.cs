@@ -16,6 +16,7 @@ internal static class LineLayoutBuilder
 {
     public static (LineLayout[] lines, ProcessingInfo processingInfo) CreateLineLayouts(
         this IEnumerable<Element> elements,
+        float yOffset,
         Size availableArea,
         FieldVariables fieldVariables,
         ParagraphStyle style,
@@ -23,7 +24,7 @@ internal static class LineLayoutBuilder
     {
         Element[] unprocessed = [.. elements];
         LineLayout[] lines = [];
-        float currentY = 0;
+        float currentY = yOffset;
         float remainingHeight = availableArea.Height;
         bool keepProcessing;
 
@@ -156,7 +157,13 @@ internal static class LineLayoutBuilder
             ModelId lastProcesseId = updatedLines.LastProcessedElement();
             Element[] unprocessed = [.. paragraph.Elements.SkipProcessed(lastProcesseId, true)];
 
-            (LineLayout[] reconstructedLines, processingInfo) = unprocessed.CreateLineLayouts(new Size(availableArea.Width, remainingHeight), fieldVariables, paragraph.Style, services);
+            (LineLayout[] reconstructedLines, processingInfo) = unprocessed.CreateLineLayouts(
+                currentY,
+                new Size(availableArea.Width, remainingHeight),
+                fieldVariables,
+                paragraph.Style,
+                services
+            );
             updatedLines = [.. updatedLines, .. reconstructedLines];
         }
 
@@ -314,7 +321,7 @@ internal static class LineLayoutBuilder
         return new LineLayout(
             e2,
             line.Decoration,
-            bb,
+            bb.MoveYBy(yPosition),
             line.Borders,
             specialChar
         );

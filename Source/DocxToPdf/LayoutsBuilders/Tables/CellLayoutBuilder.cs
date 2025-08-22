@@ -6,6 +6,7 @@ using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
@@ -27,8 +28,7 @@ internal static class CellLayoutBuilder
         Layout[] layouts = [];
 
         Size remainingArea = availableArea
-            .DecreaseWidth(cell.Padding.Horizontal)
-            .DecreaseHeight(cell.Padding.Vertical);
+            .Clip(cell.Padding);
 
         ProcessingInfo cellProcessingInfo = ProcessingInfo.Ignore;
 
@@ -98,6 +98,86 @@ internal static class CellLayoutBuilder
         );
 
         return (cellLayout, cellProcessingInfo);
+    }
+
+    public static (CellLayout, ProcessingInfo) Update(
+        this CellLayout cellLayout,
+        Cell cell,
+        Size availableArea,
+        FieldVariables fieldVariables,
+        GridLayout grid,
+        CellLayout previousPageCellLayout,
+        LayoutServices services
+    )
+    {
+        Size remainingArea = availableArea
+            .Clip(cell.Padding);
+
+        ProcessingInfo cellProcessingInfo = ProcessingInfo.Done;
+        float yOffset = cell.Padding.Top;
+        float xOffset = cell.Padding.Left;
+
+        Layout[] updatedLayouts = [];
+
+        foreach (Layout layout in cellLayout.ParagraphsOrTables)
+        {
+            (Layout updatedLayout, ProcessingInfo processingInfo) result = layout switch
+            {
+                ParagraphLayout pl => pl.Update(
+                    cell.Find<Paragraph>(pl.ModelId),
+                    previousPageCellLayout.TryFindParagraphLayout(pl.ModelId),
+                    remainingArea,
+                    fieldVariables,
+                    services),
+                //TableLayout tl => tl.Update(
+                //    cell.Find<Table>(tl.ModelId),
+                //    remainingArea,
+                //    fieldVariables,
+                //    services),
+                _ => (NoLayout.Instance, ProcessingInfo.Done)
+            };
+
+
+            if(result.processingInfo == ProcessingInfo.Ignore)
+            {
+                continue;
+            }
+
+            if(result.processingInfo is not ProcessingInfo.IgnoreAndRequestDrawingArea)
+            {
+                updatedLayouts = [.. updatedLayouts, result.updatedLayout.SetOffset(new Position(xOffset, yOffset))];
+            }
+
+            if (result.processingInfo is ProcessingInfo.NewPageRequired
+                or ProcessingInfo.RequestDrawingArea
+                or ProcessingInfo.IgnoreAndRequestDrawingArea)
+            {
+                cellProcessingInfo = result.processingInfo;
+                break;
+            }
+
+            Model currentModel = cell.Find<Model>(layout.ModelId);
+            Model nextModel = cell.ParagraphsOrTables.Next(layout.ModelId);
+            float spaceAfter = currentModel.CalculateSpaceAfter(result.updatedLayout.Partition, nextModel);
+            yOffset += result.updatedLayout.BoundingBox.Height + spaceAfter;
+            remainingArea = remainingArea
+                .DecreaseHeight(result.updatedLayout.BoundingBox.Height + spaceAfter);
+        }
+
+        Rectangle boundingBox = updatedLayouts
+            .CalculateBoundingBox(Rectangle.Empty)
+            .Expand(cell.Padding);
+
+        CellLayout updatedCellLayout = new(
+            cell.Id,
+            updatedLayouts,
+            boundingBox,
+            cell.Borders,
+            cell.GridPosition,
+            cellLayout.Partition
+        );
+
+        return (updatedCellLayout, cellProcessingInfo);
     }
 
     public static CellLayout[] AlignCellHeights(this CellLayout[] cellLayouts, GridLayout grid) =>
@@ -348,6 +428,9 @@ file static class CellOperators
        previousLayouts.Length == 0
            ? cell.ParagraphsOrTables
            : [.. cell.ParagraphsOrTables.SkipFinished(previousLayouts.Last())];
+
+    public static T Find<T>(this Cell cell, ModelId id) where T : Model =>
+        cell.ParagraphsOrTables.OfType<T>().Single(m => m.Id == id);
 
     private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
         models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());

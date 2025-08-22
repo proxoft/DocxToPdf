@@ -14,4 +14,10 @@ internal record Size(float Width, float Height)
 
     public bool FitsIn(Size other) =>
         this.Width <= other.Width && this.Height <= other.Height;
+
+    public Size Clip(Padding padding) =>
+        new(
+            Math.Max(0, this.Width - padding.Left - padding.Right),
+            Math.Max(0, this.Height - padding.Top - padding.Bottom)
+        );
 }

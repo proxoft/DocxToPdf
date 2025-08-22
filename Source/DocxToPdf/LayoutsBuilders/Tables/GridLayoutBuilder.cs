@@ -8,7 +8,10 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 internal static class GridLayoutBuilder
 {
-    public static GridLayout InitializeGridLayout(this Grid grid, ModelId modelId) =>
+    public static GridLayout InitializeGridLayout(this Table table) =>
+        table.Grid.InitializeGridLayout(table.Id);
+
+    private static GridLayout InitializeGridLayout(this Grid grid, ModelId modelId) =>
         new(
             modelId,
             [..grid.ColumnWidths],

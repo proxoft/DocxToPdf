@@ -20,7 +20,7 @@ internal static class TableLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        GridLayout gridLayout = table.Grid.InitializeGridLayout(table.Id);
+        GridLayout gridLayout = table.InitializeGridLayout();
         Rectangle[] columnsAvailableArea = gridLayout.SplitToColumnAreas(availableArea);
         bool[] columnFinished = [.. columnsAvailableArea.Select(_ => false)];
         CellLayout[] cellLayouts = [];
@@ -31,7 +31,13 @@ internal static class TableLayoutBuilder
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
             CellLayout previousCellLayout = previousLayout.Cells.TryFindPreviousCellLayout(cell.Id);
 
-            (CellLayout cellLayout , ProcessingInfo processingInfo) = cell.CreateLayout(cellAvailableArea.Size, fieldVariables, gridLayout, previousCellLayout, services);
+            (CellLayout cellLayout , ProcessingInfo processingInfo) = cell.CreateLayout(
+                cellAvailableArea.Size,
+                fieldVariables,
+                gridLayout,
+                previousCellLayout,
+                services
+            );
 
             processingInfos = [.. processingInfos, processingInfo];
             cellLayouts = [.. cellLayouts, cellLayout.SetOffset(cellAvailableArea.TopLeft)];
@@ -61,6 +67,7 @@ internal static class TableLayoutBuilder
         TableLayout tableLayout = new(
             table.Id,
             cellLayouts,
+            gridLayout,
             boundingBox,
             Borders.None,
             layoutPartition
@@ -71,9 +78,67 @@ internal static class TableLayoutBuilder
     }
 
     public static (TableLayout, ProcessingInfo) Update(
-        this TableLayout tableLayout)
+        this TableLayout tableLayout,
+        Table table,
+        TableLayout previousTableLayout,
+        Size availableArea,
+        FieldVariables fieldVariables,
+        LayoutServices services)
     {
-        return (tableLayout, ProcessingInfo.Done);
+        CellLayout[] cellLayouts = [];
+        GridLayout gridLayout = table.InitializeGridLayout();
+        Rectangle[] columnsAvailableArea = gridLayout.SplitToColumnAreas(availableArea);
+        ProcessingInfo[] processingInfos = [];
+
+        foreach (CellLayout cellLayout in tableLayout.Cells)
+        {
+            Cell cell = table.Cells.Single(c => c.Id == cellLayout.ModelId);
+            Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
+            CellLayout previousPageCellLayout = previousTableLayout.Cells.TryFindPreviousCellLayout(cell.Id);
+            (CellLayout updatedCellLayout , ProcessingInfo processingInfo) = cellLayout.Update(
+                cell,
+                cellAvailableArea.Size,
+                fieldVariables,
+                tableLayout.GridLayout,
+                previousPageCellLayout,
+                services
+            );
+
+            cellLayouts = [.. cellLayouts, updatedCellLayout.SetOffset(cellAvailableArea.TopLeft)];
+            cellLayouts = cellLayouts.AlignLayoutPartitions();
+
+            gridLayout = gridLayout.JustifyGridRows(table.Id, cellLayout.BoundingBox.Size, cell.GridPosition, table.Grid);
+            cellLayouts = cellLayouts.AlignCellHeights(gridLayout);
+
+            columnsAvailableArea = gridLayout
+                .SplitToColumnAreas(availableArea)
+                .CropColumnsAvailableArea(cellLayouts);
+
+            bool allColumnsFullyOccupied = cellLayouts.AllColumnsOccupied(gridLayout.Columns.Length);
+            if (allColumnsFullyOccupied)
+            {
+                break;
+            }
+        }
+
+        Rectangle boundingBox = cellLayouts
+            .CalculateBoundingBox(Rectangle.Empty);
+
+        LayoutPartition layoutPartition = cellLayouts
+            .Select(c => c.Partition)
+            .CalculateLayoutPartition(previousTableLayout.Partition);
+
+        TableLayout updatedTableLayout = new(
+            table.Id,
+            cellLayouts,
+            gridLayout,
+            boundingBox,
+            Borders.None,
+            layoutPartition
+        );
+
+        ProcessingInfo tableProcessingInfo = processingInfos.CalculateProcessingInfo();
+        return (updatedTableLayout, tableProcessingInfo);
     }
 
     public static TableLayoutingResult Process(this Table table, LayoutingResult previousResult, Rectangle remainingArea, FieldVariables fieldVariables, LayoutServices services)
@@ -90,7 +155,7 @@ internal static class TableLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        GridLayout gridLayout = table.Grid.InitializeGridLayout(table.Id);
+        GridLayout gridLayout = table.InitializeGridLayout();
 
         CellLayoutingResult[] cellResults = [];
         Rectangle[] columnsAvailableArea = gridLayout.SplitToColumnAreas(availableArea);
@@ -141,6 +206,7 @@ internal static class TableLayoutBuilder
         TableLayout tableLayout = new(
             table.Id,
             [.. cellResults.Select(r => r.CellLayout)],
+            gridLayout,
             boundingBox,
             Borders.None,
             partition

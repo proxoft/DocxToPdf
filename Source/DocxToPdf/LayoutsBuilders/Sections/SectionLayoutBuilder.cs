@@ -119,7 +119,13 @@ internal static class SectionLayoutBuilder
                     fieldVariables,
                     services
                 ),
-                TableLayout tl => tl.Update(),
+                TableLayout tl => tl.Update(
+                    section.Find<Table>(tl.ModelId),
+                    previousSectionLayout.Layouts.LastOfTypeOr(TableLayout.Empty), // try find in previous section
+                    remainingArea,
+                    fieldVariables,
+                    services
+                ),
                 _ => (NoLayout.Instance, ProcessingInfo.Ignore)
             };
 

@@ -70,4 +70,26 @@ public class PageNumberV2Test
                 .NotBeEmpty();
         });
     }
+
+    [Fact]
+    public void TotalPagesReconstructTable()
+    {
+        _executor.Convert("TotalPagesReconstructTable", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void TotalPagesReconstructTableResizeParagraph()
+    {
+        _executor.Convert("TotalPagesReconstructTableResizeParagraph", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
 }

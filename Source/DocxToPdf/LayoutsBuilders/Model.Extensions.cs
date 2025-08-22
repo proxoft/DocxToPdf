@@ -15,11 +15,7 @@ internal static class ModelExtensions
             .Skip(1)
             .FirstOrDefault(NoneModel.Instance);
 
-    public static ParagraphLayout TryFindParagraphLayout(this IComposedLayout parent, ModelId paragraphId) =>
-        parent.InnerLayouts.OfType<ParagraphLayout>().SingleOrDefault(p => p.ModelId == paragraphId, ParagraphLayout.Empty);
-
-    public static TableLayout TryFindTableLayout(this IComposedLayout parent, ModelId tableId) =>
-        parent.InnerLayouts.OfType<TableLayout>().SingleOrDefault(p => p.ModelId == tableId, TableLayout.Empty);
+    
 
     public static TModel[] SkipProcessed<TModel>(this IEnumerable<TModel> models, LayoutingResult lastResult) where TModel : Model
     {
