@@ -1,11 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
-using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;

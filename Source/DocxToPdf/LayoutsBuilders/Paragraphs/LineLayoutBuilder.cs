@@ -56,61 +56,6 @@ internal static class LineLayoutBuilder
         return (lines, processingInfo);
     }
 
-    public static (LineLayout[] lines, float spaceAfterLastLine, ModelId lastProcessedElementId, ResultStatus status) CreateLines(
-        this IEnumerable<Element> elements,
-        Rectangle availableArea,
-        FieldVariables fieldVariables,
-        ParagraphStyle style,
-        LayoutServices services)
-    {
-        Element[] unprocessed = [.. elements];
-        bool isEmpty = unprocessed.Length == 0;
-
-        List<LineLayout> lines = [];
-        ModelId lastProcessed = ModelId.None;
-
-        bool keepProcessing = true;
-        float remainingHeight = availableArea.Height;
-
-        float currentY = availableArea.Y;
-        float spaceAfterLastLine = 0;
-        do
-        {
-            LineLayout line = unprocessed.CreateLine(currentY, availableArea.Width, fieldVariables, style.TextStyle, services);
-            remainingHeight -= line.BoundingBox.Height;
-
-            float lineSpaceAfterLine = style.ParagraphSpacing.LineSpacing.CalculateSpaceAfterLine(line.BoundingBox.Height);
-
-            if (remainingHeight >= 0)
-            {
-                lines.Add(line);
-                lastProcessed = line.Words.LastOrDefault()?.Id ?? ModelId.None;
-                unprocessed = [.. unprocessed.SkipProcessed(lastProcessed, true)];
-                currentY += line.BoundingBox.Height;
-            }
-
-            remainingHeight -= lineSpaceAfterLine;
-            currentY += lineSpaceAfterLine;
-
-            if (unprocessed.Length == 0)
-            {
-                spaceAfterLastLine = lineSpaceAfterLine;
-            }
-
-            keepProcessing = (remainingHeight > 0) && unprocessed.Length > 0
-                && line.Decoration == LineDecoration.None;
-        } while (keepProcessing);
-
-
-        ResultStatus status =
-            lines.Count == 0 ? ResultStatus.IgnoreAndRequestDrawingArea
-            : lines.Last().Decoration == LineDecoration.PageBreak ? ResultStatus.NewPageRequired
-            : unprocessed.Length > 0 ? ResultStatus.RequestDrawingArea
-            : ResultStatus.Finished;
-
-        return ([.. lines], spaceAfterLastLine, lastProcessed, status);
-    }
-
     public static (LineLayout[] lines, ProcessingInfo) UpdateLineLayouts(
         this LineLayout[] lines,
         Paragraph paragraph,
@@ -276,7 +221,7 @@ internal static class LineLayoutBuilder
         TextStyle textStyle,
         LayoutServices services)
     {
-        if (!line.Words.Any())
+        if (line.Words.Length == 0)
         {
             return line;
         }
@@ -338,7 +283,6 @@ internal static class LineLayoutBuilder
            LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(xPosition, FieldVariables.None, services),
            _ => new EmptyLayout(ModelId.None, new Rectangle(new Position(xPosition, 0), Size.Zero), textStyle),
        };
-
 
     private static LineDecoration CalculateLineDecoration(this ElementLayout[] elementLayouts, Element[] allElements)
     {

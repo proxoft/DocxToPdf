@@ -29,28 +29,10 @@ internal static class GridLayoutOperators
         return areas;
     }
 
-    public static (float offset, float width) CalculateCellRegion(this GridLayout grid, GridPosition gridPosition)
-    {
-        float offset = grid.CalculateCellXOffset(gridPosition);
-        float width = grid.CalculateCellWidth(gridPosition);
-        return (offset, width);
-    }
-
-    public static float CalculateCellWidth(this GridLayout grid, GridPosition gridPosition) =>
-        grid.Columns
-            .Skip(gridPosition.Column)
-            .Take(gridPosition.ColumnSpan)
-            .Sum();
-
     public static float CalculateCellAvailableHeight(this GridLayout grid, GridPosition gridPosition) =>
         grid.Rows
             .Where(r => gridPosition.ContainsRowIndex(r.Row))
             .Select(r => r.Height)
-            .Sum();
-
-    private static float CalculateCellXOffset(this GridLayout grid, GridPosition gridPosition) =>
-        grid.Columns
-            .Take(gridPosition.Column - 1)
             .Sum();
 
     private static float TotalGridWidth(this GridLayout grid) =>
