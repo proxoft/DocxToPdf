@@ -6,6 +6,7 @@ using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
+using Proxoft.DocxToPdf.Documents.Shared;
 
 namespace Proxoft.DocxToPdf.Builders.Sections;
 

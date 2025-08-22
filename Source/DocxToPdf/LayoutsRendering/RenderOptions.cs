@@ -1,5 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
 

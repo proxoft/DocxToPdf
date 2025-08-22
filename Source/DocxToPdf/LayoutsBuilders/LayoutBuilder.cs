@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Sections;
-using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Pages;
 

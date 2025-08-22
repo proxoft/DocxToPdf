@@ -5,6 +5,7 @@ using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsRendering.Renderers;
 
@@ -31,18 +32,18 @@ internal static class LayoutRenderer
 
     private static void CreatePdfPage(this PageLayout page, PdfDocument pdfDocument, RenderOptions options)
     {
-        PageOrientation orientation = page.Configuration.Orientation switch
+        PageOrientation orientation = page.Orientation switch
         {
-            Documents.Sections.Orientation.Portrait => PageOrientation.Portrait,
-            Documents.Sections.Orientation.Landscape => PageOrientation.Landscape,
+            Documents.Shared.Orientation.Portrait => PageOrientation.Portrait,
+            Documents.Shared.Orientation.Landscape => PageOrientation.Landscape,
             _ => PageOrientation.Portrait,
         };
 
         PdfPage pp = new()
         {
             Orientation = orientation,
-            Width = page.Configuration.Size.Width,
-            Height = page.Configuration.Size.Height
+            Width = page.BoundingBox.Size.Width,
+            Height = page.BoundingBox.Size.Height
         };
 
         pdfDocument.AddPage(pp);

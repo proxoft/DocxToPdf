@@ -1,5 +1,5 @@
 ﻿using System;
-using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.LayoutsRendering;
 
 namespace Proxoft.DocxToPdf.Tests.Tools;

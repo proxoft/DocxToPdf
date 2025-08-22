@@ -3,6 +3,7 @@ using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
@@ -147,7 +148,7 @@ file static class Functions
         Rectangle boundingBox = pageConfiguration.CalculatePageBoundingBox();
         Rectangle contentRegion = pageConfiguration.CalculatePageDrawingArea();
         PageContentLayout pageContent = new([], contentRegion);
-        PageLayout page = new(boundingBox, pageContent, pageConfiguration);
+        PageLayout page = new(boundingBox, pageContent, pageConfiguration.Orientation);
         return page;
     }
 

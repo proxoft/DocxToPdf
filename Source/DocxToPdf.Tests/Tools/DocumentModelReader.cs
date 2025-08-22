@@ -3,7 +3,7 @@ using DocumentFormat.OpenXml.Packaging;
 using PdfSharp.Pdf;
 using Proxoft.DocxToPdf.Builders;
 using Proxoft.DocxToPdf.Documents;
-using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.LayoutsBuilders;
 using Proxoft.DocxToPdf.LayoutsRendering;
 

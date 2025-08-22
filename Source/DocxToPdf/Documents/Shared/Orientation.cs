@@ -1,4 +1,4 @@
-﻿namespace Proxoft.DocxToPdf.Documents.Sections;
+﻿namespace Proxoft.DocxToPdf.Documents.Shared;
 
 internal enum Orientation
 {
