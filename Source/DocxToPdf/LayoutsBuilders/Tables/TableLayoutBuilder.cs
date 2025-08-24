@@ -75,7 +75,7 @@ internal static class TableLayoutBuilder
         return (tableLayout, tableProcessingInfo);
     }
 
-    public static (TableLayout, ProcessingInfo) Update(
+    public static (TableLayout, UpdateInfo) Update(
         this TableLayout tableLayout,
         Table table,
         TableLayout previousTableLayout,
@@ -86,14 +86,14 @@ internal static class TableLayoutBuilder
         CellLayout[] cellLayouts = [];
         GridLayout gridLayout = table.InitializeGridLayout();
         Rectangle[] columnsAvailableArea = gridLayout.SplitToColumnAreas(availableArea);
-        ProcessingInfo[] processingInfos = [];
+        UpdateInfo[] updateInfos = [];
 
         foreach (CellLayout cellLayout in tableLayout.Cells)
         {
             Cell cell = table.Cells.Single(c => c.Id == cellLayout.ModelId);
             Rectangle cellAvailableArea = cell.CalculateCellAvailableArea(columnsAvailableArea);
             CellLayout previousPageCellLayout = previousTableLayout.Cells.TryFindPreviousCellLayout(cell.Id);
-            (CellLayout updatedCellLayout , ProcessingInfo processingInfo) = cellLayout.Update(
+            (CellLayout updatedCellLayout, _) = cellLayout.Update(
                 cell,
                 cellAvailableArea.Size,
                 fieldVariables,
@@ -134,9 +134,13 @@ internal static class TableLayoutBuilder
             layoutPartition
         );
 
-        ProcessingInfo tableProcessingInfo = processingInfos.CalculateProcessingInfo();
-        return (updatedTableLayout, tableProcessingInfo);
+        UpdateInfo tableUpdateInfo = updateInfos.Any(ui => ui == UpdateInfo.ReconstructRequired)
+            ? UpdateInfo.ReconstructRequired
+            : UpdateInfo.Done;
+
+        return (updatedTableLayout, tableUpdateInfo);
     }
+
     private static IEnumerable<Cell> InLayoutingOrder(this IEnumerable<Cell> cells) =>
         cells
             .OrderBy(c => c.GridPosition.Row)

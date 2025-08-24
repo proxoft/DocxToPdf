@@ -56,7 +56,7 @@ internal static class LineLayoutBuilder
         return (lines, processingInfo);
     }
 
-    public static (LineLayout[] lines, ProcessingInfo) UpdateLineLayouts(
+    public static (LineLayout[] lines, UpdateInfo updateInfo) UpdateLineLayouts(
         this LineLayout[] lines,
         Paragraph paragraph,
         Size availableArea,
@@ -68,11 +68,11 @@ internal static class LineLayoutBuilder
         float currentY = 0;
         float remainingHeight = availableArea.Height;
 
-        ProcessingInfo processingInfo = ProcessingInfo.Done;
+        // UpdateInfo processingInfo = UpdateInfo.Done;
 
         foreach (LineLayout line in lines)
         {
-            (LineLayout updatedLine, processingInfo) = line.Update(
+            (LineLayout updatedLine, UpdateInfo lineUpdateInfo) = line.Update(
                 paragraph.Elements,
                 currentY,
                 availableArea.Width,
@@ -83,7 +83,7 @@ internal static class LineLayoutBuilder
 
             if(remainingHeight - updatedLine.BoundingBox.Height < 0)
             {
-                processingInfo = ProcessingInfo.RequestDrawingArea;
+                // processingInfo = UpdateInfo.ReconstructRequired;
                 break;
             }
 
@@ -91,18 +91,19 @@ internal static class LineLayoutBuilder
             currentY += updatedLine.BoundingBox.Height;
 
             updatedLines = [.. updatedLines, updatedLine];
-            if(processingInfo == ProcessingInfo.ReconstructRequired)
+
+            if (lineUpdateInfo == UpdateInfo.ReconstructRequired)
             {
                 break;
             }
         }
 
-        if (processingInfo == ProcessingInfo.ReconstructRequired)
+        if(lines.LastProcessedElement() != updatedLines.LastProcessedElement()) // some lines 
         {
             ModelId lastProcesseId = updatedLines.LastProcessedElement();
             Element[] unprocessed = [.. paragraph.Elements.SkipProcessed(lastProcesseId, true)];
 
-            (LineLayout[] reconstructedLines, processingInfo) = unprocessed.CreateLineLayouts(
+            (LineLayout[] reconstructedLines, _) = unprocessed.CreateLineLayouts(
                 currentY,
                 new Size(availableArea.Width, remainingHeight),
                 fieldVariables,
@@ -112,10 +113,14 @@ internal static class LineLayoutBuilder
             updatedLines = [.. updatedLines, .. reconstructedLines];
         }
 
-        return (updatedLines, processingInfo);
+        UpdateInfo updateInfo = lines.LastProcessedElement() == updatedLines.LastProcessedElement()
+            ? UpdateInfo.Done
+            : UpdateInfo.ReconstructRequired;
+
+        return (updatedLines, updateInfo);
     }
 
-    private static (LineLayout, ProcessingInfo) Update(
+    private static (LineLayout, UpdateInfo) Update(
         this LineLayout line,
         Element[] elements,
         float yPosition,
@@ -131,15 +136,15 @@ internal static class LineLayoutBuilder
                 BoundingBox = line.BoundingBox.MoveTo(new Position(line.BoundingBox.Left, yPosition))
             };
 
-            return(l, ProcessingInfo.Done);
+            return(l, UpdateInfo.Done);
         }
 
         LineLayout updatedLine = line.UpdateLine(elements, yPosition, availableWidth, fieldVariables, textStyle, services);
-        ProcessingInfo processingInfo = line.Words.Last().Id == updatedLine.Words.Last().Id
-            ? ProcessingInfo.Done
-            : ProcessingInfo.ReconstructRequired;
+        UpdateInfo updateInfo = line.Words.Last().Id == updatedLine.Words.Last().Id
+            ? UpdateInfo.Done
+            : UpdateInfo.ReconstructRequired;
 
-        return (updatedLine, processingInfo);
+        return (updatedLine, updateInfo);
     }
 
     private static LineLayout CreateLine(

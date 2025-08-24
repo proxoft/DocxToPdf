@@ -94,7 +94,7 @@ internal static class SectionLayoutBuilder
         return (sectionLayout, sectionProcessingInfo);
     }
 
-    public static (SectionLayout, ProcessingInfo) Update(
+    public static (SectionLayout, UpdateInfo) Update(
         this SectionLayout sectionLayout,
         Section section,
         SectionLayout previousSectionLayout,
@@ -104,12 +104,13 @@ internal static class SectionLayoutBuilder
     {
         Size remainingArea = availableArea;
         Layout[] updatedLayouts = [];
-        ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
+        // ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
+        UpdateInfo lastUpdateInfo = UpdateInfo.Done;
         float yOffset = 0;
 
         foreach (Layout layout in sectionLayout.Layouts)
         {
-            (Layout layout, ProcessingInfo processingInfo) result = layout switch
+            (Layout layout, UpdateInfo updateInfo) result = layout switch
             {
                 ParagraphLayout pl => pl.Update(
                     section.Find<Paragraph>(pl.ModelId),
@@ -125,15 +126,15 @@ internal static class SectionLayoutBuilder
                     fieldVariables,
                     services
                 ),
-                _ => (NoLayout.Instance, ProcessingInfo.Ignore)
+                _ => (NoLayout.Instance, UpdateInfo.Done)
             };
 
+            lastUpdateInfo = result.updateInfo;
             updatedLayouts = [.. updatedLayouts, result.layout.SetOffset(new Position(0, yOffset))];
             yOffset += result.layout.BoundingBox.Height;
 
             if(yOffset > remainingArea.Height)
             {
-                sectionProcessingInfo = ProcessingInfo.ReconstructRequired;
                 break;
             }
 
@@ -159,7 +160,7 @@ internal static class SectionLayoutBuilder
             lp
         );
 
-        return (updatedSection, sectionProcessingInfo);
+        return (updatedSection, lastUpdateInfo);
     }
 }
 

@@ -6,6 +6,11 @@ internal enum ProcessingInfo
     Done,
     NewPageRequired,
     RequestDrawingArea,
-    IgnoreAndRequestDrawingArea,
+    IgnoreAndRequestDrawingArea
+}
+
+internal enum UpdateInfo
+{
+    Done,
     ReconstructRequired
 }

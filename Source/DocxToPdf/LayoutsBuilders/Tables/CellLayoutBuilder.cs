@@ -10,6 +10,7 @@ using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
+using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
@@ -28,7 +29,7 @@ internal static class CellLayoutBuilder
         Size remainingArea = availableArea
             .Clip(cell.Padding);
 
-        ProcessingInfo cellProcessingInfo = ProcessingInfo.Ignore;
+        ProcessingInfo cellProcessingInfo = ProcessingInfo.Done;
 
         float yOffset = cell.Padding.Top;
         float xOffset = cell.Padding.Left;
@@ -47,7 +48,7 @@ internal static class CellLayoutBuilder
                     remainingArea,
                     fieldVariables,
                     services),
-                _ => (NoLayout.Instance, ProcessingInfo.Ignore)
+                _ => (NoLayout.Instance, ProcessingInfo.Done)
             };
 
             if (result.processingInfo == ProcessingInfo.Ignore)
@@ -98,7 +99,7 @@ internal static class CellLayoutBuilder
         return (cellLayout, cellProcessingInfo);
     }
 
-    public static (CellLayout, ProcessingInfo) Update(
+    public static (CellLayout, UpdateInfo) Update(
         this CellLayout cellLayout,
         Cell cell,
         Size availableArea,
@@ -110,7 +111,6 @@ internal static class CellLayoutBuilder
         Size remainingArea = availableArea
             .Clip(cell.Padding);
 
-        ProcessingInfo cellProcessingInfo = ProcessingInfo.Done;
         float yOffset = cell.Padding.Top;
         float xOffset = cell.Padding.Left;
 
@@ -118,7 +118,7 @@ internal static class CellLayoutBuilder
 
         foreach (Layout layout in cellLayout.ParagraphsOrTables)
         {
-            (Layout updatedLayout, ProcessingInfo processingInfo) result = layout switch
+            (Layout updatedLayout, UpdateInfo updateInfo) result = layout switch
             {
                 ParagraphLayout pl => pl.Update(
                     cell.Find<Paragraph>(pl.ModelId),
@@ -131,25 +131,16 @@ internal static class CellLayoutBuilder
                 //    remainingArea,
                 //    fieldVariables,
                 //    services),
-                _ => (NoLayout.Instance, ProcessingInfo.Done)
+                _ => (NoLayout.Instance, UpdateInfo.Done)
             };
 
-
-            if(result.processingInfo == ProcessingInfo.Ignore)
-            {
-                continue;
-            }
-
-            if(result.processingInfo is not ProcessingInfo.IgnoreAndRequestDrawingArea)
+            if (result.updatedLayout != ParagraphLayout.Empty && result.updatedLayout != TableLayout.Empty)
             {
                 updatedLayouts = [.. updatedLayouts, result.updatedLayout.SetOffset(new Position(xOffset, yOffset))];
             }
 
-            if (result.processingInfo is ProcessingInfo.NewPageRequired
-                or ProcessingInfo.RequestDrawingArea
-                or ProcessingInfo.IgnoreAndRequestDrawingArea)
+            if (result.updateInfo is UpdateInfo.ReconstructRequired)
             {
-                cellProcessingInfo = result.processingInfo;
                 break;
             }
 
@@ -174,7 +165,14 @@ internal static class CellLayoutBuilder
             cellLayout.Partition
         );
 
-        return (updatedCellLayout, cellProcessingInfo);
+        bool isCellFinished = updatedLayouts.Last().ModelId == cellLayout.ParagraphsOrTables.Last().ModelId
+            && updatedLayouts.Last().Partition.IsFinished();
+
+        UpdateInfo updateInfo = isCellFinished
+            ? UpdateInfo.Done
+            : UpdateInfo.ReconstructRequired;
+
+        return (updatedCellLayout, updateInfo);
     }
 
     public static CellLayout[] AlignCellHeights(this CellLayout[] cellLayouts, GridLayout grid) =>

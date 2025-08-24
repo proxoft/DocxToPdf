@@ -28,7 +28,7 @@ internal static class ParagraphLayoutBuilder
         return result;
     }
 
-    public static (ParagraphLayout, ProcessingInfo) Update(
+    public static (ParagraphLayout, UpdateInfo) Update(
         this ParagraphLayout layout,
         Paragraph paragraph,
         ParagraphLayout previousLayout,
@@ -36,7 +36,7 @@ internal static class ParagraphLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        (LineLayout[] lines, ProcessingInfo processingInfo) = layout.Lines.UpdateLineLayouts(
+        (LineLayout[] lines, UpdateInfo updateInfo) = layout.Lines.UpdateLineLayouts(
             paragraph,
             availableArea,
             fieldVariables,
@@ -48,7 +48,7 @@ internal static class ParagraphLayoutBuilder
             .CalculateBoundingBox(Rectangle.Empty)
             .SetWidth(availableArea.Width);
 
-        bool allDone = paragraph.Elements.Select(e => e.Id).LastOrDefault(ModelId.None) == lines.LastProcessedElement();
+        bool allDone = updateInfo == UpdateInfo.Done; //paragraph.Elements.Select(e => e.Id).LastOrDefault(ModelId.None) == lines.LastProcessedElement();
         LayoutPartition lp = allDone.CalculateLayoutPartitionAfterUpdate(previousLayout.Partition);
 
         ParagraphLayout pl = new(
@@ -59,7 +59,7 @@ internal static class ParagraphLayoutBuilder
             lp
         );
 
-        return (pl, processingInfo);
+        return (pl, updateInfo);
     }
 
     private static (ParagraphLayout, ProcessingInfo) CreateLayout(

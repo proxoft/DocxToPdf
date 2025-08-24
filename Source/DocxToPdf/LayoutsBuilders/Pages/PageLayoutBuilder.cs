@@ -21,7 +21,7 @@ internal static class PageLayoutBuilder
         Section[] unprocessed = sections.Unprocessed(previousPage);
         if(unprocessed.Length == 0)
         {
-            return (PageLayout.None, ProcessingInfo.Ignore);
+            return (PageLayout.None, ProcessingInfo.Done);
         }
 
         PageLayout page = unprocessed[0].CreateNewPage();
@@ -41,20 +41,20 @@ internal static class PageLayoutBuilder
         );
     }
 
-    public static (PageLayout, ProcessingInfo) UpdatePage(
+    public static (PageLayout, UpdateInfo) UpdatePage(
         this PageLayout pageLayout,
         Section[] sections,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        (PageContentLayout content, ProcessingInfo processingInfo) = pageLayout.PageContent.UpdatePageContent(sections, fieldVariables, services);
+        (PageContentLayout content, UpdateInfo updateInfo) = pageLayout.PageContent.UpdatePageContent(sections, fieldVariables, services);
 
         PageLayout updatedPage = pageLayout with
         {
             PageContent = content,
         };
 
-        return (updatedPage, processingInfo);
+        return (updatedPage, updateInfo);
     }
 
     private static (PageContentLayout pageContent, ProcessingInfo processingInfo) CreatePageContent(
@@ -101,7 +101,7 @@ internal static class PageLayoutBuilder
         return (pageContent, pageProcessingInfo);
     }
 
-    private static (PageContentLayout, ProcessingInfo) UpdatePageContent(
+    private static (PageContentLayout, UpdateInfo) UpdatePageContent(
         this PageContentLayout pageContent,
         Section[] sections,
         FieldVariables fieldVariables,
@@ -109,7 +109,8 @@ internal static class PageLayoutBuilder
     {
         Size remainingArea = pageContent.BoundingBox.Size;
         SectionLayout[] sectionLayouts = [];
-        ProcessingInfo pageProcessingInfo = ProcessingInfo.Done;
+
+        UpdateInfo lastUpdateInfo = UpdateInfo.Done;
 
         SectionLayout lastSectionLayout = SectionLayout.Empty;
 
@@ -117,14 +118,14 @@ internal static class PageLayoutBuilder
         foreach (SectionLayout sectionLayout in pageContent.Sections)
         {
             Section section = sections.Single(s => s.Id == sectionLayout.ModelId);
-            (SectionLayout updatedLayout, ProcessingInfo processingInfo) = sectionLayout.Update(section, lastSectionLayout, remainingArea, fieldVariables, services);
+            (SectionLayout updatedLayout, UpdateInfo updateInfo) = sectionLayout.Update(section, lastSectionLayout, remainingArea, fieldVariables, services);
             sectionLayouts = [.. sectionLayouts, updatedLayout.SetOffset(new Position(0, yOffset))];
             remainingArea = remainingArea.DecreaseHeight(updatedLayout.BoundingBox.Height);
             yOffset += updatedLayout.BoundingBox.Height;
             lastSectionLayout = updatedLayout;
-            if (processingInfo is ProcessingInfo.ReconstructRequired)
+            lastUpdateInfo = updateInfo;
+            if (lastUpdateInfo is UpdateInfo.ReconstructRequired)
             {
-                pageProcessingInfo = processingInfo;
                 break;
             }
         }
@@ -134,7 +135,7 @@ internal static class PageLayoutBuilder
             Sections = sectionLayouts
         };
 
-        return (updatedContent, pageProcessingInfo);
+        return (updatedContent, lastUpdateInfo);
     }
 }
 

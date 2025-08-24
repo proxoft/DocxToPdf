@@ -29,12 +29,14 @@ internal class LayoutBuilder
             FieldVariables variables = new(currentPageNumber, minimalTotalPages);
             (PageLayout page, ProcessingInfo processingInfo) = sections.CreatePage(lastPage, variables, _layoutServices);
 
-            if (processingInfo != ProcessingInfo.Ignore)
+            if (page != PageLayout.None)
             {
                 pages = [.. pages, page];
             }
 
-            if(processingInfo is ProcessingInfo.NewPageRequired or ProcessingInfo.RequestDrawingArea)
+            if(processingInfo is ProcessingInfo.RequestDrawingArea
+                or ProcessingInfo.NewPageRequired
+                or ProcessingInfo.IgnoreAndRequestDrawingArea)
             {
                 minimalTotalPages++;
                 pages = this.UpdatePages(pages, sections, minimalTotalPages);
@@ -43,7 +45,7 @@ internal class LayoutBuilder
 
             lastPage = pages.Last();
 
-            done = processingInfo is ProcessingInfo.Done or ProcessingInfo.Ignore;
+            done = processingInfo is ProcessingInfo.Done;
         }
 
         return pages;
@@ -56,10 +58,10 @@ internal class LayoutBuilder
         foreach (PageLayout page in pages)
         {
             currentPage++;
-            (PageLayout updated, ProcessingInfo processingInfo)  = page.UpdatePage(sections, new FieldVariables(currentPage, totalPages), _layoutServices);
+            (PageLayout updated, UpdateInfo updateInfo)  = page.UpdatePage(sections, new FieldVariables(currentPage, totalPages), _layoutServices);
             updatedPages = [.. updatedPages, updated];
 
-            if(processingInfo != ProcessingInfo.Done)
+            if(updateInfo == UpdateInfo.ReconstructRequired)
             {
                 break;
             }
