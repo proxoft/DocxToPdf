@@ -8,7 +8,6 @@ using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Fields;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Drawings;
-using Proxoft.DocxToPdf.Models.Core;
 
 namespace Proxoft.DocxToPdf.Builders.Paragraphs;
 
@@ -54,6 +53,7 @@ internal static class ParagraphBuilder
             Word.Text t => t.SplitToElements(services, textStyle),
             Word.TabChar => [new Tab(services.IdFactory.NextWordId(), textStyle)],
             Word.Drawing d when d.IsInlineDrawing() => d.CreateInlineDrawing(textStyle, services),
+            Word.Drawing => [], // fixed drawings are processed separately
             // Word.CarriageReturn _ => [new NewLineElement(textStyle)],
             Word.Break => [new PageBreak(services.IdFactory.NextWordId(), textStyle.ResizeFont(-2))],
             _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", textStyle)]

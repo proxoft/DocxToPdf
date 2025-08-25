@@ -61,6 +61,17 @@ public class ImagesV2Test
     }
 
     [Fact]
+    public void ImageTextWrapping2()
+    {
+        _executor.Convert("ImageTextWrapping2", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
     public void ImageTextWrappingLineSpacing()
     {
         _executor.Convert("ImageTextWrappingLineSpacing", pages =>
