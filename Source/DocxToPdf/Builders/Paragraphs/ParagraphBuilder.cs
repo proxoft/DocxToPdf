@@ -7,6 +7,8 @@ using Proxoft.DocxToPdf.Documents.Styles.Texts;
 using Proxoft.DocxToPdf.Extensions;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Fields;
 using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Documents.Paragraphs.Drawings;
+using Proxoft.DocxToPdf.Models.Core;
 
 namespace Proxoft.DocxToPdf.Builders.Paragraphs;
 
@@ -22,9 +24,14 @@ internal static class ParagraphBuilder
                 .SelectMany(chunk => chunk.SplitToElements(services, paragraphStyle))
         ];
 
+        FixedDrawing[] fixedDrawings = paragraph
+            .SelectRuns()
+            .CreateFixedDrawings(services);
+
         return new Paragraph(
             services.IdFactory.NextParagraphId(),
             [..elements],
+            fixedDrawings,
             paragraphStyle
         );
     }
@@ -46,11 +53,20 @@ internal static class ParagraphBuilder
         {
             Word.Text t => t.SplitToElements(services, textStyle),
             Word.TabChar => [new Tab(services.IdFactory.NextWordId(), textStyle)],
-            Word.Drawing d => d.CreateInlineDrawing(textStyle, services),
+            Word.Drawing d when d.IsInlineDrawing() => d.CreateInlineDrawing(textStyle, services),
             // Word.CarriageReturn _ => [new NewLineElement(textStyle)],
             Word.Break => [new PageBreak(services.IdFactory.NextWordId(), textStyle.ResizeFont(-2))],
             _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", textStyle)]
         };
+
+    private static FixedDrawing[] CreateFixedDrawings(this IEnumerable<Word.Run> runs, BuilderServices services) =>
+        [..runs.SelectMany(r => r.CreateFixedDrawings(services))];
+
+    private static IEnumerable<FixedDrawing> CreateFixedDrawings(this Word.Run run, BuilderServices services) =>
+        run.ChildElements
+            .OfType<Word.Drawing>()
+            .Where(e => e.IsFixedDrawing())
+            .SelectMany(d => d.CreateFixedDrawing(services));
 
     private static IEnumerable<RunChunk> ChunkRunsByFieldType(this Word.Paragraph paragraph)
     {
