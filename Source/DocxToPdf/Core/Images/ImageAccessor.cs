@@ -17,6 +17,14 @@ internal class ImageAccessor : IImageAccessor
         Stream stream = imagePart.GetStream();
         return stream;
     }
+    public byte[] GetImageBytes(string imageId)
+    {
+        using Stream stream = this.GetImageStream(imageId);
+        using MemoryStream ms = new();
+        stream.CopyTo(ms);
+        byte[] data = ms.ToArray();
+        return data;
+    }
 
     public static ImageAccessor Create(MainDocumentPart mainDocumentPart) =>
         new(mainDocumentPart);

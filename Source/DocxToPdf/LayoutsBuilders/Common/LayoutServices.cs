@@ -1,5 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Paragraphs.Drawings;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Fields;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
 using D = System.Drawing;
@@ -11,6 +12,12 @@ internal class LayoutServices
     // result should contain additional info like: scalable for images
     public (Size boundingBox, float baseLineOffset) CalculateBoundingSizeAndBaseline(Element element, FieldVariables fieldVariables)
     {
+        if(element is InlineDrawing inlineDrawing)
+        {
+            (_, float blo) = XUnitCalculator.CalculateBoundingBox("", element.TextStyle);
+            return (inlineDrawing.Size, blo);
+        }
+
         (Size boundingBox, float baseLineOffset) = element switch
         {
             Text t => XUnitCalculator.CalculateBoundingBox(t.Content, element.TextStyle),

@@ -46,7 +46,7 @@ internal static class ParagraphBuilder
         {
             Word.Text t => t.SplitToElements(services, textStyle),
             Word.TabChar => [new Tab(services.IdFactory.NextWordId(), textStyle)],
-            // Word.Drawing d => d.CreateInlineDrawing(imageAccessor),
+            Word.Drawing d => d.CreateInlineDrawing(textStyle, services),
             // Word.CarriageReturn _ => [new NewLineElement(textStyle)],
             Word.Break => [new PageBreak(services.IdFactory.NextWordId(), textStyle.ResizeFont(-2))],
             _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", textStyle)]

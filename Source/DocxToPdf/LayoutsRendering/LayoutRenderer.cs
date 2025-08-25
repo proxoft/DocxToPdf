@@ -67,6 +67,9 @@ internal static class LayoutRenderer
     {
         switch (layout)
         {
+            case ImageLayout imageLayout:
+                imageLayout.RenderImage(offset, graphics);
+                break;
             case ElementLayout element:
                 element.RenderText(offset, graphics, options);
                 break;

@@ -22,9 +22,11 @@ internal class BuilderServices(
 
     public StyleFactory Styles { get; } = styleFactory;
 
+    public ImageAccessor ImageAccessor { get; } = imageAccessor;
+
     public BuilderServices ForTable(Word.TableProperties tableProperties)
     {
         StyleFactory sf = this.Styles.ForTable(tableProperties);
-        return new BuilderServices(this.IdFactory, sf, imageAccessor);
+        return new BuilderServices(this.IdFactory, sf, this.ImageAccessor);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Paragraphs.Drawings;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Fields;
 using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Layouts;
@@ -18,6 +19,7 @@ internal static class ElementLayoutBuilder
         ElementLayout layout = element switch
         {
             Text t => new TextLayout(element.Id, size, baseLineOffset, boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
+            InlineDrawing i => new ImageLayout(element.Id, i.Image, size, baseLineOffset, boundingBox, baseLineOffset, element.TextStyle, Borders.None),
             Space => new SpaceLayout(element.Id, size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle),
             PageNumberField => new PageNumberLayout(element.Id, fieldVariables.CurrentPage.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
             TotalPagesField => new TotalPagesLayout(element.Id, fieldVariables.TotalPages.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),

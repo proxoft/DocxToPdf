@@ -26,4 +26,48 @@ public class ImagesV2Test
                 .NotBeEmpty();
         });
     }
+
+    [Fact]
+    public void ImageResize()
+    {
+        _executor.Convert("ImageResize", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void ImageTextWrapInLine()
+    {
+        _executor.Convert("ImageTextWrapInLine", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void ImageTextWrapping()
+    {
+        _executor.Convert("ImageTextWrapping", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void ImageTextWrappingLineSpacing()
+    {
+        _executor.Convert("ImageTextWrappingLineSpacing", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
 }
