@@ -51,16 +51,8 @@ internal static class CellLayoutBuilder
                 _ => (NoLayout.Instance, ProcessingInfo.Done)
             };
 
-            if (result.processingInfo == ProcessingInfo.Ignore)
-            {
-                continue;
-            }
-            else
-            {
-                cellProcessingInfo = result.processingInfo;
-            }
-
-            if (result.processingInfo is not ProcessingInfo.IgnoreAndRequestDrawingArea)
+            cellProcessingInfo = result.processingInfo;
+            if (result.layout.IsNotEmpty())
             {
                 remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
                 layouts = [.. layouts, result.layout.SetOffset(new Position(xOffset, yOffset))];
@@ -81,7 +73,7 @@ internal static class CellLayoutBuilder
         }
 
         Rectangle boudingBox = layouts
-           .CalculateBoundingBox(Rectangle.Empty)
+           .CalculateBoundingBox(Rectangle.Empty.SetWidth(remainingArea.Width))
            .Expand(cell.Padding)
            ;
 
@@ -126,11 +118,12 @@ internal static class CellLayoutBuilder
                     remainingArea,
                     fieldVariables,
                     services),
-                //TableLayout tl => tl.Update(
-                //    cell.Find<Table>(tl.ModelId),
-                //    remainingArea,
-                //    fieldVariables,
-                //    services),
+                TableLayout tl => tl.Update(
+                    cell.Find<Table>(tl.ModelId),
+                    cellLayout.TryFindTableLayout(tl.ModelId),
+                    remainingArea,
+                    fieldVariables,
+                    services),
                 _ => (NoLayout.Instance, UpdateInfo.Done)
             };
 
@@ -153,7 +146,7 @@ internal static class CellLayoutBuilder
         }
 
         Rectangle boundingBox = updatedLayouts
-            .CalculateBoundingBox(Rectangle.Empty)
+            .CalculateBoundingBox(Rectangle.Empty.SetWidth(remainingArea.Width))
             .Expand(cell.Padding);
 
         CellLayout updatedCellLayout = new(
@@ -165,9 +158,7 @@ internal static class CellLayoutBuilder
             cellLayout.Partition
         );
 
-        bool isCellFinished = updatedLayouts.Last().ModelId == cellLayout.ParagraphsOrTables.Last().ModelId
-            && updatedLayouts.Last().Partition.IsFinished();
-
+        bool isCellFinished = updatedLayouts.IsUpdateFinished(cellLayout.ParagraphsOrTables);
         UpdateInfo updateInfo = isCellFinished
             ? UpdateInfo.Done
             : UpdateInfo.ReconstructRequired;

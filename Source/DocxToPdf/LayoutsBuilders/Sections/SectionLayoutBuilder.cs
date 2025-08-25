@@ -29,7 +29,7 @@ internal static class SectionLayoutBuilder
         Model[] unprocessed = section.Unprocessed(previousSectionLayout.Layouts);
         Layout[] layouts = [];
         Size remainingArea = availableArea;
-        ProcessingInfo sectionProcessingInfo = ProcessingInfo.Ignore;
+        ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
         float yOffset = 0;
 
         foreach (Model model in unprocessed)
@@ -46,19 +46,12 @@ internal static class SectionLayoutBuilder
                     remainingArea,
                     fieldVariables,
                     services),
-                _ => (NoLayout.Instance, ProcessingInfo.Ignore)
+                _ => (NoLayout.Instance, ProcessingInfo.Done)
             };
 
-            if (result.processingInfo == ProcessingInfo.Ignore)
-            {
-                continue;
-            }
-            else
-            {
-                sectionProcessingInfo = result.processingInfo;
-            }
+            sectionProcessingInfo = result.processingInfo;
 
-            if(result.processingInfo is not ProcessingInfo.IgnoreAndRequestDrawingArea)
+            if(result.layout.IsNotEmpty())
             {
                 remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
                 layouts = [.. layouts, result.layout.SetOffset(new Position(0, yOffset))];

@@ -2,7 +2,6 @@
 
 internal enum ProcessingInfo
 {
-    Ignore,
     Done,
     NewPageRequired,
     RequestDrawingArea,
