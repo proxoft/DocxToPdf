@@ -135,6 +135,7 @@ internal static class TextStyleBuilder
     {
         Word.Color? c = styles.Select(s => s.Color)
             .Prepend(runProperties?.Color)
+            .Where(c => c is not null)
             .FirstOrDefault();
 
         return c?.ToColor() ?? defaultColor;

@@ -31,6 +31,17 @@ public class ParagraphV2Test
     }
 
     [Fact]
+    public void DefaultStyles()
+    {
+        _executor.Convert("DefaultStyles", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
     public void ParagraphSpacing()
     {
         _executor.Convert("ParagraphSpacing", pages =>
