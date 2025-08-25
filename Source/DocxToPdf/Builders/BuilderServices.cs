@@ -1,14 +1,20 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using Proxoft.DocxToPdf.Builders.Styles;
+using Proxoft.DocxToPdf.Core.Images;
 using Proxoft.DocxToPdf.Documents;
 
 namespace Proxoft.DocxToPdf.Builders;
 
 internal class BuilderServices(
     ModelIdFactory modelIdFactory,
-    StyleFactory styleFactory)
+    StyleFactory styleFactory,
+    ImageAccessor imageAccessor)
 {
-    public BuilderServices(MainDocumentPart mainDocumentPart) : this(new ModelIdFactory(), StyleFactory.Create(mainDocumentPart))
+    public BuilderServices(MainDocumentPart mainDocumentPart) : this(
+        new ModelIdFactory(),
+        StyleFactory.Create(mainDocumentPart),
+        ImageAccessor.Create(mainDocumentPart)
+    )
     {
     }
 
@@ -19,6 +25,6 @@ internal class BuilderServices(
     public BuilderServices ForTable(Word.TableProperties tableProperties)
     {
         StyleFactory sf = this.Styles.ForTable(tableProperties);
-        return new BuilderServices(this.IdFactory, sf);
+        return new BuilderServices(this.IdFactory, sf, imageAccessor);
     }
 }

@@ -89,7 +89,7 @@ internal static class SectionBuilder
         bool isFirst,
         IStyleFactory styleFactory)
     {
-        ImageAccessor imageAccessor = new(mainDocumentPart);
+        ImageAccessor imageAccessor = ImageAccessor.Create(mainDocumentPart);
 
         SectionProperties sectionProperties = wordSectionProperties.CreateSectionProperties(mainDocumentPart, isFirst, headerFooterConfiguration);
         ColumnsConfiguration columnsConfiguration = wordSectionProperties.CreateColumnsConfiguration(sectionProperties.PageConfiguration, sectionProperties.Margin);
