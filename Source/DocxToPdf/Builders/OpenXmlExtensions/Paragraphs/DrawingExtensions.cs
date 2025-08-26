@@ -4,7 +4,6 @@ using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Drawings;
 using Proxoft.DocxToPdf.Documents.Styles.Texts;
-using Proxoft.DocxToPdf.Models.Common;
 using WDrawing = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 
 namespace Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
@@ -48,7 +47,7 @@ internal static class DrawingExtensions
             return [];
         }
 
-        Margin margin = drawing.Anchor.ToMargin();
+        Padding margin = drawing.Anchor.ToPadding();
         Size size = drawing.Anchor.Extent.ToSize();
         OpenXml.Drawing.Blip blipElement = drawing.Anchor.Descendants<OpenXml.Drawing.Blip>().First();
         byte[] image = services.ImageAccessor.GetImageBytes(blipElement.Embed?.Value ?? "");
@@ -72,14 +71,14 @@ internal static class DrawingExtensions
         return new Size(width, height);
     }
 
-    private static Margin ToMargin(this WDrawing.Anchor anchor)
+    private static Padding ToPadding(this WDrawing.Anchor anchor)
     {
-        double top = anchor.DistanceFromTop.EmuToPoint();
-        double right = anchor.DistanceFromRight.EmuToPoint();
-        double bottom = anchor.DistanceFromBottom.EmuToPoint();
-        double left = anchor.DistanceFromLeft.EmuToPoint();
+        float top = anchor.DistanceFromTop.EmuToPoint();
+        float right = anchor.DistanceFromRight.EmuToPoint();
+        float bottom = anchor.DistanceFromBottom.EmuToPoint();
+        float left = anchor.DistanceFromLeft.EmuToPoint();
 
-        return new Margin(top, right, bottom, left);
+        return new Padding(left, top, right, bottom);
     }
 
     private static Position ToPosition(this WDrawing.Anchor anchor) =>
