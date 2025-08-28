@@ -118,7 +118,7 @@ internal static class CellLayoutBuilder
                     services),
                 TableLayout tl => tl.Update(
                     cell.Find<Table>(tl.ModelId),
-                    cellLayout.TryFindTableLayout(tl.ModelId),
+                    previousPageCellLayout.TryFindTableLayout(tl.ModelId),
                     remainingArea,
                     fieldVariables,
                     services),
@@ -147,7 +147,11 @@ internal static class CellLayoutBuilder
             .CalculateBoundingBox(Rectangle.Empty.SetWidth(remainingArea.Width))
             .Expand(cell.Padding);
 
-        LayoutPartition layoutPartition = cell.CalculateLayoutPartition(updatedLayouts, previousPageCellLayout);
+        LayoutPartition layoutPartition = cell.CalculateLayoutPartition(
+            updatedLayouts,
+            previousPageCellLayout
+        );
+
         CellLayout updatedCellLayout = new(
             cell.Id,
             updatedLayouts,

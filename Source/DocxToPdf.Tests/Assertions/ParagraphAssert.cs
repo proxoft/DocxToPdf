@@ -15,6 +15,11 @@ internal static class ParagraphAssert
         return paragraph;
     }
 
+    public static ParagraphLayout TextShouldStartAndEnd(this ParagraphLayout paragraph, string startText, string endText) =>
+        paragraph
+            .TextShouldStart(startText)
+            .TextShouldEnd(endText);
+
     public static ParagraphLayout TextShouldStart(this ParagraphLayout paragraph, string text)
     {
         paragraph.Lines
