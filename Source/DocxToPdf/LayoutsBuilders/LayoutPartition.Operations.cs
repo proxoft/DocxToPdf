@@ -5,10 +5,10 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal static class LayoutPartitionOperations
 {
-    public static LayoutPartition CalculateLayoutPartition(this Model[] models, Layout[] layouts)
+    public static LayoutPartition CalculateLayoutPartition(this Model[] models, Layout[] layouts, LayoutPartition ifLayoutsEmpty = LayoutPartition.Start)
     {
         if(models.Length == 0) return LayoutPartition.StartEnd;
-        if(layouts.Length == 0) return LayoutPartition.Start;
+        if(layouts.Length == 0) return ifLayoutsEmpty;
 
         LayoutPartition layoutPartition = LayoutPartition.Middle;
         if(layouts[0].ModelId == models[0].Id
@@ -26,37 +26,8 @@ internal static class LayoutPartitionOperations
         return layoutPartition;
     }
 
-    public static LayoutPartition CalculateLayoutPartition(this ProcessingInfo processingInfo, LayoutPartition previous)
-    {
-        LayoutPartition layoutPartition = LayoutPartition.Middle;
-        if(previous.IsFinished())
-        {
-            layoutPartition |= LayoutPartition.Start;
-        }
-
-        if (processingInfo == ProcessingInfo.Done)
-        {
-            layoutPartition |= LayoutPartition.End;
-        }
-
-        return layoutPartition;
-    }
-
-    public static LayoutPartition CalculateLayoutPartitionAfterUpdate(this bool allElementsDone, LayoutPartition previous)
-    {
-        LayoutPartition layoutPartition = LayoutPartition.Middle;
-        if(previous.IsFinished())
-        {
-            layoutPartition |= LayoutPartition.Start;
-        }
-
-        if(allElementsDone)
-        {
-            layoutPartition |= LayoutPartition.End;
-        }
-
-        return layoutPartition;
-    }
+    public static LayoutPartition RemoveStart(this LayoutPartition layoutPartition) =>
+        layoutPartition & ~LayoutPartition.Start;
 
     public static LayoutPartition RemoveEnd(this LayoutPartition layoutPartition) =>
         layoutPartition & ~LayoutPartition.End;

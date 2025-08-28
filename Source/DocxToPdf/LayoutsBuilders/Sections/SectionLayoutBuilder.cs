@@ -107,14 +107,14 @@ internal static class SectionLayoutBuilder
             {
                 ParagraphLayout pl => pl.Update(
                     section.Find<Paragraph>(pl.ModelId),
-                    previousSectionLayout.Layouts.LastOfTypeOr(ParagraphLayout.Empty), // try find in previous section
+                    previousSectionLayout.TryFindParagraphLayout(pl.ModelId), // try find in previous section
                     remainingArea,
                     fieldVariables,
                     services
                 ),
                 TableLayout tl => tl.Update(
                     section.Find<Table>(tl.ModelId),
-                    previousSectionLayout.Layouts.LastOfTypeOr(TableLayout.Empty), // try find in previous section
+                    previousSectionLayout.TryFindTableLayout(tl.ModelId),
                     remainingArea,
                     fieldVariables,
                     services
@@ -161,13 +161,6 @@ file static class SectionOperators
 
     public static T Find<T>(this Section section, ModelId id) where T : Model =>
         section.Elements.OfType<T>().Single(e => e.Id == id);
-
-    public static T LastOfTypeOr<T>(this Layout[] layouts, T ifNone) where T : Layout =>
-        layouts switch
-        {
-            [.., T last] => last,
-            _ => ifNone,
-        };
 
     public static Model[] Unprocessed(this Section section, Layout[] previousLayouts) =>
         previousLayouts.Length == 0

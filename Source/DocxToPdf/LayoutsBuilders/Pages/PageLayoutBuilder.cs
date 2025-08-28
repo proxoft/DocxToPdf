@@ -44,10 +44,11 @@ internal static class PageLayoutBuilder
     public static (PageLayout, UpdateInfo) UpdatePage(
         this PageLayout pageLayout,
         Section[] sections,
+        SectionLayout previousPageSectionLayout,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        (PageContentLayout content, UpdateInfo updateInfo) = pageLayout.PageContent.UpdatePageContent(sections, fieldVariables, services);
+        (PageContentLayout content, UpdateInfo updateInfo) = pageLayout.PageContent.UpdatePageContent(sections, previousPageSectionLayout, fieldVariables, services);
 
         PageLayout updatedPage = pageLayout with
         {
@@ -104,6 +105,7 @@ internal static class PageLayoutBuilder
     private static (PageContentLayout, UpdateInfo) UpdatePageContent(
         this PageContentLayout pageContent,
         Section[] sections,
+        SectionLayout previousPageSectionLayout,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
@@ -112,7 +114,7 @@ internal static class PageLayoutBuilder
 
         UpdateInfo lastUpdateInfo = UpdateInfo.Done;
 
-        SectionLayout lastSectionLayout = SectionLayout.Empty;
+        SectionLayout lastSectionLayout = previousPageSectionLayout;
 
         float yOffset = 0;
         foreach (SectionLayout sectionLayout in pageContent.Sections)

@@ -16,9 +16,8 @@ internal class DocxToPdfExecutor(
     public void Convert(string fileName, Action<PageLayout[]> assert)
     {
         PageLayout[] pages = _docxSourcePattern.Replace("{0}", fileName).ReadAndLayoutDocument();
+        _pdfOutputPattern.Replace("{0}", fileName).RenderAndSave(pages, _options);
 
         assert(pages);
-
-        _pdfOutputPattern.Replace("{0}", fileName).RenderAndSave(pages, _options);
     }
 }

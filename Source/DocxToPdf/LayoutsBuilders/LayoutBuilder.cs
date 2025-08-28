@@ -2,6 +2,7 @@
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Layouts.Pages;
+using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Pages;
 
@@ -57,8 +58,17 @@ internal class LayoutBuilder
         int currentPage = 0;
         foreach (PageLayout page in pages)
         {
+            SectionLayout previousPageSectionLayout = currentPage == 0
+                ? SectionLayout.Empty
+                : updatedPages[currentPage - 1].PageContent.Sections.LastOrDefault(SectionLayout.Empty);
+
             currentPage++;
-            (PageLayout updated, UpdateInfo updateInfo)  = page.UpdatePage(sections, new FieldVariables(currentPage, totalPages), _layoutServices);
+            (PageLayout updated, UpdateInfo updateInfo)  = page.UpdatePage(
+                sections,
+                previousPageSectionLayout,
+                new FieldVariables(currentPage, totalPages),
+                _layoutServices
+            );
             updatedPages = [.. updatedPages, updated];
 
             if(updateInfo == UpdateInfo.ReconstructRequired)

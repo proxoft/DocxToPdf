@@ -76,8 +76,7 @@ internal static class CellLayoutBuilder
            .Expand(cell.Padding)
            ;
 
-        LayoutPartition layoutPartition = cellProcessingInfo.CalculateLayoutPartition(previousLayout.Partition);
-
+        LayoutPartition layoutPartition = cell.CalculateLayoutPartition(layouts, previousLayout);
         CellLayout cellLayout = new(
             cell.Id,
             layouts,
@@ -148,13 +147,14 @@ internal static class CellLayoutBuilder
             .CalculateBoundingBox(Rectangle.Empty.SetWidth(remainingArea.Width))
             .Expand(cell.Padding);
 
+        LayoutPartition layoutPartition = cell.CalculateLayoutPartition(updatedLayouts, previousPageCellLayout);
         CellLayout updatedCellLayout = new(
             cell.Id,
             updatedLayouts,
             boundingBox,
             cell.Borders,
             cell.GridPosition,
-            cellLayout.Partition
+            layoutPartition
         );
 
         bool isCellFinished = updatedLayouts.IsUpdateFinished(cellLayout.ParagraphsOrTables);
@@ -228,6 +228,24 @@ internal static class CellLayoutBuilder
 
 file static class CellOperators
 {
+    public static LayoutPartition CalculateLayoutPartition(
+        this Cell cell,
+        Layout[] layouts,
+        CellLayout previousLayout)
+    {
+        LayoutPartition ifLayoutsEmpty = previousLayout.ModelId == cell.Id
+            ? LayoutPartition.End
+            : LayoutPartition.Start;
+
+        LayoutPartition layoutPartition = cell.ParagraphsOrTables.CalculateLayoutPartition(layouts, ifLayoutsEmpty);
+        if(previousLayout.ModelId == cell.Id)
+        {
+            layoutPartition = layoutPartition.RemoveStart();
+        }
+
+        return layoutPartition;
+    }
+
     public static Model[] Unprocessed(this Cell cell, Layout[] previousLayouts) =>
        previousLayouts.Length == 0
            ? cell.ParagraphsOrTables
