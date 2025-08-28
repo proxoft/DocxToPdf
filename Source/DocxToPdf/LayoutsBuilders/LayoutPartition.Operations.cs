@@ -1,16 +1,30 @@
-﻿using Proxoft.DocxToPdf.Layouts;
+﻿using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Layouts;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal static class LayoutPartitionOperations
 {
-    public static LayoutPartition CalculateParagraphLayoutPartition(this ProcessingInfo processingInfo, LayoutPartition previous) =>
-        processingInfo switch
+    public static LayoutPartition CalculateLayoutPartition(this Model[] models, Layout[] layouts)
+    {
+        if(models.Length == 0) return LayoutPartition.StartEnd;
+        if(layouts.Length == 0) return LayoutPartition.Start;
+
+        LayoutPartition layoutPartition = LayoutPartition.Middle;
+        if(layouts[0].ModelId == models[0].Id
+            && layouts[0].Partition.HasFlag(LayoutPartition.Start))
         {
-            ProcessingInfo.NewPageRequired when previous.IsFinished() => LayoutPartition.Start | LayoutPartition.End,
-            ProcessingInfo.NewPageRequired when !previous.IsFinished() => LayoutPartition.End,
-            _ => processingInfo.CalculateLayoutPartition(previous)
-        };
+            layoutPartition |= LayoutPartition.Start;
+        }
+
+        if (layouts[^1].ModelId == models[^1].Id
+            && layouts[^1].Partition.HasFlag(LayoutPartition.End))
+        {
+            layoutPartition |= LayoutPartition.End;
+        }
+
+        return layoutPartition;
+    }
 
     public static LayoutPartition CalculateLayoutPartition(this ProcessingInfo processingInfo, LayoutPartition previous)
     {

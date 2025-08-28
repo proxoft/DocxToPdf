@@ -7,7 +7,6 @@ internal enum LayoutPartition
 {
     Middle = 0,
     Start = 1,
-    // Middle,
     End = 2,
     StartEnd = 3
 }

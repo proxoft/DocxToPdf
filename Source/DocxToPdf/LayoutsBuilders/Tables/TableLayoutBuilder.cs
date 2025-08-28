@@ -58,9 +58,7 @@ internal static class TableLayoutBuilder
         Rectangle boundingBox = cellLayouts
             .CalculateBoundingBox(Rectangle.Empty);
 
-        LayoutPartition layoutPartition = cellLayouts
-            .Select(c => c.Partition)
-            .CalculateLayoutPartition(previousLayout.Partition);
+        LayoutPartition layoutPartition = table.Cells.CalculateLayoutPartition(cellLayouts);
 
         TableLayout tableLayout = new(
             table.Id,
@@ -121,9 +119,7 @@ internal static class TableLayoutBuilder
         Rectangle boundingBox = cellLayouts
             .CalculateBoundingBox(Rectangle.Empty);
 
-        LayoutPartition layoutPartition = cellLayouts
-            .Select(c => c.Partition)
-            .CalculateLayoutPartition(previousTableLayout.Partition);
+        LayoutPartition layoutPartition = table.Cells.CalculateLayoutPartition(cellLayouts);
 
         TableLayout updatedTableLayout = new(
             table.Id,

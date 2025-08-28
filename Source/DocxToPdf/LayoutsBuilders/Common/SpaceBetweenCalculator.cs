@@ -3,7 +3,7 @@ using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Layouts;
 
-namespace Proxoft.DocxToPdf.LayoutsBuilders;
+namespace Proxoft.DocxToPdf.LayoutsBuilders.Common;
 
 internal static class SpaceBetweenCalculator
 {

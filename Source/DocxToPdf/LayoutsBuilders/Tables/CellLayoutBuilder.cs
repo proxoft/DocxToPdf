@@ -10,7 +10,6 @@ using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
 using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
-using Proxoft.DocxToPdf.Models.Paragraphs.Elements;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 

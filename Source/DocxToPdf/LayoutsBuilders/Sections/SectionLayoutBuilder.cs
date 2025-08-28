@@ -74,7 +74,7 @@ internal static class SectionLayoutBuilder
         Rectangle boudingBox = layouts
             .CalculateBoundingBox(Rectangle.Empty);
 
-        LayoutPartition layoutPartition = sectionProcessingInfo.CalculateLayoutPartition(previousSectionLayout.Partition);
+        LayoutPartition layoutPartition = section.CalculateLayoutPartition(layouts);
 
         SectionLayout sectionLayout = new(
             section.Id,
@@ -140,11 +140,7 @@ internal static class SectionLayoutBuilder
         Rectangle boudingBox = updatedLayouts
             .CalculateBoundingBox(Rectangle.Empty);
 
-        bool isSectionFinished = updatedLayouts.Length > 0
-            && updatedLayouts.Last().ModelId == section.Elements.Last().Id
-            && updatedLayouts.Last().Partition.IsFinished();
-
-        LayoutPartition lp = isSectionFinished.CalculateLayoutPartitionAfterUpdate(previousSectionLayout.Partition);
+        LayoutPartition lp = section.CalculateLayoutPartition(updatedLayouts);
 
         SectionLayout updatedSection = new(
             section.Id,
@@ -160,6 +156,9 @@ internal static class SectionLayoutBuilder
 
 file static class SectionOperators
 {
+    public static LayoutPartition CalculateLayoutPartition(this Section section, Layout[] layouts) =>
+        section.Elements.CalculateLayoutPartition(layouts);
+
     public static T Find<T>(this Section section, ModelId id) where T : Model =>
         section.Elements.OfType<T>().Single(e => e.Id == id);
 

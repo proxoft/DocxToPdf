@@ -35,7 +35,7 @@ internal static class ParagraphLayoutBuilder
             .SetWidth(availableArea.Width) // ensure full width size of paragraph
             ;
 
-        LayoutPartition layoutPartition = processingInfo.CalculateParagraphLayoutPartition(previousLayout.Partition);
+        LayoutPartition layoutPartition = paragraph.CalculateLayoutPartition(lines);
         ParagraphLayout paragraphLayout = new(
             paragraph.Id,
             lines,
@@ -69,18 +69,14 @@ internal static class ParagraphLayoutBuilder
             .CalculateBoundingBox(Rectangle.Empty)
             .SetWidth(availableArea.Width);
 
-        bool allDone = paragraph.Elements.Length == 0
-            || paragraph.Elements.Last().Id == lines.LastProcessedElementId();
-
-        LayoutPartition lp = allDone.CalculateLayoutPartitionAfterUpdate(previousLayout.Partition);
-
+        LayoutPartition layoutPartition = paragraph.CalculateLayoutPartition(lines);
         ParagraphLayout pl = new(
             paragraph.Id,
             lines,
             updatedFixedImages,
             bb,
             Borders.None,
-            lp
+            layoutPartition
         );
 
         return (pl, updateInfo);
@@ -99,4 +95,7 @@ file static class ParagraphOperators
         Rectangle[] reservedSpaces = paragraph.FixedDrawings.CreateReservedSpaces();
         return new ParagraphLayoutingArea(availableArea, 0, 0, reservedSpaces);
     }
+
+    public static LayoutPartition CalculateLayoutPartition(this Paragraph paragraph, LineLayout[] lines) =>
+        paragraph.Elements.CalculateLayoutPartition([..lines.SelectMany(l => l.Words)]);
 }

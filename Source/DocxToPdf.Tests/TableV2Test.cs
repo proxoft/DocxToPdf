@@ -78,7 +78,7 @@ public class TableV2Test
         _executor.Convert("TableWithOneColumnParagraphsXXXL", pages =>
         {
             pages
-                .Count()
+                .Length
                 .Should()
                 .Be(3);
 
