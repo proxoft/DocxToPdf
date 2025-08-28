@@ -20,4 +20,10 @@ internal record Size(float Width, float Height)
             Math.Max(0, this.Width - padding.Left - padding.Right),
             Math.Max(0, this.Height - padding.Top - padding.Bottom)
         );
+
+    public Size Expand(Padding padding) =>
+        new(
+            this.Width + padding.Left + padding.Right,
+            this.Height + padding.Top + padding.Bottom
+        );
 }

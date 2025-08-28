@@ -140,7 +140,8 @@ internal static class SectionLayoutBuilder
         Rectangle boudingBox = updatedLayouts
             .CalculateBoundingBox(Rectangle.Empty);
 
-        bool isSectionFinished = updatedLayouts.Last().ModelId == section.Elements.Last().Id
+        bool isSectionFinished = updatedLayouts.Length > 0
+            && updatedLayouts.Last().ModelId == section.Elements.Last().Id
             && updatedLayouts.Last().Partition.IsFinished();
 
         LayoutPartition lp = isSectionFinished.CalculateLayoutPartitionAfterUpdate(previousSectionLayout.Partition);

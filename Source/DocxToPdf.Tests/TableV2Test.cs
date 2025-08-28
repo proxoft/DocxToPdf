@@ -1,5 +1,7 @@
-﻿using Proxoft.DocxToPdf.LayoutsRendering;
+﻿using System.Linq;
+using Proxoft.DocxToPdf.LayoutsRendering;
 using Proxoft.DocxToPdf.Tests.Tools;
+using Proxoft.DocxToPdf.Tests.Assertions;
 
 namespace Proxoft.DocxToPdf.Tests;
 
@@ -75,8 +77,54 @@ public class TableV2Test
         _executor.Convert("TableWithOneColumnParagraphsXXXL", pages =>
         {
             pages
+                .Count()
                 .Should()
-                .NotBeEmpty();
+                .Be(3);
+
+            pages[0]
+                .PageShouldContainSingleTable()
+                .ShouldContainCell(new Documents.ModelId("cel", 1))
+                .CellShouldContainOneParagraph()
+                .TextShouldStart("Lorem")
+                .TextShouldEnd("pretium.")
+                ;
+
+            pages[0]
+                .PageShouldContainSingleTable()
+                .ShouldContainCell(new Documents.ModelId("cel", 2))
+                .CellShouldContainOneParagraph()
+                .TextShouldStart("Mauris")
+                .TextShouldEnd(", id ")
+                ;
+
+            pages[1]
+                .PageShouldContainSingleTable()
+                .ShouldContainCell(new Documents.ModelId("cel", 2))
+                .CellShouldContainOneParagraph()
+                .TextShouldStart("tincidunt")
+                .TextShouldEnd("diam.")
+                ;
+
+            pages[1]
+                .PageShouldContainSingleTable()
+                .ShouldContainCell(new Documents.ModelId("cel", 3))
+                .CellShouldContainOneParagraph()
+                .TextShouldStart("Aliquam")
+                .TextShouldEnd("suscipit.")
+                ;
+
+            pages[1]
+                .PageShouldContainSingleTable()
+                .ShouldContainCell(new Documents.ModelId("cel", 4))
+                .CellShouldContainOneParagraph()
+                .TextShouldStart("Pellentesque")
+                .TextShouldEnd("sodales ")
+                ;
+
+            pages[2]
+                .ShouldContainSingleParagraph()
+                .TextShouldBeEmpty()
+                ;
         });
     }
 

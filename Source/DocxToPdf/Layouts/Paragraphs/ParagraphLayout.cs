@@ -8,6 +8,7 @@ namespace Proxoft.DocxToPdf.Layouts.Paragraphs;
 internal record ParagraphLayout(
     ModelId ModelId,
     LineLayout[] Lines,
+    FixedImageLayout[] FixedImages,
     Rectangle BoundingBox,
     Borders Borders,
     LayoutPartition Partition
@@ -16,10 +17,11 @@ internal record ParagraphLayout(
     public static readonly ParagraphLayout Empty = new(
         ModelId.None,
         [],
+        [],
         Rectangle.Empty,
         Borders.None,
         LayoutPartition.StartEnd
     );
 
-    public IEnumerable<Layout> InnerLayouts => this.Lines;
+    public IEnumerable<Layout> InnerLayouts => [..this.Lines, ..this.FixedImages];
 }

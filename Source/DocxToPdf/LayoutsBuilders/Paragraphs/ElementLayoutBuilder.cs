@@ -1,4 +1,5 @@
-﻿using Proxoft.DocxToPdf.Documents.Common;
+﻿using System.Linq;
+using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Drawings;
 using Proxoft.DocxToPdf.Documents.Paragraphs.Fields;
@@ -23,6 +24,7 @@ internal static class ElementLayoutBuilder
             Space => new SpaceLayout(element.Id, size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle),
             PageNumberField => new PageNumberLayout(element.Id, fieldVariables.CurrentPage.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
             TotalPagesField => new TotalPagesLayout(element.Id, fieldVariables.TotalPages.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
+            PageBreak => new PageBreakLayout(element.Id, element.TextStyle),
             _ => new EmptyLayout(element.Id, boundingBox, element.TextStyle)
         };
 
@@ -41,15 +43,11 @@ internal static class ElementLayoutBuilder
         };
     }
 
-    public static ElementLayout Update(this ElementLayout layout,  Element element, float xPosition, FieldVariables fieldVariables, LayoutServices services)
-    {
-        if (layout is not TotalPagesLayout)
-        {
-            return layout.SetOffset(new Position(xPosition, 0));
-        }
+    public static ElementLayout Update(this ElementLayout layout, Element[] allElements, FieldVariables fieldVariables, LayoutServices services) =>
+        layout.Update(allElements.Single(e => e.Id == layout.Id), fieldVariables, services);
 
-        // TODO: check situations when element gets smaller than previously
-        ElementLayout el = element.CreateElementLayout(xPosition, fieldVariables, services);
-        return el;
-    }
+    private static ElementLayout Update(this ElementLayout layout, Element element, FieldVariables fieldVariables, LayoutServices services) =>
+        layout is TotalPagesLayout
+            ? element.CreateElementLayout(0, fieldVariables, services)
+            : layout;
 }

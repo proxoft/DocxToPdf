@@ -9,12 +9,12 @@ internal static class LineLayoutOperators
     public static bool ContainsUpdatableField(this LineLayout line) =>
         line.Words.Any(w => w is FieldLayout);
 
-    public static ModelId LastProcessedElement(this LineLayout[] lines) =>
+    public static ModelId LastProcessedElementId(this LineLayout[] lines) =>
         lines.Length == 0
             ? ModelId.None
-            : lines.Last().LastProcessedElement();
+            : lines.Last().LastProcessedElementId();
 
-    private static ModelId LastProcessedElement(this LineLayout lineLayout) =>
+    private static ModelId LastProcessedElementId(this LineLayout lineLayout) =>
         lineLayout.Words.Length == 0
             ? ModelId.None
             : lineLayout.Words.Last().ModelId;

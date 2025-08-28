@@ -18,14 +18,34 @@ internal static class ParagraphLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        ModelId lastProcessed = previousLayout.ModelId != paragraph.Id
-            ? ModelId.None
-            : previousLayout.LastProcessedElement();
+        ModelId lastProcessed = previousLayout.LastProcessedElementIdOf(paragraph.Id);
 
-        Size remainingArea = availableArea;
+        FixedImageLayout[] fixedImageLayouts = paragraph.FixedDrawings.CreateFixedImageLayouts(availableArea, previousLayout.FixedImages);
+        Element[] unprocessed = [.. paragraph.Elements.SkipProcessed(lastProcessed, true)];
+        ParagraphLayoutingArea area = paragraph.CreateArea(availableArea);
 
-        (ParagraphLayout, ProcessingInfo) result = paragraph.CreateLayout(lastProcessed, remainingArea, previousLayout.Partition, fieldVariables, services);
-        return result;
+        (LineLayout[] lines, ProcessingInfo processingInfo) = unprocessed.CreateLineLayouts(area, fieldVariables, paragraph.Style, services);
+        if (lines.Length == 0)
+        {
+            return (ParagraphLayout.Empty, processingInfo);
+        }
+
+        Rectangle bb = lines
+            .CalculateBoundingBox(Rectangle.Empty)
+            .SetWidth(availableArea.Width) // ensure full width size of paragraph
+            ;
+
+        LayoutPartition layoutPartition = processingInfo.CalculateParagraphLayoutPartition(previousLayout.Partition);
+        ParagraphLayout paragraphLayout = new(
+            paragraph.Id,
+            lines,
+            fixedImageLayouts,
+            bb,
+            Borders.None,
+            layoutPartition
+        );
+
+        return (paragraphLayout, processingInfo);
     }
 
     public static (ParagraphLayout, UpdateInfo) Update(
@@ -36,11 +56,12 @@ internal static class ParagraphLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
+        FixedImageLayout[] updatedFixedImages = layout.FixedImages.Update(paragraph.FixedDrawings, availableArea);
+        ParagraphLayoutingArea area = paragraph.CreateArea(availableArea);
         (LineLayout[] lines, UpdateInfo updateInfo) = layout.Lines.UpdateLineLayouts(
             paragraph,
-            availableArea,
+            area,
             fieldVariables,
-            paragraph.Style,
             services
         );
 
@@ -48,12 +69,15 @@ internal static class ParagraphLayoutBuilder
             .CalculateBoundingBox(Rectangle.Empty)
             .SetWidth(availableArea.Width);
 
-        bool allDone = updateInfo == UpdateInfo.Done; //paragraph.Elements.Select(e => e.Id).LastOrDefault(ModelId.None) == lines.LastProcessedElement();
+        bool allDone = paragraph.Elements.Length == 0
+            || paragraph.Elements.Last().Id == lines.LastProcessedElementId();
+
         LayoutPartition lp = allDone.CalculateLayoutPartitionAfterUpdate(previousLayout.Partition);
 
         ParagraphLayout pl = new(
             paragraph.Id,
             lines,
+            updatedFixedImages,
             bb,
             Borders.None,
             lp
@@ -61,38 +85,18 @@ internal static class ParagraphLayoutBuilder
 
         return (pl, updateInfo);
     }
-
-    private static (ParagraphLayout, ProcessingInfo) CreateLayout(
-        this Paragraph paragraph,
-        ModelId lastProcessed,
-        Size availableSize,
-        LayoutPartition previousPartition,
-        FieldVariables fieldVariables,
-        LayoutServices services)
-    {
-        Element[] unprocessed = [..paragraph.Elements.SkipProcessed(lastProcessed, true)];
-        (LineLayout[] lines, ProcessingInfo processingInfo) = unprocessed.CreateLineLayouts(0, availableSize, fieldVariables, paragraph.Style, services);
-
-        Rectangle bb = lines
-            .CalculateBoundingBox(Rectangle.Empty)
-            .SetWidth(availableSize.Width) // ensure full width size of paragraph
-            ;
-
-        LayoutPartition layoutPartition = processingInfo.CalculateParagraphLayoutPartition(previousPartition);
-        ParagraphLayout paragraphLayout = new(
-            paragraph.Id,
-            lines,
-            bb,
-            Borders.None,
-            layoutPartition
-        );
-
-        return (paragraphLayout, processingInfo);
-    }
 }
 
 file static class ParagraphOperators
 {
-    public static ModelId LastProcessedElement(this ParagraphLayout paragraphLayout) =>
-        paragraphLayout.Lines.LastProcessedElement();
+    public static ModelId LastProcessedElementIdOf(this ParagraphLayout paragraphLayout, ModelId ofParagraph) =>
+        paragraphLayout.ModelId == ofParagraph
+            ? paragraphLayout.Lines.LastProcessedElementId()
+            : ModelId.None;
+
+    public static ParagraphLayoutingArea CreateArea(this Paragraph paragraph, Size availableArea)
+    {
+        Rectangle[] reservedSpaces = paragraph.FixedDrawings.CreateReservedSpaces();
+        return new ParagraphLayoutingArea(availableArea, 0, 0, reservedSpaces);
+    }
 }
