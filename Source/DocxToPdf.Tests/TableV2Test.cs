@@ -1,9 +1,7 @@
-﻿using System.Linq;
-using Proxoft.DocxToPdf.LayoutsRendering;
+﻿using Proxoft.DocxToPdf.LayoutsRendering;
 using Proxoft.DocxToPdf.Tests.Tools;
 using Proxoft.DocxToPdf.Tests.Assertions;
 using Proxoft.DocxToPdf.Layouts.Tables;
-using Proxoft.DocxToPdf.Layouts.Paragraphs;
 
 namespace Proxoft.DocxToPdf.Tests;
 
