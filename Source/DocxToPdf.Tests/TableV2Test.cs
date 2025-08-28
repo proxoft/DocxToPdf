@@ -23,9 +23,7 @@ public class TableV2Test
     {
         _executor.Convert("Table", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(1);
         });
     }
 
@@ -34,9 +32,7 @@ public class TableV2Test
     {
         _executor.Convert("CellBorders", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(1);
         });
     }
 
@@ -45,9 +41,7 @@ public class TableV2Test
     {
         _executor.Convert("Layout", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(1);
         });
     }
 
@@ -56,9 +50,7 @@ public class TableV2Test
     {
         _executor.Convert("Layout2", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(1);
         });
     }
 
@@ -67,9 +59,7 @@ public class TableV2Test
     {
         _executor.Convert("TableWithParagraphsXXL", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(2);
         });
     }
 
@@ -79,9 +69,7 @@ public class TableV2Test
         _executor.Convert("TableWithOneColumnParagraphsXXXL", pages =>
         {
             pages
-                .Length
-                .Should()
-                .Be(3);
+                .CountShouldBe(3);
 
             TableLayout table = pages[0]
                 .PageShouldContainSingleTable();
@@ -140,9 +128,7 @@ public class TableV2Test
         _executor.Convert("TableWithParagraphsXXXL", pages =>
         {
             pages
-                .Length
-                .Should()
-                .Be(3);
+                .CountShouldBe(3);
 
             #region page 1
             TableLayout table = pages[0]
@@ -317,9 +303,7 @@ public class TableV2Test
     {
         _executor.Convert("TableWithTable", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(1);
         });
     }
 
@@ -328,9 +312,7 @@ public class TableV2Test
     {
         _executor.Convert("TableWithTableOverPage", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(2);
         });
     }
 }
