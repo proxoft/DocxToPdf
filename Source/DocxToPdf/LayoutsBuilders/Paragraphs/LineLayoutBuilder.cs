@@ -198,7 +198,7 @@ internal static class LineLayoutBuilder
             activeHs = (inHorizontalSpaceIndex, onXPosition);
 
             float realXPosition = horizontalSpaces[activeHs.index].Left + activeHs.x;
-            element = element.SetOffset(new Position(realXPosition, 0));
+            element = element.Offset(new Position(realXPosition, 0));
             elementLayouts = [.. elementLayouts, element];
 
             activeHs = (activeHs.index, activeHs.x + element.Size.Width);
@@ -263,7 +263,7 @@ internal static class LineLayoutBuilder
 
             activeHs = (inHorizontalSpaceIndex, onXPosition);
             float realXPosition = horizontalSpaces[activeHs.index].Left + activeHs.x;
-            updatedElements = [.. updatedElements, updated.SetOffset(new Position(realXPosition, 0))];
+            updatedElements = [.. updatedElements, updated.Offset(new Position(realXPosition, 0))];
             activeHs = (activeHs.index, activeHs.x + updated.Size.Width);
             elementIndex++;
             if (elementIndex >= line.Words.Length)

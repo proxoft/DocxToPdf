@@ -67,7 +67,10 @@ file static class Operators
     {
         PageConfiguration pageConfiguration = properties.GetPageConfiguration();
         ColumnConfig[] columns = properties.CreateColumnConfigs(pageConfiguration);
-        return new SectionProperties(pageConfiguration, columns);
+
+        OpenXml.EnumValue<Word.SectionMarkValues> sectionMark = properties.ChildsOfType<Word.SectionType>().SingleOrDefault()?.Val ?? Word.SectionMarkValues.NextPage;
+        bool startOnNextPage = sectionMark == Word.SectionMarkValues.NextPage;
+        return new SectionProperties(pageConfiguration, columns, startOnNextPage);
     }
 
     private static PageConfiguration GetPageConfiguration(

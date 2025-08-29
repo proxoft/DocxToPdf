@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Layouts;
@@ -70,8 +71,17 @@ internal static class PageLayoutBuilder
         ProcessingInfo pageProcessingInfo = ProcessingInfo.Done;
         float yOffset = 0;
 
+        bool isFirstSection = true;
+
         foreach (Section section in sections)
         {
+            if(section.ShouldRequestNewPage(isFirstSection, previousPageContent.Sections.LastOrDefault(SectionLayout.Empty)))
+            {
+                pageProcessingInfo = ProcessingInfo.NewPageRequired;
+                break;
+            }
+
+            isFirstSection = false;
             SectionLayout lastSectionLayout = previousPageContent.Sections
                 .Where(l => l.ModelId == section.Id)
                 .LastOrDefault(SectionLayout.Empty);
@@ -85,7 +95,7 @@ internal static class PageLayoutBuilder
 
             sectionLayouts = [
                 .. sectionLayouts,
-                sectionLayout.SetOffset(new Position(0, yOffset))
+                sectionLayout.Offset(new Position(0, yOffset))
             ];
 
             yOffset += sectionLayout.BoundingBox.Height;
@@ -98,6 +108,7 @@ internal static class PageLayoutBuilder
                 break;
             }
         }
+
         PageContentLayout pageContent = new(sectionLayouts, drawingArea);
         return (pageContent, pageProcessingInfo);
     }
@@ -121,7 +132,7 @@ internal static class PageLayoutBuilder
         {
             Section section = sections.Single(s => s.Id == sectionLayout.ModelId);
             (SectionLayout updatedLayout, UpdateInfo updateInfo) = sectionLayout.Update(section, lastSectionLayout, remainingArea, fieldVariables, services);
-            sectionLayouts = [.. sectionLayouts, updatedLayout.SetOffset(new Position(0, yOffset))];
+            sectionLayouts = [.. sectionLayouts, updatedLayout.Offset(new Position(0, yOffset))];
             remainingArea = remainingArea.DecreaseHeight(updatedLayout.BoundingBox.Height);
             yOffset += updatedLayout.BoundingBox.Height;
             lastSectionLayout = updatedLayout;
@@ -160,9 +171,9 @@ file static class Functions
 
     private static Rectangle CalculatePageDrawingArea(this PageConfiguration pageConfiguration) =>
         Rectangle.FromSize(pageConfiguration.Size)
-            .CropFromLeft(pageConfiguration.Margin.Left)
+            // .CropFromLeft(pageConfiguration.Margin.Left)
             .CropFromTop(pageConfiguration.Margin.Top)
-            .CropFromRight(pageConfiguration.Margin.Right)
+            // .CropFromRight(pageConfiguration.Margin.Right)
             .CropFromBottom(pageConfiguration.Margin.Bottom);
 }
 
@@ -173,6 +184,11 @@ file static class PageLayoutOperators
         lastPage.PageContent.Sections.Length == 0
             ? sections
             : [.. sections.FilterProcessed(lastPage.PageContent.Sections)];
+
+    public static bool ShouldRequestNewPage(this Section section, bool isOnPageFirst, SectionLayout previousSectionLayout) =>
+        section.Properties.StartOnNextPage
+            && !isOnPageFirst
+            && previousSectionLayout.ModelId != section.Id;
 
     private static IEnumerable<Section> FilterProcessed(this Section[] sections, SectionLayout[] sectionLayouts)
     {

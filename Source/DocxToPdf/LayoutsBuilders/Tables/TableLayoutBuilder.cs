@@ -38,7 +38,7 @@ internal static class TableLayoutBuilder
             );
 
             processingInfos = [.. processingInfos, processingInfo];
-            cellLayouts = [.. cellLayouts, cellLayout.SetOffset(cellAvailableArea.TopLeft)];
+            cellLayouts = [.. cellLayouts, cellLayout.Offset(cellAvailableArea.TopLeft)];
             cellLayouts = cellLayouts.AlignLayoutPartitions();
 
             gridLayout = gridLayout.JustifyGridRows(table.Id, cellLayout.BoundingBox.Size, cell.GridPosition, table.Grid);
@@ -99,7 +99,7 @@ internal static class TableLayoutBuilder
                 services
             );
 
-            cellLayouts = [.. cellLayouts, updatedCellLayout.SetOffset(cellAvailableArea.TopLeft)];
+            cellLayouts = [.. cellLayouts, updatedCellLayout.Offset(cellAvailableArea.TopLeft)];
             cellLayouts = cellLayouts.AlignLayoutPartitions();
 
             gridLayout = gridLayout.JustifyGridRows(table.Id, cellLayout.BoundingBox.Size, cell.GridPosition, table.Grid);

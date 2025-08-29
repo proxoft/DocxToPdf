@@ -49,9 +49,15 @@ internal static class LayoutOperators
             .DefaultIfEmpty(ifEmpty)
             .CalculateBoundingBox();
 
-    public static T SetOffset<T>(this T layout, Position offset) where T: Layout =>
+    public static T ResetOffset<T>(this T layout) where T : Layout =>
         layout with
         {
-            BoundingBox = layout.BoundingBox.MoveTo(offset)
+            BoundingBox = layout.BoundingBox.MoveTo(Position.Zero)
+        };
+
+    public static T Offset<T>(this T layout, Position offset) where T: Layout =>
+        layout with
+        {
+            BoundingBox = layout.BoundingBox.MoveBy(offset.X, offset.Y)
         };
 }

@@ -44,7 +44,9 @@ internal static class ElementLayoutBuilder
     }
 
     public static ElementLayout Update(this ElementLayout layout, Element[] allElements, FieldVariables fieldVariables, LayoutServices services) =>
-        layout.Update(allElements.Single(e => e.Id == layout.Id), fieldVariables, services);
+        layout
+            .Update(allElements.Single(e => e.Id == layout.Id), fieldVariables, services)
+            .ResetOffset();
 
     private static ElementLayout Update(this ElementLayout layout, Element element, FieldVariables fieldVariables, LayoutServices services) =>
         layout is TotalPagesLayout

@@ -28,7 +28,9 @@ internal static class SectionLayoutBuilder
     {
         Model[] unprocessed = section.Unprocessed(previousSectionLayout.Layouts);
         Layout[] layouts = [];
-        Size remainingArea = availableArea;
+        Size remainingArea = availableArea
+            .DecreaseWidth(section.Properties.PageConfiguration.Margin.HorizontalMargins());
+
         ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
         float yOffset = 0;
 
@@ -54,7 +56,7 @@ internal static class SectionLayoutBuilder
             if(result.layout.IsNotEmpty())
             {
                 remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
-                layouts = [.. layouts, result.layout.SetOffset(new Position(0, yOffset))];
+                layouts = [.. layouts, result.layout.Offset(new Position(0, yOffset))];
                 yOffset += result.layout.BoundingBox.Height;
             }
 
@@ -72,7 +74,8 @@ internal static class SectionLayoutBuilder
         }
 
         Rectangle boudingBox = layouts
-            .CalculateBoundingBox(Rectangle.Empty);
+            .CalculateBoundingBox(Rectangle.Empty)
+            .MoveXBy(section.Properties.PageConfiguration.Margin.Left);
 
         LayoutPartition layoutPartition = section.CalculateLayoutPartition(layouts);
 
@@ -95,9 +98,10 @@ internal static class SectionLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Size remainingArea = availableArea;
+        Size remainingArea = availableArea
+            .DecreaseWidth(section.Properties.PageConfiguration.Margin.HorizontalMargins());
+
         Layout[] updatedLayouts = [];
-        // ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
         UpdateInfo lastUpdateInfo = UpdateInfo.Done;
         float yOffset = 0;
 
@@ -123,7 +127,7 @@ internal static class SectionLayoutBuilder
             };
 
             lastUpdateInfo = result.updateInfo;
-            updatedLayouts = [.. updatedLayouts, result.layout.SetOffset(new Position(0, yOffset))];
+            updatedLayouts = [.. updatedLayouts, result.layout.Offset(new Position(0, yOffset))];
             yOffset += result.layout.BoundingBox.Height;
 
             if(yOffset > remainingArea.Height)
@@ -138,7 +142,8 @@ internal static class SectionLayoutBuilder
         }
 
         Rectangle boudingBox = updatedLayouts
-            .CalculateBoundingBox(Rectangle.Empty);
+            .CalculateBoundingBox(Rectangle.Empty)
+            .MoveXBy(section.Properties.PageConfiguration.Margin.Left);
 
         LayoutPartition lp = section.CalculateLayoutPartition(updatedLayouts);
 

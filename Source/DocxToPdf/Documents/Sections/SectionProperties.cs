@@ -2,5 +2,6 @@
 
 internal record SectionProperties(
     PageConfiguration PageConfiguration,
-    ColumnConfig[] Columns
+    ColumnConfig[] Columns,
+    bool StartOnNextPage
 );

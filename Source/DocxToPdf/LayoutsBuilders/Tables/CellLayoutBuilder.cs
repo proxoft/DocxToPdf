@@ -54,7 +54,7 @@ internal static class CellLayoutBuilder
             if (result.layout.IsNotEmpty())
             {
                 remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
-                layouts = [.. layouts, result.layout.SetOffset(new Position(xOffset, yOffset))];
+                layouts = [.. layouts, result.layout.Offset(new Position(xOffset, yOffset))];
                 yOffset += result.layout.BoundingBox.Height;
             }
 
@@ -127,7 +127,7 @@ internal static class CellLayoutBuilder
 
             if (result.updatedLayout != ParagraphLayout.Empty && result.updatedLayout != TableLayout.Empty)
             {
-                updatedLayouts = [.. updatedLayouts, result.updatedLayout.SetOffset(new Position(xOffset, yOffset))];
+                updatedLayouts = [.. updatedLayouts, result.updatedLayout.Offset(new Position(xOffset, yOffset))];
             }
 
             if (result.updateInfo is UpdateInfo.ReconstructRequired)
