@@ -27,7 +27,7 @@ internal static class PageAssertions
         return page;
     }
 
-    public static SectionLayout ShouldContainSection(this PageLayout page, int sectionId)
+    public static SectionLayout ShouldContainSectionWithId(this PageLayout page, int sectionId)
     {
         ModelId modelId = sectionId.AsSectionId();
         page.PageContent

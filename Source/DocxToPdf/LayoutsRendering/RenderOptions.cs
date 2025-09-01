@@ -35,7 +35,8 @@ internal static class Operators
         forLayout switch
         {
             PageContentLayout => options.PageContentBorder,
-            SectionLayout => options.SectionBorder,
+            // SectionLayout => options.SectionBorder,
+            ColumnLayout => options.SectionBorder,
             ParagraphLayout => options.ParagraphBorder,
             LineLayout => options.LineBorder,
             TextLayout => options.WordBorder,

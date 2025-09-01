@@ -86,7 +86,7 @@ internal static class PageLayoutBuilder
                 .Where(l => l.ModelId == section.Id)
                 .LastOrDefault(SectionLayout.Empty);
 
-            (SectionLayout sectionLayout, ProcessingInfo processingInfo) = section.CreateLayout(
+            (SectionLayout sectionLayout, ProcessingInfo processingInfo) = section.CreateLayoutN(
                 lastSectionLayout,
                 remainingArea,
                 fieldVariables,
@@ -131,7 +131,7 @@ internal static class PageLayoutBuilder
         foreach (SectionLayout sectionLayout in pageContent.Sections)
         {
             Section section = sections.Single(s => s.Id == sectionLayout.ModelId);
-            (SectionLayout updatedLayout, UpdateInfo updateInfo) = sectionLayout.Update(section, lastSectionLayout, remainingArea, fieldVariables, services);
+            (SectionLayout updatedLayout, UpdateInfo updateInfo) = sectionLayout.UpdateN(section, lastSectionLayout, remainingArea, fieldVariables, services);
             sectionLayouts = [.. sectionLayouts, updatedLayout.Offset(new Position(0, yOffset))];
             remainingArea = remainingArea.DecreaseHeight(updatedLayout.BoundingBox.Height);
             yOffset += updatedLayout.BoundingBox.Height;

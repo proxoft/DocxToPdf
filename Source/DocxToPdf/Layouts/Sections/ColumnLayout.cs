@@ -5,14 +5,14 @@ using Proxoft.DocxToPdf.Documents.Shared;
 
 namespace Proxoft.DocxToPdf.Layouts.Sections;
 
-internal record SectionLayout(
+internal record ColumnLayout(
     ModelId ModelId,
-    ColumnLayout[] Columns,
+    Layout[] ParagraphsOrTables,
     Rectangle BoundingBox,
     Borders Borders,
     LayoutPartition Partition) : Layout(ModelId, BoundingBox, Borders, Partition), IComposedLayout
 {
-    public static readonly SectionLayout Empty = new(
+    public static readonly ColumnLayout None = new(
         ModelId.None,
         [],
         Rectangle.Empty,
@@ -20,5 +20,5 @@ internal record SectionLayout(
         LayoutPartition.StartEnd
     );
 
-    public IEnumerable<Layout> InnerLayouts => this.Columns;
+    public IEnumerable<Layout> InnerLayouts => this.ParagraphsOrTables;
 }

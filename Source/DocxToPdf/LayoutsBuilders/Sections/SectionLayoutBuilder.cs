@@ -4,60 +4,59 @@ using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Sections;
-using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Documents.Shared;
+using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
+using Proxoft.DocxToPdf.Layouts.Sections;
+using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
+using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
-using Proxoft.DocxToPdf.Layouts.Sections;
-using Proxoft.DocxToPdf.Layouts.Paragraphs;
-using Proxoft.DocxToPdf.Layouts.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 internal static class SectionLayoutBuilder
 {
-    public static (SectionLayout, ProcessingInfo) CreateLayout(
+    public static (SectionLayout, ProcessingInfo) CreateLayoutN(
         this Section section,
         SectionLayout previousSectionLayout,
         Size availableArea,
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Model[] unprocessed = section.Unprocessed(previousSectionLayout.Layouts);
-        Layout[] layouts = [];
-        Size remainingArea = availableArea
-            .DecreaseWidth(section.Properties.PageConfiguration.Margin.HorizontalMargins());
-
+        ColumnLayout[] columns = [];
         ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
-        float yOffset = 0;
+        ColumnLayout lastColumnLayout = previousSectionLayout.ModelId == section.Id
+            ? previousSectionLayout.Columns.LastOrDefault(ColumnLayout.None)
+            : ColumnLayout.None;
 
-        foreach (Model model in unprocessed)
+        float columnXOffset = 0;
+        for (int columnIndex = 0; columnIndex < section.Properties.Columns.Length; columnIndex++)
         {
-            (Layout layout, ProcessingInfo processingInfo) result = model switch
-            {
-                Paragraph p => p.CreateLayout(
-                    previousSectionLayout.TryFindParagraphLayout(p.Id),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                Table t => t.CreateTableLayout(
-                    previousSectionLayout.TryFindTableLayout(t.Id),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                _ => (NoLayout.Instance, ProcessingInfo.Done)
-            };
+            Size columnArea = section.CalculateColumnArea(columnIndex, availableArea);
+            (ColumnLayout column, ProcessingInfo processingInfo) = section.CreateSectionColumnLayout(
+                columnArea,
+                lastColumnLayout,
+                fieldVariables,
+                services);
 
-            sectionProcessingInfo = result.processingInfo;
-
-            if(result.layout.IsNotEmpty())
+            lastColumnLayout = column;
+            if (column.IsNotEmpty())
             {
-                remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
-                layouts = [.. layouts, result.layout.Offset(new Position(0, yOffset))];
-                yOffset += result.layout.BoundingBox.Height;
+                columns = [..columns, column.Offset(new Position(columnXOffset, 0))];
+            }
+
+            sectionProcessingInfo = processingInfo;
+
+            columnXOffset += section.WidthOccupiedByColumn(columnIndex);
+
+            if ((sectionProcessingInfo is ProcessingInfo.RequestDrawingArea or ProcessingInfo.IgnoreAndRequestDrawingArea)
+                && columnIndex < section.Properties.Columns.Length - 1)
+            {
+                // proceed to next column
+                continue;
             }
 
             if (sectionProcessingInfo is ProcessingInfo.NewPageRequired
@@ -66,31 +65,13 @@ internal static class SectionLayoutBuilder
             {
                 break;
             }
-
-            Model nextModel = unprocessed.Next(model.Id);
-            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, nextModel);
-            yOffset += spaceAfter;
-            remainingArea = remainingArea.DecreaseHeight(spaceAfter);
         }
 
-        Rectangle boudingBox = layouts
-            .CalculateBoundingBox(Rectangle.Empty)
-            .MoveXBy(section.Properties.PageConfiguration.Margin.Left);
-
-        LayoutPartition layoutPartition = section.CalculateLayoutPartition(layouts);
-
-        SectionLayout sectionLayout = new(
-            section.Id,
-            layouts,
-            boudingBox,
-            Borders.None,
-            layoutPartition
-        );
-
+        SectionLayout sectionLayout = columns.ComposeSectionLayout(section);
         return (sectionLayout, sectionProcessingInfo);
     }
 
-    public static (SectionLayout, UpdateInfo) Update(
+    public static (SectionLayout, UpdateInfo) UpdateN(
         this SectionLayout sectionLayout,
         Section section,
         SectionLayout previousSectionLayout,
@@ -98,80 +79,81 @@ internal static class SectionLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Size remainingArea = availableArea
-            .DecreaseWidth(section.Properties.PageConfiguration.Margin.HorizontalMargins());
+        ColumnLayout[] updatedColumns = [];
+        ColumnLayout previousColumnLayout = previousSectionLayout.ModelId == section.Id
+            ? previousSectionLayout.Columns.LastOrDefault(ColumnLayout.None)
+            : ColumnLayout.None; 
 
-        Layout[] updatedLayouts = [];
-        UpdateInfo lastUpdateInfo = UpdateInfo.Done;
-        float yOffset = 0;
-
-        foreach (Layout layout in sectionLayout.Layouts)
+        float columnXOffset = 0;
+        int columnIndex = 0;
+        UpdateInfo updateInfo = UpdateInfo.Done;
+        foreach (ColumnLayout cl in sectionLayout.Columns)
         {
-            (Layout layout, UpdateInfo updateInfo) result = layout switch
-            {
-                ParagraphLayout pl => pl.Update(
-                    section.Find<Paragraph>(pl.ModelId),
-                    previousSectionLayout.TryFindParagraphLayout(pl.ModelId), // try find in previous section
-                    remainingArea,
-                    fieldVariables,
-                    services
-                ),
-                TableLayout tl => tl.Update(
-                    section.Find<Table>(tl.ModelId),
-                    previousSectionLayout.TryFindTableLayout(tl.ModelId),
-                    remainingArea,
-                    fieldVariables,
-                    services
-                ),
-                _ => (NoLayout.Instance, UpdateInfo.Done)
-            };
+            Size columnArea = section.CalculateColumnArea(columnIndex, availableArea);
 
-            lastUpdateInfo = result.updateInfo;
-            updatedLayouts = [.. updatedLayouts, result.layout.Offset(new Position(0, yOffset))];
-            yOffset += result.layout.BoundingBox.Height;
+            (ColumnLayout updatedColumn, updateInfo) = cl.Update(
+                section,
+                previousColumnLayout,
+                columnArea,
+                fieldVariables,
+                services);
 
-            if(yOffset > remainingArea.Height)
+            updatedColumns = [.. updatedColumns, updatedColumn.ResetOffset().Offset(new Position(columnXOffset, 0))];
+            columnXOffset += section.WidthOccupiedByColumn(columnIndex);
+            columnIndex++;
+            previousColumnLayout = updatedColumn;
+            if(updateInfo == UpdateInfo.ReconstructRequired)
             {
                 break;
             }
-
-            Model model = section.Find<Model>(layout.ModelId);
-            Model next = section.Elements.Next(model.Id);
-            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, next);
-            yOffset += spaceAfter;
         }
 
-        Rectangle boudingBox = updatedLayouts
-            .CalculateBoundingBox(Rectangle.Empty)
-            .MoveXBy(section.Properties.PageConfiguration.Margin.Left);
-
-        LayoutPartition lp = section.CalculateLayoutPartition(updatedLayouts);
-
-        SectionLayout updatedSection = new(
-            section.Id,
-            updatedLayouts,
-            boudingBox,
-            Borders.None,
-            lp
-        );
-
-        return (updatedSection, lastUpdateInfo);
+        SectionLayout updatedLayout = updatedColumns.ComposeSectionLayout(section);
+        return (updatedLayout, updateInfo);
     }
 }
 
+file static class SectionOperators2
+{
+    public static LayoutPartition CalculateLayoutPartition(this ColumnLayout[] columns)
+    {
+        if (columns.Length == 0) return LayoutPartition.StartEnd;
+        LayoutPartition layoutPartition = LayoutPartition.StartEnd;
+        if (!columns[0].Partition.HasFlag(LayoutPartition.Start)) layoutPartition = layoutPartition.RemoveStart();
+        if (!columns[^1].Partition.HasFlag(LayoutPartition.End)) layoutPartition = layoutPartition.RemoveEnd();
+        return layoutPartition;
+    }
+
+    public static SectionLayout ComposeSectionLayout(this ColumnLayout[] columns, Section section)
+    {
+        Rectangle boudingBox = columns
+            .CalculateBoundingBox(Rectangle.Empty)
+            .MoveXBy(section.Properties.PageConfiguration.Margin.Left);
+
+        LayoutPartition layoutPartition = columns.CalculateLayoutPartition();
+        SectionLayout sectionLayout = new(
+            section.Id,
+            columns,
+            boudingBox,
+            Borders.None,
+            layoutPartition
+        );
+
+        return sectionLayout;
+    }
+
+    public static Size CalculateSectionArea(this Section section, Size pageArea) =>
+        pageArea.DecreaseWidth(section.Properties.PageConfiguration.Margin.HorizontalMargins());
+
+    public static Size CalculateColumnArea(this Section section, int columnIndex, Size sectionAvailableSpace) =>
+        new(section.Properties.Columns[columnIndex].Width, sectionAvailableSpace.Height);
+
+    public static float WidthOccupiedByColumn(this Section section, int columnIndex) =>
+        section.Properties.Columns[columnIndex].Width + section.Properties.Columns[columnIndex].SpaceAfter;
+}
+
+
 file static class SectionOperators
 {
-    public static LayoutPartition CalculateLayoutPartition(this Section section, Layout[] layouts) =>
-        section.Elements.CalculateLayoutPartition(layouts);
 
-    public static T Find<T>(this Section section, ModelId id) where T : Model =>
-        section.Elements.OfType<T>().Single(e => e.Id == id);
-
-    public static Model[] Unprocessed(this Section section, Layout[] previousLayouts) =>
-        previousLayouts.Length == 0
-            ? section.Elements
-            : [..section.Elements.SkipFinished(previousLayouts.Last())];
-
-    private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
-        models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());
 }

@@ -4,5 +4,5 @@ internal class ColumnConfig(float width, float space)
 {
     public float Width { get; } = width;
 
-    public float Space { get; } = space;
+    public float SpaceAfter { get; } = space;
 }

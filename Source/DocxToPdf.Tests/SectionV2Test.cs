@@ -1,4 +1,5 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
+using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.Tests.Assertions;
 using Proxoft.DocxToPdf.Tests.Tools;
 
@@ -33,13 +34,13 @@ public class SectionV2Test
         {
             pages.CountShouldBe(1);
             pages[0]
-                .ShouldContainSection(1);
+                .ShouldContainSectionWithId(1);
 
             pages[0]
-                .ShouldContainSection(2);
+                .ShouldContainSectionWithId(2);
 
             pages[0]
-                .ShouldContainSection(3);
+                .ShouldContainSectionWithId(3);
         });
     }
 
@@ -49,6 +50,60 @@ public class SectionV2Test
         _executor.Convert("PageOrientation", pages =>
         {
             pages.CountShouldBe(3);
+        });
+    }
+
+    [Fact]
+    public void TextOverMultipleColumns()
+    {
+        _executor.Convert("TextOverMultipleColumns", pages =>
+        {
+            pages.CountShouldBe(1);
+
+            SectionLayout section = pages[0]
+                .ShouldContainSectionWithId(1);
+
+            _ = section.ShouldContainColumn(0)
+                .ShouldContainParagraph()
+                .TextShouldStart("Lorem");
+
+            _ = section.ShouldContainColumn(1);
+            _ = section.ShouldContainColumn(2)
+                .ShouldContainParagraph()
+                .TextShouldEnd("suscipit ");
+        });
+    }
+
+    [Fact]
+    public void TextOverMultipleColumnsOverPages()
+    {
+        _executor.Convert("TextOverMultipleColumnsOverPages", pages =>
+        {
+            pages.CountShouldBe(2);
+
+            SectionLayout section = pages[0]
+                .ShouldContainSectionWithId(1);
+
+            _ = section.ShouldContainColumn(0)
+                .ShouldContainParagraph()
+                .TextShouldStart("Lorem");
+
+            _ = section.ShouldContainColumn(1);
+            _ = section.ShouldContainColumn(2)
+                .ShouldContainParagraph()
+                .TextShouldEnd(", tempus nec ");
+
+            section = pages[1]
+                .ShouldContainSectionWithId(1);
+
+            _ = section.ShouldContainColumn(0)
+                .ShouldContainParagraph()
+                .TextShouldStart("dignissim");
+
+            _ = section.ShouldContainColumn(1);
+            _ = section.ShouldContainColumn(2)
+                .ShouldContainParagraph()
+                .TextShouldEnd("Aliquam");
         });
     }
 }
