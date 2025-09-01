@@ -153,6 +153,7 @@ internal static class LineLayoutBuilder
        {
            LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateElementLayout(xPosition, FieldVariables.None, services),
            LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(xPosition, FieldVariables.None, services),
+           LineDecoration.ColumnBreak => new Text(ModelId.None, "····Column Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(xPosition, FieldVariables.None, services),
            _ => new EmptyLayout(ModelId.None, new Rectangle(new Position(xPosition, 0), Size.Zero), textStyle),
        };
 
@@ -160,7 +161,8 @@ internal static class LineLayoutBuilder
     {
         if (allElements.Length == 0) return LineDecoration.Last;    // empty line
         if (elementLayouts.Length == 0) return LineDecoration.None;
-        if (elementLayouts.Last() is PageBreakLayout) return LineDecoration.PageBreak;
+        if (elementLayouts.Last() is BreakLayout pb && pb.BreakType == BreakType.Page) return  LineDecoration.PageBreak;
+        if (elementLayouts.Last() is BreakLayout cb && cb.BreakType == BreakType.Column) return  LineDecoration.ColumnBreak;
         if (elementLayouts.Last().Id == allElements.Last().Id) return LineDecoration.Last;
         return LineDecoration.None;
     }
@@ -203,7 +205,8 @@ internal static class LineLayoutBuilder
 
             activeHs = (activeHs.index, activeHs.x + element.Size.Width);
             elementIndex++;
-            if(elementIndex >= elements.Length)
+            if(elementIndex >= elements.Length
+                || element is BreakLayout)
             {
                 break;
             }

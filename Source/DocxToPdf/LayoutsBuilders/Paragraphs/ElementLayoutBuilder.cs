@@ -24,7 +24,7 @@ internal static class ElementLayoutBuilder
             Space => new SpaceLayout(element.Id, size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle),
             PageNumberField => new PageNumberLayout(element.Id, fieldVariables.CurrentPage.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
             TotalPagesField => new TotalPagesLayout(element.Id, fieldVariables.TotalPages.ToString(), size, baseLineOffset, boundingBox, baseLineOffset, Borders.None, element.TextStyle, LayoutPartition.StartEnd),
-            PageBreak => new PageBreakLayout(element.Id, element.TextStyle),
+            Break b => new BreakLayout(element.Id, b.BreakType, b.TextStyle),
             _ => new EmptyLayout(element.Id, boundingBox, element.TextStyle)
         };
 

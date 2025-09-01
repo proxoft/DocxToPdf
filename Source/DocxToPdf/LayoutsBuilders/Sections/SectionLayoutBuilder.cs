@@ -1,25 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Proxoft.DocxToPdf.Documents;
+﻿using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
-using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Shared;
-using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
-using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
-using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
-using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
-using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 internal static class SectionLayoutBuilder
 {
-    public static (SectionLayout, ProcessingInfo) CreateLayoutN(
+    public static (SectionLayout, ProcessingInfo) CreateLayout(
         this Section section,
         SectionLayout previousSectionLayout,
         Size availableArea,
@@ -71,7 +62,7 @@ internal static class SectionLayoutBuilder
         return (sectionLayout, sectionProcessingInfo);
     }
 
-    public static (SectionLayout, UpdateInfo) UpdateN(
+    public static (SectionLayout, UpdateInfo) Update(
         this SectionLayout sectionLayout,
         Section section,
         SectionLayout previousSectionLayout,

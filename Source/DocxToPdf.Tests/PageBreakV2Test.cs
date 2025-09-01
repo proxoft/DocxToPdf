@@ -1,6 +1,8 @@
 ﻿using Proxoft.DocxToPdf.Tests.Tools;
 using Proxoft.DocxToPdf.Documents.Styles;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
+using System.Linq;
+using Proxoft.DocxToPdf.Tests.Assertions;
 
 namespace Proxoft.DocxToPdf.Tests;
 
@@ -21,9 +23,7 @@ public class PageBreakV2Test
     {
         _executor.Convert("PageBreak", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(3);
         });
     }
 }

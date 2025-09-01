@@ -27,6 +27,11 @@ internal static class ColumnLayoutBuilder
     )
     {
         Model[] unprocessed = section.Unprocessed(previousColumn.ParagraphsOrTables);
+        if (unprocessed.Length == 0)
+        {
+            return (ColumnLayout.None, ProcessingInfo.Done);
+        }
+
         Layout[] layouts = [];
         Size remainingArea = availableArea;
 

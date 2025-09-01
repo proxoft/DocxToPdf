@@ -19,6 +19,46 @@ public class SectionV2Test
     );
 
     [Fact]
+    public void Columns()
+    {
+        _executor.Convert("Columns", pages =>
+        {
+            pages.CountShouldBe(2);
+
+            SectionLayout section = pages[0]
+                .ShouldContainSectionWithId(1);
+
+            section
+                .ShouldContainColumn(0)
+                .ShouldContainParagraph()
+                .TextShouldStartAndEnd("Lorem", "tincidunt.");
+
+            section
+                .ShouldContainColumn(1)
+                .ShouldContainParagraph()
+                .TextShouldStartAndEnd("Sed", ".");
+
+            section
+                .ShouldContainColumn(2)
+                .ShouldContainParagraph()
+                .TextShouldStartAndEnd("Ut non", "sapien.");
+
+            section = pages[1]
+                .ShouldContainSectionWithId(1);
+
+            section
+                .ShouldContainColumn(0)
+                .ShouldContainParagraph()
+                .TextShouldStartAndEnd("Nam eget", ".");
+
+            section
+                .ShouldContainColumn(1)
+                .ShouldContainParagraph()
+                .TextShouldStartAndEnd("Cras", "efficitur.");
+        });
+    }
+
+    [Fact]
     public void DefaultMargins()
     {
         _executor.Convert("DefaultMargins", pages =>

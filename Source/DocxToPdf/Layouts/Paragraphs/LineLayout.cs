@@ -9,6 +9,7 @@ internal enum LineDecoration
 {
     None,
     Last,
+    ColumnBreak,
     PageBreak,
 }
 

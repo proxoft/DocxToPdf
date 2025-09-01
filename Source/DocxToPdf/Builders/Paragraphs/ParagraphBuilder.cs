@@ -55,7 +55,8 @@ internal static class ParagraphBuilder
             Word.Drawing d when d.IsInlineDrawing() => d.CreateInlineDrawing(textStyle, services),
             Word.Drawing => [], // fixed drawings are processed separately
             // Word.CarriageReturn _ => [new NewLineElement(textStyle)],
-            Word.Break => [new PageBreak(services.IdFactory.NextWordId(), textStyle.ResizeFont(-2))],
+            // Word.Break => [new PageBreak(services.IdFactory.NextWordId(), textStyle.ResizeFont(-2))],
+            Word.Break b => [..b.ToBreak(textStyle.ResizeFont(-2), services.IdFactory)],
             _ => [new Text(services.IdFactory.NextWordId(), "!ignored!", textStyle)]
         };
 
@@ -122,6 +123,13 @@ internal static class ParagraphBuilder
             yield return run;
             if(run.IsFieldEnd()) yield break;
         }
+    }
+
+    private static IEnumerable<Break> ToBreak(this Word.Break @break, TextStyle textStyle, ModelIdFactory idFactory)
+    {
+        if (@break.Type is null) yield break;
+        if (@break.Type == Word.BreakValues.Column) yield return new Break(idFactory.NextWordId(), BreakType.Column, textStyle);
+        if (@break.Type == Word.BreakValues.Page) yield return new Break(idFactory.NextWordId(), BreakType.Page, textStyle);
     }
 
     private record RunChunk(Word.Run[] Runs, bool IsField);
