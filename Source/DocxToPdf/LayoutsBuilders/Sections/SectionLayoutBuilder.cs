@@ -33,6 +33,11 @@ internal static class SectionLayoutBuilder
                 fieldVariables,
                 services);
 
+            if(column.IsEmpty() && processingInfo == ProcessingInfo.Done)
+            {
+                break;
+            }
+
             lastColumnLayout = column;
             if (column.IsNotEmpty())
             {

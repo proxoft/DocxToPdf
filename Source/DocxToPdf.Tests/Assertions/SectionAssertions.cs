@@ -12,6 +12,15 @@ internal static class SectionAssertions
     public static ParagraphLayout ShouldContainParagraph(this SectionLayout section) =>
         section.Columns[0].ShouldContainParagraph();
 
+    public static SectionLayout ShouldHaveColumnsCount(this SectionLayout section, int count)
+    {
+        section.Columns.Length
+            .Should()
+            .Be(count);
+
+        return section;
+    }
+
     public static ColumnLayout ShouldContainColumn(this SectionLayout section, int columnIndex)
     {
         section.Columns.Length

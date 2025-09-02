@@ -59,6 +59,85 @@ public class SectionV2Test
     }
 
     [Fact]
+    public void ContinuousSectionsWithMultipleColumns()
+    {
+        _executor.Convert("ContinuousSectionsWithMultipleColumns", pages => {
+            pages.CountShouldBe(2);
+
+            SectionLayout section = pages[0]
+                .ShouldContainSectionWithId(1);
+
+            #region Section 1
+            section
+                .ShouldHaveColumnsCount(2)
+                .ShouldContainColumn(0)
+                .ShouldContainParagraphAtIndex(0)
+                .TextShouldEnd("First section first column");
+
+            section
+                .ShouldContainColumn(0)
+                .ShouldContainParagraphAtIndex(1)
+                .TextShouldEnd("Follow by column break");
+
+            section
+               .ShouldContainColumn(1)
+               .ShouldContainParagraphAtIndex(0)
+               .TextShouldEnd("First section second column");
+
+            section
+                .ShouldContainColumn(1)
+                .ShouldContainParagraphAtIndex(1)
+                .TextShouldEnd("Follow by section break");
+            #endregion
+
+            #region Section 2
+            section = pages[0]
+                .ShouldContainSectionWithId(2);
+
+            section
+                .ShouldHaveColumnsCount(1)
+                .ShouldContainColumn(0)
+                .ShouldContainParagraphAtIndex(1)
+                .TextShouldEnd("single columns -------------------------------------------- ")
+                ;
+            #endregion
+
+            #region Section 3
+            section = pages[0]
+                .ShouldContainSectionWithId(3);
+
+            section
+                .ShouldHaveColumnsCount(3)
+                .ShouldContainColumn(0)
+                .ShouldContainParagraphAtIndex(0)
+                .TextShouldEnd("three columns: column1")
+                ;
+
+            section
+                .ShouldContainColumn(1)
+                .ShouldContainParagraphAtIndex(0)
+                .TextShouldEnd("column2")
+                ;
+
+            section
+                .ShouldContainColumn(2)
+                .ShouldContainParagraphAtIndex(0)
+                .TextShouldEnd("col")
+                ;
+            #endregion
+
+            #region page 2 Section 4
+            section = pages[1]
+                .ShouldContainSectionWithId(4);
+
+            section
+                .ShouldHaveColumnsCount(1);
+
+            #endregion
+        });
+    }
+
+    [Fact]
     public void DefaultMargins()
     {
         _executor.Convert("DefaultMargins", pages =>

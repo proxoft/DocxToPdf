@@ -1,4 +1,5 @@
-﻿using Proxoft.DocxToPdf.Layouts.Paragraphs;
+﻿using System.Linq;
+using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.Layouts.Tables;
 
@@ -30,5 +31,23 @@ internal static class ColumnAssertions
             .BeOfType<ParagraphLayout>();
 
         return (ParagraphLayout)sectionColumn.ParagraphsOrTables[0];
+    }
+
+    public static ParagraphLayout ShouldContainParagraphAtIndex(this ColumnLayout sectionColumn, int order)
+    {
+        sectionColumn.ParagraphsOrTables
+            .Should()
+            .NotBeEmpty();
+
+        sectionColumn.ParagraphsOrTables
+            .OfType<ParagraphLayout>()
+            .Count()
+            .Should()
+            .BeGreaterThan(order);
+            ;
+
+        return sectionColumn.ParagraphsOrTables
+            .OfType<ParagraphLayout>()
+            .ElementAt(order);
     }
 }

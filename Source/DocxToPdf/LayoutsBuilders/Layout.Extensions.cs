@@ -8,7 +8,9 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal static class LayoutExtensions
 {
-    public static bool IsNotEmpty(this Layout layout) => layout.ModelId != ModelId.None;
+    public static bool IsEmpty(this Layout layout) => layout.ModelId == ModelId.None;
+
+    public static bool IsNotEmpty(this Layout layout) => !layout.IsEmpty();
 
     public static bool IsUpdateFinished(this Layout[] originalLayouts, Layout[] updatedLayouts) =>
         originalLayouts.Length == 0 && updatedLayouts.Length == 0
