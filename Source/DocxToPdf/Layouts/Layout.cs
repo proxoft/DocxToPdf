@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DocumentFormat.OpenXml.Vml.Spreadsheet;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Shared;
@@ -48,6 +47,15 @@ internal static class LayoutOperators
             .Select(l => l.BoundingBox)
             .DefaultIfEmpty(ifEmpty)
             .CalculateBoundingBox();
+
+    public static Rectangle CalculateBoundingBox(this IEnumerable<Layout> layouts, Size minSize)
+    {
+        Size size = layouts
+            .Select(l => l.BoundingBox)
+            .CalculateBoundingBoxSize(minSize);
+
+        return new Rectangle(Position.Zero, size);
+    }
 
     public static T ResetOffset<T>(this T layout) where T : Layout =>
         layout with

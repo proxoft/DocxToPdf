@@ -25,13 +25,14 @@ internal static class CellLayoutBuilder
         Model[] unprocessed = cell.Unprocessed(previousLayout.ParagraphsOrTables);
         Layout[] layouts = [];
 
+        Padding effectivePadding = cell.Padding.UpdatePaddingByPartitioning(previousLayout);
         Size remainingArea = availableArea
-            .Clip(cell.Padding);
+            .Clip(effectivePadding);
 
         ProcessingInfo cellProcessingInfo = ProcessingInfo.Done;
 
-        float yOffset = cell.Padding.Top;
-        float xOffset = cell.Padding.Left;
+        float yOffset = effectivePadding.Top;
+        float xOffset = effectivePadding.Left;
 
         foreach (Model model in unprocessed)
         {
@@ -71,16 +72,16 @@ internal static class CellLayoutBuilder
             remainingArea = remainingArea.DecreaseHeight(spaceAfter);
         }
 
-        Rectangle boudingBox = layouts
-           .CalculateBoundingBox(Rectangle.Empty.SetWidth(remainingArea.Width))
-           .Expand(cell.Padding)
+        Rectangle boundingBox = layouts
+           .CalculateBoundingBox(new Size(remainingArea.Width, 0))
+           .Expand(effectivePadding)
            ;
 
         LayoutPartition layoutPartition = cell.CalculateLayoutPartition(layouts, previousLayout);
         CellLayout cellLayout = new(
             cell.Id,
             layouts,
-            boudingBox,
+            boundingBox,
             cell.Borders,
             cell.GridPosition,
             layoutPartition
@@ -98,11 +99,12 @@ internal static class CellLayoutBuilder
         LayoutServices services
     )
     {
+        Padding effectivePadding = cell.Padding.UpdatePaddingByPartitioning(previousPageCellLayout);
         Size remainingArea = availableArea
-            .Clip(cell.Padding);
+            .Clip(effectivePadding);
 
-        float yOffset = cell.Padding.Top;
-        float xOffset = cell.Padding.Left;
+        float yOffset = effectivePadding.Top;
+        float xOffset = effectivePadding.Left;
 
         Layout[] updatedLayouts = [];
 
@@ -144,8 +146,9 @@ internal static class CellLayoutBuilder
         }
 
         Rectangle boundingBox = updatedLayouts
-            .CalculateBoundingBox(Rectangle.Empty.SetWidth(remainingArea.Width))
-            .Expand(cell.Padding);
+           .CalculateBoundingBox(new Size(remainingArea.Width, 0))
+           .Expand(effectivePadding)
+           ;
 
         LayoutPartition layoutPartition = cell.CalculateLayoutPartition(
             updatedLayouts,
@@ -232,6 +235,15 @@ internal static class CellLayoutBuilder
 
 file static class CellOperators
 {
+    public static Padding UpdatePaddingByPartitioning(this Padding padding, CellLayout previousLayout) =>
+        !previousLayout.Partition.HasFlag(LayoutPartition.End)
+            ? padding with
+            {
+                Top = 0
+            }
+            : padding;
+    
+
     public static LayoutPartition CalculateLayoutPartition(
         this Cell cell,
         Layout[] layouts,

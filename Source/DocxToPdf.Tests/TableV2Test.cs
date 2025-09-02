@@ -264,17 +264,17 @@ public class TableV2Test
             _ = table
                 .ShouldContainCell(10)
                 .ShouldBeStart(only: true)
-                .ShouldStartAndEndWithText("Cell 10", "tristique ");
+                .ShouldStartAndEndWithText("Cell 10", "facilisis sapien ");
 
             _ = table
                 .ShouldContainCell(11)
                 .ShouldBeStart(only: true)
-                .ShouldStartAndEndWithText("Cell 11", "enim. In ");
+                .ShouldStartAndEndWithText("Cell 11", "quam egestas ");
 
             _ = table
                 .ShouldContainCell(12)
                 .ShouldBeStart(only: true)
-                .ShouldStartAndEndWithText("Cell 12", "Praesent ");
+                .ShouldStartAndEndWithText("Cell 12", "nec libero ");
             #endregion
 
             #region page 3
@@ -283,15 +283,15 @@ public class TableV2Test
 
             _ = table
                 .ShouldContainCell(10)
-                .ShouldStartAndEndWithText("quam", "End Cell 10");
+                .ShouldStartAndEndWithText("nulla", "End Cell 10");
 
             _ = table
                 .ShouldContainCell(11)
-                .ShouldStartAndEndWithText("a nunc", "End Cell 11");
+                .ShouldStartAndEndWithText("euismod ", "End Cell 11");
 
             _ = table
                 .ShouldContainCell(12)
-                .ShouldStartAndEndWithText("pretium", "End Cell 12");
+                .ShouldStartAndEndWithText("vulputate", "End Cell 12");
             #endregion
         });
     }
@@ -309,6 +309,33 @@ public class TableV2Test
     public void TableWithTableOverPage()
     {
         _executor.Convert("TableWithTableOverPage", pages =>
+        {
+            pages.CountShouldBe(2);
+        });
+    }
+
+    [Fact]
+    public void TableInSectionColumns()
+    {
+        _executor.Convert("TableInSectionColumns", pages =>
+        {
+            pages.CountShouldBe(1);
+        });
+    }
+
+    [Fact]
+    public void TableOverSectionColumns()
+    {
+        _executor.Convert("TableOverSectionColumns", pages =>
+        {
+            pages.CountShouldBe(1);
+        });
+    }
+
+    [Fact]
+    public void TableOverSectionColumnsOverPages()
+    {
+        _executor.Convert("TableOverSectionColumnsOverPages", pages =>
         {
             pages.CountShouldBe(2);
         });

@@ -107,4 +107,23 @@ internal static class Operators
 
         return new Rectangle(x, y, right - x, bottom - y);
     }
+
+    public static Size CalculateBoundingBoxSize(this IEnumerable<Rectangle> rectangles, Size minSize)
+    {
+        Rectangle[] rs = [..rectangles];
+        if(rs.Length == 0)
+        {
+            return minSize;
+        }
+
+        float x = rs.Select(r => r.X).Min();
+        float y = rs.Select(r => r.Y).Min();
+        float right = rs.Select(r => r.Right).Max();
+        float bottom = rs.Select(r => r.Bottom).Max();
+
+        float width = Math.Max(right - x, minSize.Width);
+        float height = Math.Max(bottom - y, minSize.Height);
+
+        return new Size(width, height);
+    }
 }
