@@ -164,6 +164,15 @@ public class SectionV2Test
     }
 
     [Fact]
+    public void ResizedMargins()
+    {
+        _executor.Convert("ResizedMargins", pages =>
+        {
+            pages.CountShouldBe(5);
+        });
+    }
+
+    [Fact]
     public void PageOrientation()
     {
         _executor.Convert("PageOrientation", pages =>
