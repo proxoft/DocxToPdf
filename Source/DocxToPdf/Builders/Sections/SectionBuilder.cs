@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Proxoft.DocxToPdf.Builders.Headers;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Common;
+using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.HeadersFooters;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
+using Proxoft.DocxToPdf.Documents.Headers;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Shared;
 
@@ -16,17 +19,21 @@ internal static class SectionBuilder
         body.CreateSections(services);
 }
 
-file record SectionData(Word.SectionProperties SectionProperties, OpenXml.OpenXmlCompositeElement[] Elements);
+file record SectionData(
+    Word.SectionProperties SectionProperties,
+    OpenXml.OpenXmlCompositeElement[] Elements,
+    HeaderFooterConfiguration HeaderFooterConfiguration
+);
 
 file static class Operators
 {
     public static Section[] CreateSections(this Word.Body body, BuilderServices services) =>
         [..body
-            .SplitToSections()
+            .SplitToSectionData(services)
             .Select(data => data.CreateSection(services))
         ];
 
-    private static IEnumerable<SectionData> SplitToSections(this Word.Body body)
+    private static IEnumerable<SectionData> SplitToSectionData(this Word.Body body, BuilderServices services)
     {
         List<OpenXml.OpenXmlCompositeElement> sectionElements = [];
 
@@ -45,7 +52,8 @@ file static class Operators
                 continue;
             }
 
-            yield return new SectionData(secProps, [.. sectionElements]);
+            HeaderFooterConfiguration hfc = secProps.CreateHeaderFooterConfiguration(services);
+            yield return new SectionData(secProps, [.. sectionElements], hfc);
             sectionElements.Clear();
         }
 
@@ -53,14 +61,15 @@ file static class Operators
            .ChildsOfType<Word.SectionProperties>()
            .Single();
 
-        yield return new SectionData(wordSectionProperties, [.. sectionElements]);
+        HeaderFooterConfiguration headerFooterConfiguration = wordSectionProperties.CreateHeaderFooterConfiguration(services);
+        yield return new SectionData(wordSectionProperties, [.. sectionElements], headerFooterConfiguration);
     }
 
     private static Section CreateSection(this SectionData data, BuilderServices services)
     {
         SectionProperties props = data.SectionProperties.ToSectionProperties();
-        Model[] elements = [..data.Elements.Select(e => e.ToParagraphOrTable(services))]; 
-        return new Section(services.IdFactory.NextSectionId(), props, elements);
+        Model[] elements = [..data.Elements.Select(e => e.ToParagraphOrTable(services))];
+        return new Section(services.IdFactory.NextSectionId(), props, elements, data.HeaderFooterConfiguration);
     }
 
     private static SectionProperties ToSectionProperties(this Word.SectionProperties properties)
@@ -148,4 +157,44 @@ file static class Operators
                     return new ColumnConfig(cw, space);
                 })
         ];
+
+    private static HeaderFooterConfiguration CreateHeaderFooterConfiguration(
+        this Word.SectionProperties sectionProperties,
+        BuilderServices services
+        )
+    {
+        bool hasTitlePage = sectionProperties
+            .ChildsOfType<Word.TitlePage>()
+            .SingleOrDefault()
+            .IsOn(ifOnOffTypeNull: false, ifOnOffValueNull: true);
+
+        Dictionary<HeaderFooterType, Header> headers = sectionProperties.CreateHeaders(services);
+
+        return new HeaderFooterConfiguration(
+            hasTitlePage,
+            headers
+        );
+    }
+
+    private static Dictionary<HeaderFooterType, Header> CreateHeaders(
+        this Word.SectionProperties sectionProperties,
+        BuilderServices services)
+    {
+        Word.HeaderReference[] headerReferences = [..sectionProperties
+            .ChildsOfType<Word.HeaderReference>()
+            .Where(hr => hr.Id is not null && hr.Type is not null)
+        ];
+
+        Dictionary<HeaderFooterType, Header> headers =
+            sectionProperties
+                .ChildsOfType<Word.HeaderReference>()
+                .Where(hr => hr.Id is not null && hr.Type is not null)
+                .Select(hr => (hr.Id, type: hr.Type!.ToHeaderFooterType()))
+                .Select(hr => (header: services.HeaderFooterAccessor.FindHeader(hr.Id!), hr.type))
+                .Where(h => h.header is not null)
+                .Select(h => (header: h.header.Create(services), h.type))
+                .ToDictionary(d => d.type, d => d.header);
+
+        return headers;
+    }
 }

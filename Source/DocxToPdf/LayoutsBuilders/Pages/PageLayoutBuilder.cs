@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DocumentFormat.OpenXml.Spreadsheet;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
+using Proxoft.DocxToPdf.Documents.Shared;
 using Proxoft.DocxToPdf.Layouts;
 using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
-using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Pages;
 
@@ -25,19 +24,19 @@ internal static class PageLayoutBuilder
             return (PageLayout.None, ProcessingInfo.Done);
         }
 
-        PageLayout page = unprocessed[0].CreateNewPage();
+        // Rectangle pageContentRegion = unprocessed[0].CalculatePageDrawingArea();
+        (Rectangle boundingBox, Orientation orientation) = unprocessed[0].GetPageProperties();
+
         (PageContentLayout pageContent, ProcessingInfo processingInfo) = unprocessed.CreatePageContent(
-            page.PageContent.BoundingBox,
+            boundingBox,
             previousPage.PageContent,
             fieldVariables,
             services
         );
 
+        PageLayout page = pageContent.CreatePage(boundingBox, orientation);
         return (
-            page with
-            {
-                PageContent = pageContent,
-            },
+            page,
             processingInfo
         );
     }
@@ -58,125 +57,30 @@ internal static class PageLayoutBuilder
 
         return (updatedPage, updateInfo);
     }
-
-    private static (PageContentLayout pageContent, ProcessingInfo processingInfo) CreatePageContent(
-        this Section[] sections,
-        Rectangle drawingArea,
-        PageContentLayout previousPageContent,
-        FieldVariables fieldVariables,
-        LayoutServices services)
-    {
-        SectionLayout[] sectionLayouts = [];
-        Size remainingArea = drawingArea.Size;
-        ProcessingInfo pageProcessingInfo = ProcessingInfo.Done;
-        float yOffset = 0;
-
-        bool isFirstSection = true;
-
-        foreach (Section section in sections)
-        {
-            if(section.ShouldRequestNewPage(isFirstSection, previousPageContent.Sections.LastOrDefault(SectionLayout.Empty)))
-            {
-                pageProcessingInfo = ProcessingInfo.NewPageRequired;
-                break;
-            }
-
-            isFirstSection = false;
-            SectionLayout lastSectionLayout = previousPageContent.Sections
-                .Where(l => l.ModelId == section.Id)
-                .LastOrDefault(SectionLayout.Empty);
-
-            (SectionLayout sectionLayout, ProcessingInfo processingInfo) = section.CreateLayout(
-                lastSectionLayout,
-                remainingArea,
-                fieldVariables,
-                services
-            );
-
-            sectionLayouts = [
-                .. sectionLayouts,
-                sectionLayout.Offset(new Position(0, yOffset))
-            ];
-
-            yOffset += sectionLayout.BoundingBox.Height;
-
-            if (processingInfo is ProcessingInfo.NewPageRequired
-                or ProcessingInfo.RequestDrawingArea
-                or ProcessingInfo.IgnoreAndRequestDrawingArea)
-            {
-                pageProcessingInfo = ProcessingInfo.NewPageRequired;
-                break;
-            }
-        }
-
-        PageContentLayout pageContent = new(sectionLayouts, drawingArea);
-        return (pageContent, pageProcessingInfo);
-    }
-
-    private static (PageContentLayout, UpdateInfo) UpdatePageContent(
-        this PageContentLayout pageContent,
-        Section[] sections,
-        SectionLayout previousPageSectionLayout,
-        FieldVariables fieldVariables,
-        LayoutServices services)
-    {
-        Size remainingArea = pageContent.BoundingBox.Size;
-        SectionLayout[] sectionLayouts = [];
-
-        UpdateInfo lastUpdateInfo = UpdateInfo.Done;
-
-        SectionLayout lastSectionLayout = previousPageSectionLayout;
-
-        float yOffset = 0;
-        foreach (SectionLayout sectionLayout in pageContent.Sections)
-        {
-            Section section = sections.Single(s => s.Id == sectionLayout.ModelId);
-            (SectionLayout updatedLayout, UpdateInfo updateInfo) = sectionLayout.Update(section, lastSectionLayout, remainingArea, fieldVariables, services);
-            sectionLayouts = [.. sectionLayouts, updatedLayout.Offset(new Position(0, yOffset))];
-            remainingArea = remainingArea.DecreaseHeight(updatedLayout.BoundingBox.Height);
-            yOffset += updatedLayout.BoundingBox.Height;
-            lastSectionLayout = updatedLayout;
-            lastUpdateInfo = updateInfo;
-            if (lastUpdateInfo is UpdateInfo.ReconstructRequired)
-            {
-                break;
-            }
-        }
-
-        PageContentLayout updatedContent = pageContent with
-        {
-            Sections = sectionLayouts
-        };
-
-        return (updatedContent, lastUpdateInfo);
-    }
 }
 
 file static class Functions
 {
-    public static PageLayout CreateNewPage(this Section section) =>
-        section.Properties.PageConfiguration.CreateNewPage();
+    //public static PageLayout CreateNewPage(this Section section) =>
+    //    section.Properties.PageConfiguration.CreateNewPage();
 
-    private static PageLayout CreateNewPage(this PageConfiguration pageConfiguration)
-    {
-        Rectangle boundingBox = pageConfiguration.CalculatePageBoundingBox();
-        Rectangle contentRegion = pageConfiguration.CalculatePageDrawingArea();
-        PageContentLayout pageContent = new([], contentRegion);
-        PageLayout page = new(boundingBox, pageContent, pageConfiguration.Orientation);
-        return page;
-    }
+    public static (Rectangle, Orientation) GetPageProperties(this Section section) =>
+        (section.Properties.PageConfiguration.CalculatePageBoundingBox(), section.Properties.PageConfiguration.Orientation);
+
+    public static Rectangle CalculatePageDrawingArea(this Section section) =>
+        section.Properties.PageConfiguration.CalculatePageDrawingArea();
+
+    public static PageLayout CreatePage(this PageContentLayout content, Rectangle pageBoundingBox, Orientation orientation) =>
+        new(pageBoundingBox, content, orientation);
 
     private static Rectangle CalculatePageBoundingBox(this PageConfiguration pageConfiguration) =>
         Rectangle.FromSize(pageConfiguration.Size);
 
     private static Rectangle CalculatePageDrawingArea(this PageConfiguration pageConfiguration) =>
         Rectangle.FromSize(pageConfiguration.Size)
-            // .CropFromLeft(pageConfiguration.Margin.Left)
-            .CropFromTop(pageConfiguration.Margin.Top)
-            // .CropFromRight(pageConfiguration.Margin.Right)
+            .CropFromTop(pageConfiguration.Margin.Header)
             .CropFromBottom(pageConfiguration.Margin.Bottom);
 }
-
 
 file static class PageLayoutOperators
 {

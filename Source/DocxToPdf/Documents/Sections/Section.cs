@@ -3,5 +3,6 @@
 internal record Section(
     ModelId Id,
     SectionProperties Properties,
-    Model[] Elements
+    Model[] Elements,
+    HeaderFooterConfiguration HeaderFooterConfiguration
 ) : Model(Id);
