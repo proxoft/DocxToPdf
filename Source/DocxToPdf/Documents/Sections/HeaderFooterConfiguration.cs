@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using Proxoft.DocxToPdf.Documents.Footers;
 using Proxoft.DocxToPdf.Documents.Headers;
 
 namespace Proxoft.DocxToPdf.Documents.Sections;
 
-internal enum HeaderFooterType
+internal enum PageNumberType
 {
-    Default, // =~ Odd
+    Default, // == Odd
     First,
     Even,
 }
@@ -13,8 +14,9 @@ internal enum HeaderFooterType
 internal record HeaderFooterConfiguration(
     bool HasTitlePage,
     bool UseEvenOddHeader,
-    Dictionary<HeaderFooterType, Header> Headers
+    Dictionary<PageNumberType, Header> Headers,
+    Dictionary<PageNumberType, Footer> Footers
 )
 {
-    public static readonly HeaderFooterConfiguration None = new(false, false, []);
+    public static readonly HeaderFooterConfiguration None = new(false, false, [], []);
 }

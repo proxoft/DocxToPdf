@@ -18,6 +18,9 @@ internal class HeaderFooterAccessor
     public Word.Header? FindHeader(string referenceId) =>
          _mainDocumentPart.FindHeader(referenceId);
 
+    public Word.Footer? FindFooter(string referenceId) =>
+         _mainDocumentPart.FindFooter(referenceId);
+
     public static HeaderFooterAccessor Create(MainDocumentPart mainDocumentPart) =>
         new(mainDocumentPart);
 }

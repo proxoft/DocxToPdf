@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Proxoft.DocxToPdf.Documents;
+﻿using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Headers;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
@@ -14,7 +13,7 @@ using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 using Proxoft.DocxToPdf.Documents.Shared;
 
-namespace Proxoft.DocxToPdf.LayoutsBuilders.Headers;
+namespace Proxoft.DocxToPdf.LayoutsBuilders.HeadersFooters;
 
 internal static class HeaderLayoutBuilder
 {
@@ -91,31 +90,10 @@ file static class Operators
     public static Header FindHeader(this Section section, FieldVariables fieldVariables) =>
         section.HeaderFooterConfiguration.FindHeader(fieldVariables);
 
-    private static Header FindHeader(this HeaderFooterConfiguration configuration, FieldVariables fieldVariables)
-    {
-        if (configuration.Headers.Count == 0) return Header.None;
-        if (fieldVariables.CurrentPage == 1) return configuration.Headers.FindFirstPageHeader();
-        if (fieldVariables.CurrentPage % 2 == 0) return configuration.Headers.FindEvenPageHeader();
-        return configuration.Headers.FindOddPageHeader();
-    }
-
-    private static Header FindFirstPageHeader(this Dictionary<HeaderFooterType, Header> headers)
-    {
-        if(headers.ContainsKey(HeaderFooterType.First)) return headers[HeaderFooterType.First];
-        if(headers.ContainsKey(HeaderFooterType.Default)) return headers[HeaderFooterType.Default];
-        return Header.None;
-    }
-
-    private static Header FindOddPageHeader(this Dictionary<HeaderFooterType, Header> headers)
-    {
-        if (headers.ContainsKey(HeaderFooterType.Default)) return headers[HeaderFooterType.Default];
-        return Header.None;
-    }
-
-    private static Header FindEvenPageHeader(this Dictionary<HeaderFooterType, Header> headers)
-    {
-        if (headers.ContainsKey(HeaderFooterType.Even)) return headers[HeaderFooterType.Even];
-        if (headers.ContainsKey(HeaderFooterType.Default)) return headers[HeaderFooterType.Default];
-        return Header.None;
-    }
+    private static Header FindHeader(this HeaderFooterConfiguration configuration, FieldVariables fieldVariables) =>
+        configuration.Headers.FindForPage(
+            fieldVariables.CurrentPage,
+            hasTitlePage: configuration.HasTitlePage,
+            useEvenOdd: configuration.UseEvenOddHeader,
+            Header.None);
 }

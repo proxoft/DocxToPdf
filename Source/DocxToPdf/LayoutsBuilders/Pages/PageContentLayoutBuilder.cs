@@ -3,11 +3,12 @@ using System.Linq;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Footers;
 using Proxoft.DocxToPdf.Layouts.Headers;
 using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
-using Proxoft.DocxToPdf.LayoutsBuilders.Headers;
+using Proxoft.DocxToPdf.LayoutsBuilders.HeadersFooters;
 using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Pages;
@@ -37,6 +38,7 @@ internal static class PageContentLayoutBuilder
         float yOffset = sections[0].Properties.PageConfiguration.Margin.Top;
 
         HeaderLayout headerLayout = sections[0].CreateHeaderLayout(pageArea.Size, fieldVariables, services);
+        FooterLayout footerLayout = sections[0].CreateFooterLayout(pageArea.Size, fieldVariables, services);
 
         bool isFirstSection = true;
         foreach (Section section in sections)
@@ -75,7 +77,7 @@ internal static class PageContentLayoutBuilder
             }
         }
 
-        PageContentLayout pageContent = new(headerLayout, sectionLayouts, pageArea);
+        PageContentLayout pageContent = new(headerLayout, sectionLayouts, footerLayout, pageArea);
         return (pageContent, pageProcessingInfo);
     }
 

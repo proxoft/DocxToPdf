@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Proxoft.DocxToPdf.Builders.Footers;
 using Proxoft.DocxToPdf.Builders.Headers;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Common;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.HeadersFooters;
@@ -7,6 +8,7 @@ using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
 using Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Units;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
+using Proxoft.DocxToPdf.Documents.Footers;
 using Proxoft.DocxToPdf.Documents.Headers;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Shared;
@@ -168,25 +170,22 @@ file static class Operators
             .SingleOrDefault()
             .IsOn(ifOnOffTypeNull: false, ifOnOffValueNull: true);
 
-        Dictionary<HeaderFooterType, Header> headers = sectionProperties.CreateHeaders(services);
+        Dictionary<PageNumberType, Header> headers = sectionProperties.CreateHeaders(services);
+        Dictionary<PageNumberType, Footer> footers = sectionProperties.CreateFooters(services);
 
         return new HeaderFooterConfiguration(
             HasTitlePage: hasTitlePage,
             UseEvenOddHeader: services.HeaderFooterAccessor.UseEvenOddHeadersAndFooters(),
-            headers
+            headers,
+            footers
         );
     }
 
-    private static Dictionary<HeaderFooterType, Header> CreateHeaders(
+    private static Dictionary<PageNumberType, Header> CreateHeaders(
         this Word.SectionProperties sectionProperties,
         BuilderServices services)
     {
-        Word.HeaderReference[] headerReferences = [..sectionProperties
-            .ChildsOfType<Word.HeaderReference>()
-            .Where(hr => hr.Id is not null && hr.Type is not null)
-        ];
-
-        Dictionary<HeaderFooterType, Header> headers = sectionProperties
+        Dictionary<PageNumberType, Header> headers = sectionProperties
                 .ChildsOfType<Word.HeaderReference>()
                 .Where(hr => hr.Id is not null && hr.Type is not null)
                 .Select(hr => (hr.Id, type: hr.Type!.ToHeaderFooterType()))
@@ -196,5 +195,21 @@ file static class Operators
                 .ToDictionary(d => d.type, d => d.header);
 
         return headers;
+    }
+
+    private static Dictionary<PageNumberType, Footer> CreateFooters(
+        this Word.SectionProperties sectionProperties,
+        BuilderServices services)
+    {
+        Dictionary<PageNumberType, Footer> footers = sectionProperties
+                .ChildsOfType<Word.FooterReference>()
+                .Where(fr => fr.Id is not null && fr.Type is not null)
+                .Select(fr => (fr.Id, type: fr.Type!.ToHeaderFooterType()))
+                .Select(fr => (footer: services.HeaderFooterAccessor.FindFooter(fr.Id!), fr.type))
+                .Where(f => f.footer is not null)
+                .Select(f => (footer: f.footer.Create(services), f.type))
+                .ToDictionary(d => d.type, d => d.footer);
+
+        return footers;
     }
 }

@@ -39,6 +39,7 @@ internal sealed class ModelIdFactory
 
     private readonly ModelIdContainer _section = new("sct");
     private readonly ModelIdContainer _header = new("hdr");
+    private readonly ModelIdContainer _footer = new("ftr");
     
     private readonly ModelIdContainer _paragraph = new("par");
     private readonly ModelIdContainer _word = new("wrd");
@@ -56,6 +57,9 @@ internal sealed class ModelIdFactory
 
     public ModelId NextHeaderId() =>
         _header.Next();
+
+    public ModelId NextFooterId() =>
+        _footer.Next();
 
     public ModelId NextParagraphId() =>
         _paragraph.Next();

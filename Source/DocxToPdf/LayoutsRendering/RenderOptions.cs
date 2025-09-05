@@ -1,5 +1,6 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
 using Proxoft.DocxToPdf.Layouts;
+using Proxoft.DocxToPdf.Layouts.Footers;
 using Proxoft.DocxToPdf.Layouts.Headers;
 using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
@@ -16,6 +17,8 @@ internal class RenderOptions
     public BorderStyle SectionBorder { get; set; } = BorderStyle.None;
 
     public BorderStyle HeaderBorder { get; set; } = BorderStyle.None;
+
+    public BorderStyle FooterBorder { get; set; } = BorderStyle.None;
 
     public BorderStyle SectionColumnBorder { get; set; } = BorderStyle.None;
 
@@ -40,6 +43,7 @@ internal static class Operators
             PageContentLayout => options.PageContentBorder,
             // SectionLayout => options.SectionBorder,
             HeaderLayout => options.HeaderBorder,
+            FooterLayout => options.FooterBorder,
             ColumnLayout => options.SectionBorder,
             ParagraphLayout => options.ParagraphBorder,
             LineLayout => options.LineBorder,
