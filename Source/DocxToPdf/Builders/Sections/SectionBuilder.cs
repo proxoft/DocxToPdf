@@ -171,7 +171,8 @@ file static class Operators
         Dictionary<HeaderFooterType, Header> headers = sectionProperties.CreateHeaders(services);
 
         return new HeaderFooterConfiguration(
-            hasTitlePage,
+            HasTitlePage: hasTitlePage,
+            UseEvenOddHeader: services.HeaderFooterAccessor.UseEvenOddHeadersAndFooters(),
             headers
         );
     }
@@ -185,8 +186,7 @@ file static class Operators
             .Where(hr => hr.Id is not null && hr.Type is not null)
         ];
 
-        Dictionary<HeaderFooterType, Header> headers =
-            sectionProperties
+        Dictionary<HeaderFooterType, Header> headers = sectionProperties
                 .ChildsOfType<Word.HeaderReference>()
                 .Where(hr => hr.Id is not null && hr.Type is not null)
                 .Select(hr => (hr.Id, type: hr.Type!.ToHeaderFooterType()))

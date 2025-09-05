@@ -18,8 +18,38 @@ public class HeaderTestV2
     );
 
     [Fact]
+    public void Default()
+    {
+        _executor.Convert("Default", pages => { });
+    }
+
+    [Fact]
     public void HelloWorld()
     {
         _executor.Convert("HelloWorld", pages => { });
+    }
+
+    [Fact]
+    public void OddEven()
+    {
+        _executor.Convert("OddEven", pages => { });
+    }
+
+    [Fact]
+    public void FirstEvenOddXXL()
+    {
+        _executor.Convert("FirstEvenOddXXL", pages => { });
+    }
+
+    [Fact]
+    public void FirstEvenOddEvenOdd()
+    {
+        _executor.Convert("FirstEvenOddEvenOdd", pages => { });
+    }
+
+    [Fact]
+    public void XXL()
+    {
+        _executor.Convert("XXL", pages => { });
     }
 }

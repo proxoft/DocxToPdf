@@ -29,11 +29,12 @@ internal static class PageContentLayoutBuilder
         SectionLayout[] sectionLayouts = [];
         ProcessingInfo pageProcessingInfo = ProcessingInfo.Done;
 
-        float yOffset = sections[0].Properties.PageConfiguration.Margin.Top;
         Size remainingArea = pageArea.Size
             .DecreaseHeight(sections[0].Properties.PageConfiguration.Margin.Top)
-            .DecreaseWidth(sections[0].Properties.PageConfiguration.Margin.Bottom)
+            .DecreaseHeight(sections[0].Properties.PageConfiguration.Margin.Bottom)
             ;
+
+        float yOffset = sections[0].Properties.PageConfiguration.Margin.Top;
 
         HeaderLayout headerLayout = sections[0].CreateHeaderLayout(pageArea.Size, fieldVariables, services);
 
@@ -85,14 +86,16 @@ internal static class PageContentLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Size remainingArea = pageContent.BoundingBox.Size;
         SectionLayout[] sectionLayouts = [];
-
         UpdateInfo lastUpdateInfo = UpdateInfo.Done;
-
         SectionLayout lastSectionLayout = previousPageSectionLayout;
 
-        float yOffset = 0;
+        Size remainingArea = pageContent.BoundingBox.Size
+            .DecreaseHeight(sections[0].Properties.PageConfiguration.Margin.Top)
+            .DecreaseHeight(sections[0].Properties.PageConfiguration.Margin.Bottom)
+            ;
+        float yOffset = sections[0].Properties.PageConfiguration.Margin.Top;
+
         foreach (SectionLayout sectionLayout in pageContent.Sections)
         {
             Section section = sections.Single(s => s.Id == sectionLayout.ModelId);

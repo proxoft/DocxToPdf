@@ -94,12 +94,8 @@ file static class Operators
     private static Header FindHeader(this HeaderFooterConfiguration configuration, FieldVariables fieldVariables)
     {
         if (configuration.Headers.Count == 0) return Header.None;
-
-        int effectivePageNumber = fieldVariables.CurrentPage +
-            (configuration.HasTitlePage ? -1 : 0);
-
-        if (effectivePageNumber == 0) return configuration.Headers.FindFirstPageHeader();
-        if (effectivePageNumber % 2 == 0) return configuration.Headers.FindEvenPageHeader();
+        if (fieldVariables.CurrentPage == 1) return configuration.Headers.FindFirstPageHeader();
+        if (fieldVariables.CurrentPage % 2 == 0) return configuration.Headers.FindEvenPageHeader();
         return configuration.Headers.FindOddPageHeader();
     }
 

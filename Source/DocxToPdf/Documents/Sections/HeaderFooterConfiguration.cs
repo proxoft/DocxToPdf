@@ -12,8 +12,9 @@ internal enum HeaderFooterType
 
 internal record HeaderFooterConfiguration(
     bool HasTitlePage,
+    bool UseEvenOddHeader,
     Dictionary<HeaderFooterType, Header> Headers
 )
 {
-    public static readonly HeaderFooterConfiguration None = new(false, []);
+    public static readonly HeaderFooterConfiguration None = new(false, false, []);
 }
