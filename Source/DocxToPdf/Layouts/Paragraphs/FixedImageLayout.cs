@@ -8,6 +8,5 @@ internal record FixedImageLayout(
     ModelId ModelId,
     byte[] Content,
     Rectangle BoundingBox,
-    Padding Padding,
     Borders Borders
 ) : Layout(ModelId, BoundingBox, Borders, LayoutPartition.StartEnd);

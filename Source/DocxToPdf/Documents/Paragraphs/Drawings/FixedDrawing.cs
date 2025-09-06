@@ -7,7 +7,7 @@ internal record FixedDrawing(
     byte[] Image,
     Position Offset,
     Size Size,
-    Padding Padding
+    Padding TextDistance
 ) : Model(Id)
 {
 }

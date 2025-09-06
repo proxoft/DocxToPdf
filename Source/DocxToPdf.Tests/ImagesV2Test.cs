@@ -11,7 +11,9 @@ public class ImagesV2Test
         "Images/{0}_v2.pdf",
         new()
         {
-            ParagraphBorder = new BorderStyle(new Color("FFA500"), 1, LineStyle.Solid),
+            // ParagraphBorder = new BorderStyle(new Color("FFA500"), 1, LineStyle.Solid),
+            LineBorder = new BorderStyle(new Color("FFA500"), 1, LineStyle.Solid),
+            RenderWhitespaceCharacters = true,
             RenderParagraphCharacter = true,
         }
     );

@@ -31,20 +31,16 @@ internal static class FixedImageLayoutBuilder
     ];
 
     public static Rectangle[] CreateReservedSpaces(this FixedDrawing[] fixedDrawings) =>
-        [..fixedDrawings.Select(f => new Rectangle(f.Offset, f.Size.Expand(f.Padding)))];
+        [..fixedDrawings.Select(f => new Rectangle(f.Offset, f.Size).Expand(f.TextDistance))];
 
     private static FixedImageLayout CreateFixedImageLayout(this FixedDrawing fixedDrawing) =>
         new(
             fixedDrawing.Id,
             fixedDrawing.Image,
             new Rectangle(fixedDrawing.Offset, fixedDrawing.Size),
-            fixedDrawing.Padding,
             Borders.None
         );
 
-    private static bool FitsInArea(this FixedDrawing fixedDrawing, Size availableArea)
-    {
-        Size totalSize = fixedDrawing.Size.Expand(fixedDrawing.Padding);
-        return totalSize.Width <= availableArea.Width && totalSize.Height <= availableArea.Height;
-    }
+    private static bool FitsInArea(this FixedDrawing fixedDrawing, Size availableArea) =>
+        fixedDrawing.Size.Width <= availableArea.Width && fixedDrawing.Size.Height <= availableArea.Height;
 }

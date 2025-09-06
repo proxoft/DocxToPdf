@@ -122,7 +122,10 @@ internal static class LineLayoutBuilder
             .Select(e => e.Size.Height)
             .Max();
 
-        Rectangle boundingBox = elements.CalculateBoundingBox();
+        Rectangle boundingBox = elements
+            .Append(new FakeLayout(height)) // ensure the line will start on position 0,0
+            .CalculateBoundingBox()
+            ;
 
         float lineBaselineOffset = elements
             .Select(e => e.BaselineOffset)
@@ -313,4 +316,10 @@ internal static class LineLayoutBuilder
 
         return (false, -1, 0);
     }
+}
+
+file record FakeLayout(float height)
+    : ElementLayout(ModelId.None, new Size(0, height), 0, new Rectangle(new Position(0, 0), new Size(0, height)), 0, Borders.None, LayoutPartition.StartEnd)
+{
+    public override TextStyle GetTextStyle() => TextStyle.Default;
 }

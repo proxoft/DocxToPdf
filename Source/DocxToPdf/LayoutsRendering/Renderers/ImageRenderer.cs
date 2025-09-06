@@ -16,13 +16,9 @@ internal static class ImageRenderer
         }
 
         Position position = layout.BoundingBox.TopLeft
-            .Shift(offset.X, offset.Y)
-            .Shift(layout.Padding.Left, layout.Padding.Top);
+            .Shift(offset.X, offset.Y);
 
-        Size size = layout.BoundingBox.Size
-            .Clip(layout.Padding);
-
-        layout.Content.RenderImage(position, size, graphics);
+        layout.Content.RenderImage(position, layout.BoundingBox.Size, graphics);
     }
 
     public static void RenderImage(this ImageLayout layout, Position offset, XGraphics graphics)
@@ -34,8 +30,7 @@ internal static class ImageRenderer
         }
 
         Position position = layout.BoundingBox.TopLeft
-            .ShiftX(offset.X)
-            .ShiftY(offset.Y);
+            .Shift(offset.X, offset.Y);
 
         layout.Data.RenderImage(position, layout.Size, graphics);
     }
