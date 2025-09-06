@@ -53,4 +53,10 @@ public class HeaderTestV2
     {
         _executor.Convert("XXL", pages => { });
     }
+
+    [Fact]
+    public void HeadersForSections()
+    {
+        _executor.Convert("HeadersForSections", pages => { });
+    }
 }

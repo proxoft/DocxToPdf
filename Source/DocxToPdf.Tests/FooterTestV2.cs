@@ -46,4 +46,10 @@ public class FooterTestV2
     {
         _executor.Convert("FirstEvenOddXL", (pages) => { });
     }
+
+    [Fact]
+    public void FootersForSections()
+    {
+        _executor.Convert("FootersForSections", pages => { });
+    }
 }
