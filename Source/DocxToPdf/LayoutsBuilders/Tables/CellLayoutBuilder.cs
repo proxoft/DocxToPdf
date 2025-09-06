@@ -2,14 +2,10 @@
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
-using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
-using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
-using Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
@@ -66,53 +62,22 @@ internal static class CellLayoutBuilder
     )
     {
         Padding effectivePadding = cell.Padding.UpdatePaddingByPartitioning(previousPageCellLayout);
-        Size remainingArea = availableArea
+        Size cellContentArea = availableArea
             .Clip(effectivePadding);
 
-        float yOffset = effectivePadding.Top;
-        float xOffset = effectivePadding.Left;
+        (Layout[] updatedLayouts, UpdateInfo updateInfo) = cellLayout.ParagraphsOrTables.UpdateParagraphAndTableLayouts(
+            cell.ParagraphsOrTables,
+            cellContentArea,
+            previousPageCellLayout,
+            fieldVariables,
+            services
+        );
 
-        Layout[] updatedLayouts = [];
-
-        foreach (Layout layout in cellLayout.ParagraphsOrTables)
-        {
-            (Layout updatedLayout, UpdateInfo updateInfo) result = layout switch
-            {
-                ParagraphLayout pl => pl.Update(
-                    cell.Find<Paragraph>(pl.ModelId),
-                    previousPageCellLayout.TryFindParagraphLayout(pl.ModelId),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                TableLayout tl => tl.Update(
-                    cell.Find<Table>(tl.ModelId),
-                    previousPageCellLayout.TryFindTableLayout(tl.ModelId),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                _ => (NoLayout.Instance, UpdateInfo.Done)
-            };
-
-            if (result.updatedLayout != ParagraphLayout.Empty && result.updatedLayout != TableLayout.Empty)
-            {
-                updatedLayouts = [.. updatedLayouts, result.updatedLayout.Offset(new Position(xOffset, yOffset))];
-            }
-
-            if (result.updateInfo is UpdateInfo.ReconstructRequired)
-            {
-                break;
-            }
-
-            Model currentModel = cell.Find<Model>(layout.ModelId);
-            Model nextModel = cell.ParagraphsOrTables.Next(layout.ModelId);
-            float spaceAfter = currentModel.CalculateSpaceAfter(result.updatedLayout.Partition, nextModel);
-            yOffset += result.updatedLayout.BoundingBox.Height + spaceAfter;
-            remainingArea = remainingArea
-                .DecreaseHeight(result.updatedLayout.BoundingBox.Height + spaceAfter);
-        }
+        Position offset = new(effectivePadding.Left, effectivePadding.Top);
+        updatedLayouts = [.. updatedLayouts.Select(l => l.Offset(offset))];
 
         Rectangle boundingBox = updatedLayouts
-           .CalculateBoundingBox(new Size(remainingArea.Width, 0))
+           .CalculateBoundingBox(new Size(cellContentArea.Width, 0))
            .Expand(effectivePadding)
            ;
 
@@ -131,7 +96,7 @@ internal static class CellLayoutBuilder
         );
 
         bool isCellFinished = updatedLayouts.IsUpdateFinished(cellLayout.ParagraphsOrTables);
-        UpdateInfo updateInfo = isCellFinished
+        updateInfo = isCellFinished
             ? UpdateInfo.Done
             : UpdateInfo.ReconstructRequired;
 
@@ -208,7 +173,6 @@ file static class CellOperators
                 Top = 0
             }
             : padding;
-    
 
     public static LayoutPartition CalculateLayoutPartition(
         this Cell cell,
@@ -232,9 +196,6 @@ file static class CellOperators
        previousLayouts.Length == 0
            ? cell.ParagraphsOrTables
            : [.. cell.ParagraphsOrTables.SkipFinished(previousLayouts.Last())];
-
-    public static T Find<T>(this Cell cell, ModelId id) where T : Model =>
-        cell.ParagraphsOrTables.OfType<T>().Single(m => m.Id == id);
 
     private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
         models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());

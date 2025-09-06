@@ -11,6 +11,8 @@ public class PageNumberV2Test
         "PageNumbers/{0}_v2.pdf",
         new()
         {
+            HeaderBorder = new BorderStyle(new Color("00A5B1"), 1, LineStyle.Solid),
+            FooterBorder = new BorderStyle(new Color("00A512"), 1, LineStyle.Solid),
             ParagraphBorder = new BorderStyle(new Color("FFA500"), 1, LineStyle.Solid),
             RenderParagraphCharacter = true,
         }

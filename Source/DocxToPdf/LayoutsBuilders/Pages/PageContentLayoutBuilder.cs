@@ -98,6 +98,10 @@ internal static class PageContentLayoutBuilder
             ;
         float yOffset = sections[0].Properties.PageConfiguration.Margin.Top;
 
+        Section footerHeaderSection = sections.Find<Section>(pageContent.Sections.First().ModelId);
+        HeaderLayout header = pageContent.Header.Update(footerHeaderSection, pageContent.BoundingBox.Size, fieldVariables, services);
+        FooterLayout footer = pageContent.Footer.Update(footerHeaderSection, pageContent.BoundingBox.Size, fieldVariables, services);
+
         foreach (SectionLayout sectionLayout in pageContent.Sections)
         {
             Section section = sections.Single(s => s.Id == sectionLayout.ModelId);
@@ -115,7 +119,9 @@ internal static class PageContentLayoutBuilder
 
         PageContentLayout updatedContent = pageContent with
         {
-            Sections = sectionLayouts
+            Header = header,
+            Sections = sectionLayouts,
+            Footer = footer
         };
 
         return (updatedContent, lastUpdateInfo);

@@ -2,17 +2,11 @@
 using System.Linq;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
-using Proxoft.DocxToPdf.Documents.Paragraphs;
 using Proxoft.DocxToPdf.Documents.Sections;
 using Proxoft.DocxToPdf.Documents.Shared;
-using Proxoft.DocxToPdf.Documents.Tables;
 using Proxoft.DocxToPdf.Layouts;
-using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
-using Proxoft.DocxToPdf.Layouts.Tables;
 using Proxoft.DocxToPdf.LayoutsBuilders.Common;
-using Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
-using Proxoft.DocxToPdf.LayoutsBuilders.Tables;
 
 namespace Proxoft.DocxToPdf.LayoutsBuilders.Sections;
 
@@ -62,47 +56,12 @@ internal static class ColumnLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Size remainingArea = availableArea;
-
-        Layout[] updatedLayouts = [];
-        UpdateInfo lastUpdateInfo = UpdateInfo.Done;
-        float yOffset = 0;
-
-        foreach (Layout layout in column.ParagraphsOrTables)
-        {
-            (Layout layout, UpdateInfo updateInfo) result = layout switch
-            {
-                ParagraphLayout pl => pl.Update(
-                    section.Find<Paragraph>(pl.ModelId),
-                    previousColumnLayout.TryFindParagraphLayout(pl.ModelId), // try find in previous section
-                    remainingArea,
-                    fieldVariables,
-                    services
-                ),
-                TableLayout tl => tl.Update(
-                    section.Find<Table>(tl.ModelId),
-                    previousColumnLayout.TryFindTableLayout(tl.ModelId),
-                    remainingArea,
-                    fieldVariables,
-                    services
-                ),
-                _ => (NoLayout.Instance, UpdateInfo.Done)
-            };
-
-            lastUpdateInfo = result.updateInfo;
-            updatedLayouts = [.. updatedLayouts, result.layout.Offset(new Position(0, yOffset))];
-            yOffset += result.layout.BoundingBox.Height;
-
-            if (yOffset > remainingArea.Height)
-            {
-                break;
-            }
-
-            Model model = section.Find<Model>(layout.ModelId);
-            Model next = section.Elements.Next(model.Id);
-            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, next);
-            yOffset += spaceAfter;
-        }
+        (Layout[] updatedLayouts, UpdateInfo updateInfo) = column.ParagraphsOrTables.UpdateParagraphAndTableLayouts(
+            section.Elements,
+            availableArea,
+            previousColumnLayout,
+            fieldVariables,
+            services);
 
         LayoutPartition lp = section.CalculateLayoutPartition(updatedLayouts);
         Rectangle boudingBox = updatedLayouts
@@ -116,15 +75,12 @@ internal static class ColumnLayoutBuilder
             lp
         );
 
-        return (updatedColumnLayout, lastUpdateInfo);
+        return (updatedColumnLayout, updateInfo);
     }
 }
 
 file static class ColumnOperators
 {
-    public static T Find<T>(this Section section, ModelId id) where T : Model =>
-        section.Elements.OfType<T>().Single(e => e.Id == id);
-
     public static Model[] Unprocessed(this Section section, Layout[] previousLayouts) =>
         previousLayouts.Length == 0
             ? section.Elements
@@ -142,7 +98,6 @@ file static class ColumnOperators
         layoutPartition.HasFlag(LayoutPartition.End)
             ? 0
             : availableSize.Height;
-
 
     private static IEnumerable<Model> SkipFinished(this Model[] models, Layout lastLayout) =>
         models.SkipProcessed(lastLayout.ModelId, lastLayout.Partition.IsFinished());
