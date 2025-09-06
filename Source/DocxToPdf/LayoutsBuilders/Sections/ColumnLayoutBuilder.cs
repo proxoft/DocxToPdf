@@ -32,50 +32,12 @@ internal static class ColumnLayoutBuilder
             return (ColumnLayout.None, ProcessingInfo.Done);
         }
 
-        Layout[] layouts = [];
-        Size remainingArea = availableArea;
-
-        ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
-        float yOffset = 0;
-
-        foreach (Model model in unprocessed)
-        {
-            (Layout layout, ProcessingInfo processingInfo) result = model switch
-            {
-                Paragraph p => p.CreateLayout(
-                    previousColumn.TryFindParagraphLayout(p.Id),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                Table t => t.CreateTableLayout(
-                    previousColumn.TryFindTableLayout(t.Id),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                _ => (NoLayout.Instance, ProcessingInfo.Done)
-            };
-
-            sectionProcessingInfo = result.processingInfo;
-
-            if (result.layout.IsNotEmpty())
-            {
-                remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
-                layouts = [.. layouts, result.layout.Offset(new Position(0, yOffset))];
-                yOffset += result.layout.BoundingBox.Height;
-            }
-
-            if (sectionProcessingInfo is ProcessingInfo.NewPageRequired
-                or ProcessingInfo.RequestDrawingArea
-                or ProcessingInfo.IgnoreAndRequestDrawingArea)
-            {
-                break;
-            }
-
-            Model nextModel = unprocessed.Next(model.Id);
-            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, nextModel);
-            yOffset += spaceAfter;
-            remainingArea = remainingArea.DecreaseHeight(spaceAfter);
-        }
+        (Layout[] layouts, ProcessingInfo processingInfo) = unprocessed.CreateParagraphAndTableLayouts(
+            availableArea,
+            previousColumn,
+            fieldVariables,
+            services
+            );
 
         LayoutPartition lp = section.CalculateLayoutPartition(layouts);
         Rectangle boudingBox = layouts
@@ -89,7 +51,7 @@ internal static class ColumnLayoutBuilder
             lp
         );
 
-        return (columnLayout, sectionProcessingInfo);
+        return (columnLayout, processingInfo);
     }
 
     public static (ColumnLayout, UpdateInfo) Update(

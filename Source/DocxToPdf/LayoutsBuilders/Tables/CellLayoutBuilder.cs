@@ -23,54 +23,20 @@ internal static class CellLayoutBuilder
         LayoutServices services)
     {
         Model[] unprocessed = cell.Unprocessed(previousLayout.ParagraphsOrTables);
-        Layout[] layouts = [];
+        
 
         Padding effectivePadding = cell.Padding.UpdatePaddingByPartitioning(previousLayout);
         Size remainingArea = availableArea
             .Clip(effectivePadding);
 
-        ProcessingInfo cellProcessingInfo = ProcessingInfo.Done;
+        (Layout[] layouts, ProcessingInfo processingInfo) = unprocessed.CreateParagraphAndTableLayouts(
+            remainingArea,
+            previousLayout,
+            fieldVariables,
+            services);
 
-        float yOffset = effectivePadding.Top;
-        float xOffset = effectivePadding.Left;
-
-        foreach (Model model in unprocessed)
-        {
-            (Layout layout, ProcessingInfo processingInfo) result = model switch
-            {
-                Paragraph p => p.CreateLayout(
-                    previousLayout.TryFindParagraphLayout(p.Id),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                Table t => t.CreateTableLayout(
-                    previousLayout.TryFindTableLayout(t.Id),
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                _ => (NoLayout.Instance, ProcessingInfo.Done)
-            };
-
-            cellProcessingInfo = result.processingInfo;
-            if (result.layout.IsNotEmpty())
-            {
-                remainingArea = remainingArea.DecreaseHeight(result.layout.BoundingBox.Height);
-                layouts = [.. layouts, result.layout.Offset(new Position(xOffset, yOffset))];
-                yOffset += result.layout.BoundingBox.Height;
-            }
-
-            if (cellProcessingInfo is ProcessingInfo.NewPageRequired
-                or ProcessingInfo.RequestDrawingArea
-                or ProcessingInfo.IgnoreAndRequestDrawingArea)
-            {
-                break;
-            }
-
-            Model nextModel = unprocessed.Next(model.Id);
-            float spaceAfter = model.CalculateSpaceAfter(result.layout.Partition, nextModel);
-            yOffset += spaceAfter;
-            remainingArea = remainingArea.DecreaseHeight(spaceAfter);
-        }
+        Position offset = new(effectivePadding.Left, effectivePadding.Top);
+        layouts = [..layouts.Select(l => l.Offset(offset))];
 
         Rectangle boundingBox = layouts
            .CalculateBoundingBox(new Size(remainingArea.Width, 0))
@@ -87,7 +53,7 @@ internal static class CellLayoutBuilder
             layoutPartition
         );
 
-        return (cellLayout, cellProcessingInfo);
+        return (cellLayout, processingInfo);
     }
 
     public static (CellLayout, UpdateInfo) Update(

@@ -13,13 +13,15 @@ internal record Layout(
     LayoutPartition Partition
 );
 
-internal sealed record NoLayout : Layout
+internal sealed record NoLayout : Layout, IComposedLayout
 {
     public static readonly NoLayout Instance = new();
 
     private NoLayout() : base(ModelId.None, Rectangle.Empty, Borders.None, LayoutPartition.StartEnd)
     {
     }
+
+    public IEnumerable<Layout> InnerLayouts => [];
 }
 
 

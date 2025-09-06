@@ -11,6 +11,7 @@ public class HeaderTestV2
        new()
        {
            HeaderBorder = new BorderStyle(new Documents.Styles.Color("005659"), 1, LineStyle.Solid),
+           FooterBorder = new BorderStyle(new Documents.Styles.Color("005659"), 1, LineStyle.Solid),
            SectionBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, LineStyle.Solid),
            // ParagraphBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
            RenderParagraphCharacter = true,

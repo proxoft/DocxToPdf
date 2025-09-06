@@ -41,41 +41,11 @@ internal static class HeaderLayoutBuilder
         FieldVariables fieldVariables,
         LayoutServices services)
     {
-        Size remainingArea = availableArea;
-        Layout[] layouts = [];
-
-        float yOffset = 0;
-        foreach (Model model in header.ParagraphsOrTables)
-        {
-            (Layout layout, ProcessingInfo processingInfo) result = model switch
-            {
-                Paragraph p => p.CreateLayout(
-                    ParagraphLayout.Empty,
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                Table t => t.CreateTableLayout(
-                    TableLayout.Empty,
-                    remainingArea,
-                    fieldVariables,
-                    services),
-                _ => (NoLayout.Instance, ProcessingInfo.Done)
-            };
-
-            if (result.layout.IsNotEmpty())
-            {
-                layouts = [..layouts, result.layout.Offset(new Position(0, yOffset))];
-            }
-
-            if(result.processingInfo != ProcessingInfo.Done)
-            {
-                break;
-            }
-
-            yOffset += result.layout.BoundingBox.Height;
-            remainingArea = remainingArea
-                .DecreaseHeight(result.layout.BoundingBox.Height);
-        }
+        (Layout[] layouts, _) = header.ParagraphsOrTables.CreateParagraphAndTableLayouts(
+            availableArea,
+            NoLayout.Instance,
+            fieldVariables, services
+        );
 
         Rectangle bb = layouts
             .CalculateBoundingBox(availableArea);
