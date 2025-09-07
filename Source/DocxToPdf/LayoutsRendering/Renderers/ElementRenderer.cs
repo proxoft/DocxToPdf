@@ -30,7 +30,10 @@ internal static class ElementRenderer
             graphics.DrawRectangle(backgroundBrush, rect);
         }
 
-        Position position = new Position(layout.BoundingBox.X, layout.BoundingBox.Bottom - layout.LineBaseLineOffset)
+        // space layout can have resized bounding box due to justification
+        // therefore it should be rendered in the middle of the bounding box
+        float xDelta = layout.BoundingBox.Width - layout.Size.Width;
+        Position position = new Position(layout.BoundingBox.X + xDelta / 2, layout.BoundingBox.Bottom - layout.LineBaseLineOffset)
             .Shift(offset.X, offset.Y);
 
         graphics.DrawString(text, font, brush, position.ToXPoint());

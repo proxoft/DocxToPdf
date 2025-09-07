@@ -1,4 +1,5 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
+using Proxoft.DocxToPdf.Tests.Assertions;
 using Proxoft.DocxToPdf.Tests.Tools;
 
 namespace Proxoft.DocxToPdf.Tests;
@@ -15,6 +16,7 @@ public class ParagraphV2Test
             // LineBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
             // WordBorder = new BorderStyle(new Documents.Styles.Color("458976"), 1, Documents.Styles.Borders.LineStyle.Solid)
             ParagraphBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
+            RenderWhitespaceCharacters = true,
             RenderParagraphCharacter = true,
         }
     );
@@ -24,9 +26,7 @@ public class ParagraphV2Test
     {
         _executor.Convert("Paragraph", pages =>
         {
-            pages
-                .Should()
-                .NotBeEmpty();
+            pages.CountShouldBe(1);
         });
     }
 
@@ -89,6 +89,17 @@ public class ParagraphV2Test
     public void ParagraphFontStyles()
     {
         _executor.Convert("ParagraphFontStyles", pages =>
+        {
+            pages
+                .Should()
+                .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void ParagraphAlignments()
+    {
+        _executor.Convert("ParagraphAlignments", pages =>
         {
             pages
                 .Should()

@@ -13,9 +13,7 @@ internal record ParagraphLayoutingArea(
     float YOffset,
     float LineParagraphYOffset,
     Rectangle[] Reserved)
-: LayoutingArea(AvailableSize, Reserved)
-{
-}
+: LayoutingArea(AvailableSize, Reserved);
 
 internal static class ParagraphLayoutingAreaOperators
 {

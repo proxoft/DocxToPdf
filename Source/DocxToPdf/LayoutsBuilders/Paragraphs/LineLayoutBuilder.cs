@@ -22,10 +22,10 @@ internal static class LineLayoutBuilder
         LayoutServices services)
     {
         Element[] unprocessed = [.. elements];
-        if(unprocessed.Length == 0)
+        if (unprocessed.Length == 0)
         {
             LineLayout ll = CreateEmptyLine(0, LineDecoration.Last, style.TextStyle, services);
-            if(ll.BoundingBox.Height > area.AvailableSize.Height)
+            if (ll.BoundingBox.Height > area.AvailableSize.Height)
             {
                 return ([], ProcessingInfo.IgnoreAndRequestDrawingArea);
             }
@@ -35,16 +35,18 @@ internal static class LineLayoutBuilder
         LineLayout[] lines = [];
 
         ParagraphLayoutingArea currentArea = area;
-        bool keepProcessing;
-        do
-        {
-            LineLayout? ll = unprocessed.TryCreateLine(currentArea, fieldVariables, style.TextStyle, services);
-            if (ll is null)
-            {
-                break;
-            }
+        bool keepProcessing = unprocessed.Length > 0;
 
-            if(currentArea.AvailableSize.Height < ll.BoundingBox.Height)
+        while (keepProcessing) {
+            LineLayout ll = unprocessed.CreateLine(
+                currentArea,
+                style.LineAlignment,
+                fieldVariables,
+                style.TextStyle,
+                services
+            );
+
+            if (currentArea.AvailableSize.Height < ll.BoundingBox.Height)
             {
                 break;
             }
@@ -59,7 +61,7 @@ internal static class LineLayoutBuilder
             keepProcessing = currentArea.AvailableSize.Height > 0
                 && unprocessed.Length > 0
                 && ll.Decoration == LineDecoration.None;
-        } while (keepProcessing);
+        }
 
         ProcessingInfo processingInfo = lines.Length == 0 ? ProcessingInfo.IgnoreAndRequestDrawingArea
             : lines.Last().Decoration == LineDecoration.PageBreak ? ProcessingInfo.NewPageRequired
@@ -123,7 +125,7 @@ internal static class LineLayoutBuilder
             .Max();
 
         Rectangle boundingBox = elements
-            .Append(new FakeLayout(height)) // ensure the line will start on position 0,0
+            .Append(FakeLayout.New(height)) // ensure the line will start on position 0,0
             .CalculateBoundingBox()
             ;
 
@@ -170,62 +172,49 @@ internal static class LineLayoutBuilder
         return LineDecoration.None;
     }
 
-    private static LineLayout? TryCreateLine(
+    private static LineLayout CreateLine(
         this Element[] elements,
         ParagraphLayoutingArea area,
+        LineAlignment alignment,
         FieldVariables fieldVariables,
         TextStyle paragraphTextStyle,
         LayoutServices services)
     {
-        if(elements.Length == 0)
-        {
-            return null;
-        }
-
-        ElementLayout[] elementLayouts = [];
         int elementIndex = 0;
         ElementLayout element = elements[elementIndex].CreateElementLayout(0, fieldVariables, services);
 
-        (int index, float x) activeHs = (0, 0);
-
         float expectedLineHeight = element.Size.Height;
-        Rectangle[] horizontalSpaces = area.CreateHorizontalSpaces(expectedLineHeight);
+        LineSegment[] lineSegments = area.CreateLineSegments(expectedLineHeight);
 
         while (true)
         {
-            // check if element fits into horizontal space
-            (bool fits, int inHorizontalSpaceIndex, float onXPosition) = element.FitsIn(horizontalSpaces, activeHs);
-            if (!fits)
-            {
-                break;
-            }
+            (lineSegments, bool success) = lineSegments.TryAdd(element);
 
-            activeHs = (inHorizontalSpaceIndex, onXPosition);
-
-            float realXPosition = horizontalSpaces[activeHs.index].Left + activeHs.x;
-            element = element.Offset(new Position(realXPosition, 0));
-            elementLayouts = [.. elementLayouts, element];
-
-            activeHs = (activeHs.index, activeHs.x + element.Size.Width);
-            elementIndex++;
-            if(elementIndex >= elements.Length
+            if (!success
+                || elementIndex >= elements.Length - 1
                 || element is BreakLayout)
             {
                 break;
             }
 
-            element = elements[elementIndex].CreateElementLayout(0, fieldVariables, services);
-            if(element.Size.Height > expectedLineHeight)
+            elementIndex++;
+            if (element.Size.Height > expectedLineHeight)
             {
-                // restart layouting
+                // restart line creating
                 expectedLineHeight = element.Size.Height;
+                lineSegments = area.CreateLineSegments(expectedLineHeight);
                 elementIndex = 0;
-                activeHs = (0, 0);
-                horizontalSpaces = area.CreateHorizontalSpaces(expectedLineHeight);
-                elementLayouts = [];
-                element = elements[elementIndex].CreateElementLayout(0, fieldVariables, services);
             }
+
+            element = elements[elementIndex].CreateElementLayout(0, fieldVariables, services);
         }
+
+        bool isLastLine = lineSegments.IsLastLine(elements);
+        ElementLayout[] elementLayouts = [
+            ..lineSegments
+                .AlignElements(alignment, isLastLine)
+                .SelectMany(s => s.Elements)
+        ];
 
         LineDecoration lineDecoration = elementLayouts.CalculateLineDecoration(elements);
         LineLayout line = elementLayouts.CreateLine(area.YOffset, lineDecoration, paragraphTextStyle, services);
@@ -318,8 +307,243 @@ internal static class LineLayoutBuilder
     }
 }
 
-file record FakeLayout(float height)
-    : ElementLayout(ModelId.None, new Size(0, height), 0, new Rectangle(new Position(0, 0), new Size(0, height)), 0, Borders.None, LayoutPartition.StartEnd)
+file record LineSegment(
+    Rectangle Area,
+    bool Active,
+    ElementLayout[] Elements,
+    Rectangle RemainingArea)
+{
+    public static LineSegment New(Rectangle area, bool active) =>
+        new(area, active, [], area);
+}
+
+file static class LineSegmentFunctions
+{
+    public static (LineSegment[] segments, bool success) TryAdd(this LineSegment[] segments, ElementLayout element)
+    {
+        LineSegment[] updated = [..segments.TakeWhile(s => !s.Active)];
+        bool success = false;
+        foreach(LineSegment segment in segments.SkipWhile(s => !s.Active))
+        {
+            (LineSegment updatedSegment, success) = segment.TryAdd(element);
+            updated = [
+                    ..updated,
+                    updatedSegment
+            ];
+
+            if (success)
+            {
+                updated = [
+                    ..updated,
+                    ..segments.SkipWhile(s => s != segment).Skip(1)
+                ];
+
+                break;
+            }
+        }
+
+        return (updated, success);
+    }
+
+    public static LineSegment[] AlignElements(this LineSegment[] segments, LineAlignment lineAlignment, bool isLastLine)
+    {
+        LineSegment[] alignedSegments = lineAlignment switch
+        {
+            LineAlignment.Left => segments,
+            LineAlignment.Center => [.. segments.Select(s => s.CenterAlignElements())],
+            LineAlignment.Right => [..segments.Select(s => s.RightAlignElements())],
+            LineAlignment.Justify when isLastLine => segments, // left align
+            LineAlignment.Justify => [..segments.Select(s => s.JustifyElements())],
+            _ => segments
+        };
+
+        return alignedSegments;
+    }
+
+    public static bool IsLastLine(this LineSegment[] lineSegments, Element[] allElements)
+    {
+        if (allElements.Length == 0) return true;
+
+        ElementLayout? last = lineSegments
+            .Reverse()
+            .SelectMany(s => s.Elements.Reverse())
+            .FirstOrDefault();
+
+        if (last is null) return false;
+        if (last is BreakLayout) return true;
+
+        return last.Id == allElements[^1].Id;
+    }
+
+    private static (LineSegment segment, bool success) TryAdd(this LineSegment segment, ElementLayout element)
+    {
+        if (!element.FitsIn(segment))
+        {
+            return (
+                segment with
+                {
+                    Active = false
+                },
+                false
+            );
+        }
+
+        LineSegment updated = segment with
+        {
+            Active = true,
+            Elements = [.. segment.Elements, element.Offset(new Position(segment.RemainingArea.Left, 0))],
+            RemainingArea = segment.RemainingArea.CropFromLeft(element.Size.Width)
+        };
+
+        return (updated, true);
+    }
+
+    private static bool FitsIn(this ElementLayout element, LineSegment segment) =>
+        segment.RemainingArea.Width >= element.Size.Width;
+
+    private static LineSegment CenterAlignElements(this LineSegment segment)
+    {
+        if (segment.Elements.Length == 0) return segment;
+        float xDiff = (segment.Area.Right - segment.Elements[^1].BoundingBox.Right) / 2;
+        ElementLayout[] alignedElements = [
+            ..segment.Elements
+                .Select(e => e.Offset(new Position(xDiff, 0)))
+        ];
+
+        return segment with
+        {
+            Elements = alignedElements
+        };
+    }
+
+    private static LineSegment RightAlignElements(this LineSegment segment)
+    {
+        if(segment.Elements.Length == 0) return segment;
+        float xDiff = segment.Area.Right - segment.Elements[^1].BoundingBox.Right;
+        ElementLayout[] alignedElements = [
+            ..segment.Elements
+                .Select(e => e.Offset(new Position(xDiff, 0)))
+        ];
+
+        return segment with
+        {
+            Elements = alignedElements
+        };
+    }
+
+    private static LineSegment JustifyElements(this LineSegment segment)
+    {
+        if (segment.Elements.Length == 0) return segment;
+        float availableSpace = segment.Area.Right - segment.Elements[^1].BoundingBox.Right;
+        int spacesCount = segment.Elements
+            .OfType<SpaceLayout>()
+            .Count();
+
+        if(spacesCount == 0) return segment;
+        float widthPerSpace = availableSpace / spacesCount;
+        float x = 0;
+        ElementLayout[] justified = [..segment.Elements
+            .Select(e =>
+            {
+                ElementLayout jel = e.JustifyWidth(widthPerSpace)
+                    .ResetOffset()
+                    .Offset(new Position(x, 0));
+
+                x += jel.BoundingBox.Width;
+                return jel;
+            })
+        ];
+
+        return segment with
+        {
+            Elements = justified
+        };
+    }
+
+    private static ElementLayout JustifyWidth(this ElementLayout elementLayout, float spaceWidth) =>
+        elementLayout is SpaceLayout sl
+            ? sl with
+            {
+                BoundingBox = sl.BoundingBox
+                            .ResizeWidth(spaceWidth)
+            }
+            : elementLayout;
+}
+
+file record FakeLayout(Size Size)
+    : ElementLayout(ModelId.None, Size, 0, new Rectangle(new Position(0, 0), Size), 0, Borders.None, LayoutPartition.StartEnd)
 {
     public override TextStyle GetTextStyle() => TextStyle.Default;
+
+    public static FakeLayout New(float height) =>
+        new(new Size(0, height));
+}
+
+file static class ParagraphLayoutingAreaOperators
+{
+    public static LineSegment[] CreateLineSegments(this ParagraphLayoutingArea area, float expectedLineHeight)
+    {
+        Rectangle lineArea = new(
+            new Position(0, area.LineParagraphYOffset),
+            new Size(area.AvailableSize.Width, expectedLineHeight)
+        );
+
+        Rectangle[] significantReserved = [
+            ..area.Reserved
+                .Where(r => r.HasOverlapWithLine(area.LineParagraphYOffset, expectedLineHeight)) // ignore those which dont overlap with line
+                .Where(r => r.Right >= 0)                                                        // ignore those which are left from paragraph
+                .Where(r => r.Left <= area.AvailableSize.Width)                                  // ignore those which are to the right of paragraph
+                .OrderBy(r => r.X)
+                .ThenBy(r => r.Right)
+        ];
+
+        LineSegment[] lineSegments = [];
+        bool isFirst = true;
+
+        // Rectangle[] horizontalSpaces = [];
+        float right = 0;
+
+        foreach (Rectangle r in significantReserved)
+        {
+            if (right < r.X)
+            {
+                float width = r.X - right;
+                Rectangle horizontalSpace = new(
+                    new Position(right, area.YOffset),
+                    new Size(width, expectedLineHeight)
+                );
+
+                lineSegments = [
+                    ..lineSegments,
+                    LineSegment.New(horizontalSpace, isFirst)
+                ];
+
+                isFirst = false;
+            }
+
+            if (right < r.Right)
+            {
+                right = r.Right;
+            }
+        }
+
+        if (right < area.AvailableSize.Width)
+        {
+            Rectangle remaining = new(
+                 new Position(right, area.YOffset),
+                 new Size(area.AvailableSize.Width - right, expectedLineHeight)
+            );
+
+            lineSegments = [
+                ..lineSegments,
+                LineSegment.New(remaining, isFirst)
+            ];
+        }
+
+        return lineSegments;
+    }
+
+    private static bool HasOverlapWithLine(this Rectangle rectangle, float yPosition, float expectedLineHeight) =>
+        rectangle.Y <= yPosition + expectedLineHeight
+        && rectangle.Bottom >= yPosition;
 }

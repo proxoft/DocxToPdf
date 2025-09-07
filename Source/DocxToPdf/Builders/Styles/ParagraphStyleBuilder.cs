@@ -86,6 +86,7 @@ internal static class ParagraphStyleBuilder
         if (justification.Val.Value == JustificationValues.Left) return LineAlignment.Left;
         if (justification.Val.Value == JustificationValues.Center) return LineAlignment.Center;
         if (justification.Val.Value == JustificationValues.Right) return LineAlignment.Right;
+        if (justification.Val.Value == JustificationValues.Both) return LineAlignment.Justify;
 
         return LineAlignment.Left;
     }
