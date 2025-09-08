@@ -82,7 +82,13 @@ internal static class LineLayoutBuilder
         LineLayout[] updatedLines = [];
         foreach (LineLayout lineLayout in lines)
         {
-            (LineLayout updatedLine, UpdateInfo lineUpdateInfo) = lineLayout.TryUpdateLine(paragraph.Elements, remainingArea, fieldVariables, paragraph.Style.TextStyle, services);
+            (LineLayout updatedLine, UpdateInfo lineUpdateInfo) = lineLayout.TryUpdateLine(
+                paragraph.Elements,
+                remainingArea,
+                fieldVariables,
+                paragraph.Style.LineAlignment,
+                paragraph.Style.TextStyle,
+                services);
 
             if (remainingArea.AvailableSize.Height < updatedLine.BoundingBox.Height)
             {
@@ -213,7 +219,7 @@ internal static class LineLayoutBuilder
         ElementLayout[] elementLayouts = [
             ..lineSegments
                 .AlignElements(alignment, isLastLine)
-                .SelectMany(s => s.Elements)
+                .PositionElementsInLine()
         ];
 
         LineDecoration lineDecoration = elementLayouts.CalculateLineDecoration(elements);
@@ -227,6 +233,7 @@ internal static class LineLayoutBuilder
         Element[] allElements,
         ParagraphLayoutingArea area,
         FieldVariables fieldVariables,
+        LineAlignment alignment,
         TextStyle paragraphTextStyle,
         LayoutServices services)
     {
@@ -235,11 +242,8 @@ internal static class LineLayoutBuilder
             return (line, UpdateInfo.Done);
         }
 
-        ElementLayout[] updatedElements = [];
-
         float expectedLineHeight = line.BoundingBox.Height;
-        Rectangle[] horizontalSpaces = area.CreateHorizontalSpaces(expectedLineHeight);
-        (int index, float x) activeHs = (0, 0);
+        LineSegment[] lineSegments = area.CreateLineSegments(expectedLineHeight);
         int elementIndex = 0;
 
         while (true)
@@ -250,60 +254,39 @@ internal static class LineLayoutBuilder
                 services
             );
 
-            (bool fits, int inHorizontalSpaceIndex, float onXPosition) = updated.FitsIn(horizontalSpaces, activeHs);
-            if (!fits)
+            (lineSegments, bool success) = lineSegments.TryAdd(updated);
+
+            if (!success
+                || elementIndex >= line.Words.Length - 1)
             {
                 break;
             }
 
-            activeHs = (inHorizontalSpaceIndex, onXPosition);
-            float realXPosition = horizontalSpaces[activeHs.index].Left + activeHs.x;
-            updatedElements = [.. updatedElements, updated.Offset(new Position(realXPosition, 0))];
-            activeHs = (activeHs.index, activeHs.x + updated.Size.Width);
             elementIndex++;
-            if (elementIndex >= line.Words.Length)
-            {
-                break;
-            }
-
             if (updated.Size.Height > expectedLineHeight)
             {
-                // restart layouting
+                // restart
                 expectedLineHeight = updated.Size.Height;
+                lineSegments = area.CreateLineSegments(expectedLineHeight);
                 elementIndex = 0;
-                activeHs = (0, 0);
-                horizontalSpaces = area.CreateHorizontalSpaces(expectedLineHeight);
-                updatedElements = [];
             }
         }
 
-        LineLayout ll = updatedElements.CreateLine(area.YOffset, line.Decoration, paragraphTextStyle, services);
+        bool isLastLine = lineSegments.IsLastLine(allElements);
+        ElementLayout[] updatedElements = [
+            ..lineSegments
+                .AlignElements(alignment, isLastLine)
+                .PositionElementsInLine()
+        ];
+
+        LineDecoration lineDecoration = updatedElements.CalculateLineDecoration(allElements);
+        LineLayout ll = updatedElements.CreateLine(area.YOffset, lineDecoration, paragraphTextStyle, services);
+
         UpdateInfo updateInfo = line.Words.Last().Id == ll.Words.Last().Id
             ? UpdateInfo.Done
             : UpdateInfo.ReconstructRequired;
+
         return (ll, updateInfo);
-    }
-
-    private static (bool, int horizontalSpace, float onXPosition) FitsIn(
-        this ElementLayout element,
-        Rectangle[] spaces,
-        (int index, float xPosition) activeHs)
-    {
-        int i = activeHs.index;
-        float x = activeHs.xPosition;
-
-        foreach(Rectangle space in spaces.Skip(activeHs.index))
-        {
-            if(space.Width >= x + element.Size.Width)
-            {
-                return (true, i, x);
-            }
-
-            i++;
-            x = 0;
-        }
-
-        return (false, -1, 0);
     }
 }
 
@@ -314,7 +297,7 @@ file record LineSegment(
     Rectangle RemainingArea)
 {
     public static LineSegment New(Rectangle area, bool active) =>
-        new(area, active, [], area);
+        new(area, active, [], new Rectangle(Position.Zero, area.Size));
 }
 
 file static class LineSegmentFunctions
@@ -360,6 +343,9 @@ file static class LineSegmentFunctions
         return alignedSegments;
     }
 
+    public static IEnumerable<ElementLayout> PositionElementsInLine(this LineSegment[] segments) =>
+        segments.SelectMany(s => s.PositionElementsInLine());
+
     public static bool IsLastLine(this LineSegment[] lineSegments, Element[] allElements)
     {
         if (allElements.Length == 0) return true;
@@ -391,7 +377,7 @@ file static class LineSegmentFunctions
         LineSegment updated = segment with
         {
             Active = true,
-            Elements = [.. segment.Elements, element.Offset(new Position(segment.RemainingArea.Left, 0))],
+            Elements = [.. segment.Elements, element.ResetOffset().Offset(new Position(segment.RemainingArea.Left, 0))],
             RemainingArea = segment.RemainingArea.CropFromLeft(element.Size.Width)
         };
 
@@ -404,7 +390,7 @@ file static class LineSegmentFunctions
     private static LineSegment CenterAlignElements(this LineSegment segment)
     {
         if (segment.Elements.Length == 0) return segment;
-        float xDiff = (segment.Area.Right - segment.Elements[^1].BoundingBox.Right) / 2;
+        float xDiff = (segment.Area.Size.Width - segment.Elements[^1].BoundingBox.Right) / 2;
         ElementLayout[] alignedElements = [
             ..segment.Elements
                 .Select(e => e.Offset(new Position(xDiff, 0)))
@@ -419,7 +405,7 @@ file static class LineSegmentFunctions
     private static LineSegment RightAlignElements(this LineSegment segment)
     {
         if(segment.Elements.Length == 0) return segment;
-        float xDiff = segment.Area.Right - segment.Elements[^1].BoundingBox.Right;
+        float xDiff = segment.Area.Size.Width - segment.Elements[^1].BoundingBox.Right;
         ElementLayout[] alignedElements = [
             ..segment.Elements
                 .Select(e => e.Offset(new Position(xDiff, 0)))
@@ -434,7 +420,7 @@ file static class LineSegmentFunctions
     private static LineSegment JustifyElements(this LineSegment segment)
     {
         if (segment.Elements.Length == 0) return segment;
-        float availableSpace = segment.Area.Right - segment.Elements[^1].BoundingBox.Right;
+        float availableSpace = segment.Area.Size.Width - segment.Elements[^1].BoundingBox.Right;
         int spacesCount = segment.Elements
             .OfType<SpaceLayout>()
             .Count();
@@ -465,9 +451,12 @@ file static class LineSegmentFunctions
             ? sl with
             {
                 BoundingBox = sl.BoundingBox
-                            .ResizeWidth(spaceWidth)
+                            .SetWidth(elementLayout.Size.Width + spaceWidth)
             }
             : elementLayout;
+
+    private static IEnumerable<ElementLayout> PositionElementsInLine(this LineSegment segment) =>
+        segment.Elements.Select(e => e.Offset(new Position(segment.Area.Left, 0)));
 }
 
 file record FakeLayout(Size Size)

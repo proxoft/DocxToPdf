@@ -1,6 +1,7 @@
 ﻿using Proxoft.DocxToPdf.Tests.Tools;
 using Proxoft.DocxToPdf.Documents.Styles;
 using Proxoft.DocxToPdf.Documents.Styles.Borders;
+using Proxoft.DocxToPdf.Tests.Assertions;
 
 namespace Proxoft.DocxToPdf.Tests;
 
@@ -92,6 +93,15 @@ public class PageNumberV2Test
             pages
                 .Should()
                 .NotBeEmpty();
+        });
+    }
+
+    [Fact]
+    public void TotalPagesWithImageTextWrapping()
+    {
+        _executor.Convert("TotalPagesWithImageTextWrapping", pages =>
+        {
+            pages.CountShouldBe(11);
         });
     }
 }

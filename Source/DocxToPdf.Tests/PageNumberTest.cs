@@ -35,4 +35,10 @@ public class PageNumberTest : TestBase
     {
         this.Generate(nameof(TotalPagesReconstructMultipleParagraphs));
     }
+
+    [Fact]
+    public void TotalPagesWithImageTextWrapping()
+    {
+        this.Generate(nameof(TotalPagesWithImageTextWrapping));
+    }
 }
