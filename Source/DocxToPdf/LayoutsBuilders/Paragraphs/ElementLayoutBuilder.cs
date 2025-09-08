@@ -12,11 +12,11 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders.Paragraphs;
 
 internal static class ElementLayoutBuilder
 {
-    public static ElementLayout CreateElementLayout(this Element element, float xPosition, FieldVariables fieldVariables, LayoutServices services)
+    public static ElementLayout CreateElementLayout(this Element element, FieldVariables fieldVariables, LayoutServices services)
     {
         (Size size, float baseLineOffset) = services.CalculateBoundingSizeAndBaseline(element, fieldVariables);
 
-        Rectangle boundingBox = new(new Position(xPosition, 0), size);
+        Rectangle boundingBox = new(Position.Zero, size);
         ElementLayout layout = element switch
         {
             Text t => new TextLayout(element.Id, size, baseLineOffset, boundingBox, baseLineOffset, t, Borders.None, LayoutPartition.StartEnd),
@@ -50,6 +50,6 @@ internal static class ElementLayoutBuilder
 
     private static ElementLayout Update(this ElementLayout layout, Element element, FieldVariables fieldVariables, LayoutServices services) =>
         layout is TotalPagesLayout
-            ? element.CreateElementLayout(0, fieldVariables, services)
+            ? element.CreateElementLayout(fieldVariables, services)
             : layout;
 }

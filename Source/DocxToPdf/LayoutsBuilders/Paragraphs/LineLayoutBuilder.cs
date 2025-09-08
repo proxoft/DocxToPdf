@@ -143,7 +143,9 @@ internal static class LineLayoutBuilder
             ..elements.Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
         ];
 
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, boundingBox.TopRight.X, services);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, services)
+            .Offset(new Position(boundingBox.Right, 0));
+
         return new LineLayout(justifiedElements, lineDecoration, boundingBox.MoveYBy(yPosition), Borders.None, specialChar);
     }
 
@@ -151,21 +153,20 @@ internal static class LineLayoutBuilder
     {
         float defaultLineHeight = services.CalculateLineHeight(textStyle);
         Rectangle bb = new(new Position(0, YPosition), new Size(0, defaultLineHeight));
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, 0, services);
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, services);
         return new LineLayout([], lineDecoration, bb, Borders.None, specialChar);
     }
 
     private static ElementLayout CreateLineCharacter(
        this TextStyle textStyle,
        LineDecoration lineDecoration,
-       float xPosition,
        LayoutServices services) =>
        lineDecoration switch
        {
-           LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateElementLayout(xPosition, FieldVariables.None, services),
-           LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(xPosition, FieldVariables.None, services),
-           LineDecoration.ColumnBreak => new Text(ModelId.None, "····Column Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(xPosition, FieldVariables.None, services),
-           _ => new EmptyLayout(ModelId.None, new Rectangle(new Position(xPosition, 0), Size.Zero), textStyle),
+           LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateElementLayout(FieldVariables.None, services),
+           LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(FieldVariables.None, services),
+           LineDecoration.ColumnBreak => new Text(ModelId.None, "····Column Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(FieldVariables.None, services),
+           _ => new EmptyLayout(ModelId.None, Rectangle.Empty, textStyle),
        };
 
     private static LineDecoration CalculateLineDecoration(this ElementLayout[] elementLayouts, Element[] allElements)
@@ -187,7 +188,7 @@ internal static class LineLayoutBuilder
         LayoutServices services)
     {
         int elementIndex = 0;
-        ElementLayout element = elements[elementIndex].CreateElementLayout(0, fieldVariables, services);
+        ElementLayout element = elements[elementIndex].CreateElementLayout(fieldVariables, services);
 
         float expectedLineHeight = element.Size.Height;
         LineSegment[] lineSegments = area.CreateLineSegments(expectedLineHeight);
@@ -212,7 +213,7 @@ internal static class LineLayoutBuilder
                 elementIndex = 0;
             }
 
-            element = elements[elementIndex].CreateElementLayout(0, fieldVariables, services);
+            element = elements[elementIndex].CreateElementLayout(fieldVariables, services);
         }
 
         bool isLastLine = lineSegments.IsLastLine(elements);
