@@ -24,10 +24,12 @@ internal static class TableBuilder
         Grid grid = table.CreateTableGrid();
         CellBorderPattern cellBorderPattern = table.CreateCellBorderPattern();
         Cell[] cells = [.. table.CreateCells(cellBorderPattern, services)];
+        Alignment alignment = table.GetAlignment();
 
         return new Table(
             tableId,
             cells,
+            alignment,
             grid,
             cellBorderPattern,
             new Borders(BorderStyle.None, BorderStyle.None, BorderStyle.None, BorderStyle.None)
@@ -95,5 +97,25 @@ internal static class TableBuilder
         BorderStyle insideV = borders.InsideVerticalBorder.ToBorderStyle(BorderStyle.Default);
 
         return new CellBorderPattern(top, right, bottom, left, insideH, insideV);
+    }
+
+    private static Alignment GetAlignment(this Word.Table table)
+    {
+        Word.TableProperties tableProps = table.ChildElements.OfType<Word.TableProperties>().Single();
+        OpenXml.EnumValue<Word.TableRowAlignmentValues>? ra = tableProps.ChildElements
+            .OfType<Word.TableJustification>()
+            .SingleOrDefault()
+            ?.Val;
+
+        Alignment alignment = ra.GetAlignment();
+        return alignment;
+    }
+
+    private static Alignment GetAlignment(this OpenXml.EnumValue<Word.TableRowAlignmentValues>? rowAlignmentValue)
+    {
+        if (rowAlignmentValue is null) return Alignment.Left;
+        if (rowAlignmentValue.Value == Word.TableRowAlignmentValues.Right) return Alignment.Right;
+        if (rowAlignmentValue.Value == Word.TableRowAlignmentValues.Center) return Alignment.Center;
+        return Alignment.Left;
     }
 }

@@ -55,7 +55,10 @@ internal static class TableLayoutBuilder
             }
         }
 
-        TableLayout tableLayout = cellLayouts.ComposeTableLayout(table, gridLayout);
+        TableLayout tableLayout = cellLayouts
+            .ComposeTableLayout(table, gridLayout)
+            .Align(availableArea.Width, table.Alignment);
+
         ProcessingInfo tableProcessingInfo = processingInfos.CalculateProcessingInfo();
         return (tableLayout, tableProcessingInfo);
     }
@@ -103,7 +106,10 @@ internal static class TableLayoutBuilder
             }
         }
 
-        TableLayout updatedTableLayout = cellLayouts.ComposeTableLayout(table, gridLayout);
+        TableLayout updatedTableLayout = cellLayouts
+            .ComposeTableLayout(table, gridLayout)
+            .Align(availableArea.Width, table.Alignment);
+
         UpdateInfo tableUpdateInfo = updateInfos.Any(ui => ui == UpdateInfo.ReconstructRequired)
             ? UpdateInfo.ReconstructRequired
             : UpdateInfo.Done;
@@ -146,6 +152,21 @@ internal static class TableLayoutBuilder
         );
 
         return tableLayout;
+    }
+
+    private static TableLayout Align(this TableLayout layout, float availableWidth, Alignment alignment)
+    {
+        float freeSpace = availableWidth - layout.BoundingBox.Width;
+        if (freeSpace <= 0) return layout;
+
+        float xOffset = alignment switch
+        {
+            Alignment.Center => freeSpace / 2,
+            Alignment.Right => freeSpace,
+            _  => 0
+        };
+
+        return layout.Offset(new Position(xOffset, 0));
     }
 }
 
@@ -204,7 +225,6 @@ file static class GridOperators
             .DefaultIfEmpty(LayoutPartition.StartEnd)
             .Any(lp => !lp.IsFinished());
 }
-
 
 file static class CellOperators
 {

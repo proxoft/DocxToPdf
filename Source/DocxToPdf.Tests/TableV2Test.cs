@@ -352,4 +352,13 @@ public class TableV2Test
             pages.CountShouldBe(2);
         });
     }
+
+    [Fact]
+    public void TableAlignment()
+    {
+        _executor.Convert("TableAlignment", pages =>
+        {
+            pages.CountShouldBe(1);
+        });
+    }
 }
