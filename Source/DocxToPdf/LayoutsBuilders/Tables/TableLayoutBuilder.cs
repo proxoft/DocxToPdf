@@ -55,20 +55,7 @@ internal static class TableLayoutBuilder
             }
         }
 
-        Rectangle boundingBox = cellLayouts
-            .CalculateBoundingBox(Rectangle.Empty);
-
-        LayoutPartition layoutPartition = table.Cells.CalculateLayoutPartition(cellLayouts);
-
-        TableLayout tableLayout = new(
-            table.Id,
-            cellLayouts,
-            gridLayout,
-            boundingBox,
-            Borders.None,
-            layoutPartition
-        );
-
+        TableLayout tableLayout = cellLayouts.ComposeTableLayout(table, gridLayout);
         ProcessingInfo tableProcessingInfo = processingInfos.CalculateProcessingInfo();
         return (tableLayout, tableProcessingInfo);
     }
@@ -116,20 +103,7 @@ internal static class TableLayoutBuilder
             }
         }
 
-        Rectangle boundingBox = cellLayouts
-            .CalculateBoundingBox(Rectangle.Empty);
-
-        LayoutPartition layoutPartition = table.Cells.CalculateLayoutPartition(cellLayouts);
-
-        TableLayout updatedTableLayout = new(
-            table.Id,
-            cellLayouts,
-            gridLayout,
-            boundingBox,
-            Borders.None,
-            layoutPartition
-        );
-
+        TableLayout updatedTableLayout = cellLayouts.ComposeTableLayout(table, gridLayout);
         UpdateInfo tableUpdateInfo = updateInfos.Any(ui => ui == UpdateInfo.ReconstructRequired)
             ? UpdateInfo.ReconstructRequired
             : UpdateInfo.Done;
@@ -153,6 +127,25 @@ internal static class TableLayoutBuilder
             .SkipWhile(c => !lastPageCellLayouts.Any(l => l.ModelId == c.Id)) // skip cells processed on pages before last page
             .Where(c => !c.IsCellLayoutingFinished(lastPageCellLayouts))
             ;
+    }
+
+    private static TableLayout ComposeTableLayout(this CellLayout[] cellLayouts, Table table, GridLayout gridLayout)
+    {
+        Rectangle boundingBox = cellLayouts
+            .CalculateBoundingBox(Rectangle.Empty);
+
+        LayoutPartition layoutPartition = table.Cells.CalculateLayoutPartition(cellLayouts);
+
+        TableLayout tableLayout = new(
+            table.Id,
+            cellLayouts,
+            gridLayout,
+            boundingBox,
+            Borders.None,
+            layoutPartition
+        );
+
+        return tableLayout;
     }
 }
 
@@ -231,23 +224,4 @@ file static class ProcessingInfoOperators
         cellProcessingInfos.Any(ip => ip is ProcessingInfo.RequestDrawingArea or ProcessingInfo.IgnoreAndRequestDrawingArea)
             ? ProcessingInfo.RequestDrawingArea
             : ProcessingInfo.Done;
-}
-
-file static class LayoutPartitionOperators
-{
-    public static LayoutPartition CalculateLayoutPartition(this IEnumerable<LayoutPartition> cellLayoutPartitions, LayoutPartition previousTablePartition)
-    {
-        LayoutPartition result = LayoutPartition.Middle;
-        if(previousTablePartition.IsFinished())
-        {
-            result |= LayoutPartition.Start;
-        }
-
-        if(cellLayoutPartitions.All(lp => lp.IsFinished()))
-        {
-            result |= LayoutPartition.End;
-        }
-
-        return result;
-    }
 }

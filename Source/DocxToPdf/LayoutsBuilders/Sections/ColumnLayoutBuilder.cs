@@ -33,18 +33,8 @@ internal static class ColumnLayoutBuilder
             services
             );
 
-        LayoutPartition lp = section.CalculateLayoutPartition(layouts);
-        Rectangle boudingBox = layouts
-            .CalculateBoundingBox(lp.DefaultBoundingBox(availableArea));
-
-        ColumnLayout columnLayout = new(
-            section.Id,
-            layouts,
-            boudingBox,
-            Borders.None,
-            lp
-        );
-
+        
+        ColumnLayout columnLayout = layouts.ComposeColumnLayout(section, availableArea.Width);
         return (columnLayout, processingInfo);
     }
 
@@ -63,19 +53,25 @@ internal static class ColumnLayoutBuilder
             fieldVariables,
             services);
 
-        LayoutPartition lp = section.CalculateLayoutPartition(updatedLayouts);
-        Rectangle boudingBox = updatedLayouts
-            .CalculateBoundingBox(lp.DefaultBoundingBox(availableArea));
+        ColumnLayout updatedColumnLayout = updatedLayouts.ComposeColumnLayout(section, availableArea.Width);
+        return (updatedColumnLayout, updateInfo);
+    }
 
-        ColumnLayout updatedColumnLayout = new(
-            section.Id,
-            updatedLayouts,
-            boudingBox,
-            Borders.None,
-            lp
+    private static ColumnLayout ComposeColumnLayout(this Layout[] layouts, Section section, float width)
+    {
+        LayoutPartition lp = section.CalculateLayoutPartition(layouts);
+        Rectangle boudingBox = layouts
+            .CalculateBoundingBox(new Size(width, 0));
+
+        ColumnLayout columnLayout = new(
+           section.Id,
+           layouts,
+           boudingBox,
+           Borders.None,
+           lp
         );
 
-        return (updatedColumnLayout, updateInfo);
+        return columnLayout;
     }
 }
 
