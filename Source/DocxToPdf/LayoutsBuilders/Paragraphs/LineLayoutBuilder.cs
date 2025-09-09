@@ -24,7 +24,7 @@ internal static class LineLayoutBuilder
         Element[] unprocessed = [.. elements];
         if (unprocessed.Length == 0)
         {
-            LineLayout ll = CreateEmptyLine(0, LineDecoration.Last, style.TextStyle, services);
+            LineLayout ll = style.TextStyle.CreateEmptyLine(0, LineDecoration.Last, services);
             if (ll.BoundingBox.Height > area.AvailableSize.Height)
             {
                 return ([], ProcessingInfo.IgnoreAndRequestDrawingArea);
@@ -104,7 +104,7 @@ internal static class LineLayoutBuilder
             }
         }
 
-        if (lines.LastProcessedElementId() != updatedLines.LastProcessedElementId()) // some lines 
+        if (lines.LastProcessedElementId() != updatedLines.LastProcessedElementId())
         {
             ModelId lastProcesseId = updatedLines.LastProcessedElementId();
             Element[] unprocessed = [.. paragraph.Elements.SkipProcessed(lastProcesseId, true)];
@@ -117,66 +117,6 @@ internal static class LineLayoutBuilder
             : UpdateInfo.ReconstructRequired;
 
         return (updatedLines, updateInfo);
-    }
-
-    private static LineLayout CreateLine(this ElementLayout[] elements, float yPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
-    {
-        if(elements.Length == 0)
-        {
-            return CreateEmptyLine(yPosition, lineDecoration, textStyle, services);
-        }
-
-        float height = elements
-            .Select(e => e.Size.Height)
-            .Max();
-
-        Rectangle boundingBox = elements
-            .Append(FakeLayout.New(height)) // ensure the line will start on position 0,0
-            .CalculateBoundingBox()
-            ;
-
-        float lineBaselineOffset = elements
-            .Select(e => e.BaselineOffset)
-            .Max();
-
-        ElementLayout[] justifiedElements = [
-            ..elements.Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
-        ];
-
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, services)
-            .Offset(new Position(boundingBox.Right, 0));
-
-        return new LineLayout(justifiedElements, lineDecoration, boundingBox.MoveYBy(yPosition), Borders.None, specialChar);
-    }
-
-    private static LineLayout CreateEmptyLine(float YPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
-    {
-        float defaultLineHeight = services.CalculateLineHeight(textStyle);
-        Rectangle bb = new(new Position(0, YPosition), new Size(0, defaultLineHeight));
-        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, services);
-        return new LineLayout([], lineDecoration, bb, Borders.None, specialChar);
-    }
-
-    private static ElementLayout CreateLineCharacter(
-       this TextStyle textStyle,
-       LineDecoration lineDecoration,
-       LayoutServices services) =>
-       lineDecoration switch
-       {
-           LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateElementLayout(FieldVariables.None, services),
-           LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(FieldVariables.None, services),
-           LineDecoration.ColumnBreak => new Text(ModelId.None, "····Column Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(FieldVariables.None, services),
-           _ => new EmptyLayout(ModelId.None, Rectangle.Empty, textStyle),
-       };
-
-    private static LineDecoration CalculateLineDecoration(this ElementLayout[] elementLayouts, Element[] allElements)
-    {
-        if (allElements.Length == 0) return LineDecoration.Last;    // empty line
-        if (elementLayouts.Length == 0) return LineDecoration.None;
-        if (elementLayouts.Last() is BreakLayout pb && pb.BreakType == BreakType.Page) return  LineDecoration.PageBreak;
-        if (elementLayouts.Last() is BreakLayout cb && cb.BreakType == BreakType.Column) return  LineDecoration.ColumnBreak;
-        if (elementLayouts.Last().Id == allElements.Last().Id) return LineDecoration.Last;
-        return LineDecoration.None;
     }
 
     private static LineLayout CreateLine(
@@ -216,16 +156,7 @@ internal static class LineLayoutBuilder
             element = elements[elementIndex].CreateElementLayout(fieldVariables, services);
         }
 
-        bool isLastLine = lineSegments.IsLastLine(elements);
-        ElementLayout[] elementLayouts = [
-            ..lineSegments
-                .AlignElements(alignment, isLastLine)
-                .PositionElementsInLine()
-        ];
-
-        LineDecoration lineDecoration = elementLayouts.CalculateLineDecoration(elements);
-        LineLayout line = elementLayouts.CreateLine(area.YOffset, lineDecoration, paragraphTextStyle, services);
-
+        LineLayout line = lineSegments.CreateLineLayout(area.YOffset, alignment, elements, paragraphTextStyle, services);
         return line;
     }
 
@@ -273,16 +204,7 @@ internal static class LineLayoutBuilder
             }
         }
 
-        bool isLastLine = lineSegments.IsLastLine(allElements);
-        ElementLayout[] updatedElements = [
-            ..lineSegments
-                .AlignElements(alignment, isLastLine)
-                .PositionElementsInLine()
-        ];
-
-        LineDecoration lineDecoration = updatedElements.CalculateLineDecoration(allElements);
-        LineLayout ll = updatedElements.CreateLine(area.YOffset, lineDecoration, paragraphTextStyle, services);
-
+        LineLayout ll = lineSegments.CreateLineLayout(area.YOffset, alignment, allElements, paragraphTextStyle, services);
         UpdateInfo updateInfo = line.Words.Last().Id == ll.Words.Last().Id
             ? UpdateInfo.Done
             : UpdateInfo.ReconstructRequired;
@@ -327,6 +249,27 @@ file static class LineSegmentFunctions
         }
 
         return (updated, success);
+    }
+
+    public static LineLayout CreateLineLayout(
+        this LineSegment[] segments,
+        float yOffset,
+        LineAlignment alignment,
+        Element[] allElements,
+        TextStyle paragraphTextStyle,
+        LayoutServices services)
+    {
+        bool isLastLine = segments.IsLastLine(allElements);
+     
+        ElementLayout[] elementLayouts = [
+            ..segments
+                .AlignElements(alignment, isLastLine)
+                .PositionElementsInLine()
+        ];
+
+        LineDecoration lineDecoration = elementLayouts.CalculateLineDecoration(allElements);
+        LineLayout line = elementLayouts.CreateLine(yOffset, lineDecoration, paragraphTextStyle, services);
+        return line;
     }
 
     public static LineSegment[] AlignElements(this LineSegment[] segments, LineAlignment lineAlignment, bool isLastLine)
@@ -458,6 +401,72 @@ file static class LineSegmentFunctions
 
     private static IEnumerable<ElementLayout> PositionElementsInLine(this LineSegment segment) =>
         segment.Elements.Select(e => e.Offset(new Position(segment.Area.Left, 0)));
+}
+
+file static class ElementLayoutOperators
+{
+    public static LineDecoration CalculateLineDecoration(this ElementLayout[] elementLayouts, Element[] allElements)
+    {
+        if (allElements.Length == 0) return LineDecoration.Last;    // empty line
+        if (elementLayouts.Length == 0) return LineDecoration.None;
+        if (elementLayouts.Last() is BreakLayout pb && pb.BreakType == BreakType.Page) return LineDecoration.PageBreak;
+        if (elementLayouts.Last() is BreakLayout cb && cb.BreakType == BreakType.Column) return LineDecoration.ColumnBreak;
+        if (elementLayouts.Last().Id == allElements.Last().Id) return LineDecoration.Last;
+        return LineDecoration.None;
+    }
+
+    public static LineLayout CreateLine(this ElementLayout[] elements, float yPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
+    {
+        if (elements.Length == 0)
+        {
+            return textStyle.CreateEmptyLine(yPosition, lineDecoration, services);
+        }
+
+        float height = elements
+            .Select(e => e.Size.Height)
+            .Max();
+
+        Rectangle boundingBox = elements
+            .Append(FakeLayout.New(height)) // ensure the line will start on position 0,0
+            .CalculateBoundingBox()
+            ;
+
+        float lineBaselineOffset = elements
+            .Select(e => e.BaselineOffset)
+            .Max();
+
+        ElementLayout[] justifiedElements = [
+            ..elements.Select(e => e.UpdateBoudingBox(height, lineBaselineOffset))
+        ];
+
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, services)
+            .Offset(new Position(boundingBox.Right, 0));
+
+        return new LineLayout(justifiedElements, lineDecoration, boundingBox.MoveYBy(yPosition), Borders.None, specialChar);
+    }
+}
+
+file static class TextStyleExtensions
+{
+    public static ElementLayout CreateLineCharacter(
+       this TextStyle textStyle,
+       LineDecoration lineDecoration,
+       LayoutServices services) =>
+       lineDecoration switch
+       {
+           LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateElementLayout(FieldVariables.None, services),
+           LineDecoration.PageBreak => new Text(ModelId.None, "····Page Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(FieldVariables.None, services),
+           LineDecoration.ColumnBreak => new Text(ModelId.None, "····Column Break····¶", textStyle.ResizeFont(-3)).CreateElementLayout(FieldVariables.None, services),
+           _ => new EmptyLayout(ModelId.None, Rectangle.Empty, textStyle),
+       };
+
+    public static LineLayout CreateEmptyLine(this TextStyle textStyle, float YPosition, LineDecoration lineDecoration, LayoutServices services)
+    {
+        float defaultLineHeight = services.CalculateLineHeight(textStyle);
+        Rectangle bb = new(new Position(0, YPosition), new Size(0, defaultLineHeight));
+        ElementLayout specialChar = textStyle.CreateLineCharacter(lineDecoration, services);
+        return new LineLayout([], lineDecoration, bb, Borders.None, specialChar);
+    }
 }
 
 file record FakeLayout(Size Size)
