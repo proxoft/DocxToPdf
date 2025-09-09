@@ -29,6 +29,15 @@ public class TableV2Test
     }
 
     [Fact]
+    public void TableBorders()
+    {
+        _executor.Convert("TableBorders", pages =>
+        {
+            pages.CountShouldBe(1);
+        });
+    }
+
+    [Fact]
     public void CellBorders()
     {
         _executor.Convert("CellBorders", pages =>
