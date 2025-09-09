@@ -1,5 +1,7 @@
 ﻿using System.Linq;
 using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Layouts.Footers;
+using Proxoft.DocxToPdf.Layouts.Headers;
 using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
@@ -62,4 +64,10 @@ internal static class PageAssertions
             .Sections[0]
             .ShouldContainParagraph();
     }
+
+    public static HeaderLayout ShouldHaveHeader(this PageLayout page) =>
+        page.PageContent.Header;
+
+    public static FooterLayout ShouldHaveFooter(this PageLayout page) =>
+        page.PageContent.Footer;
 }

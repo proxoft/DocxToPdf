@@ -37,11 +37,12 @@ file static class Operators
 
     private static IEnumerable<SectionData> SplitToSectionData(this Word.Body body, BuilderServices services)
     {
-        List<OpenXml.OpenXmlCompositeElement> sectionElements = [];
+        OpenXml.OpenXmlCompositeElement[] sectionElements = [];
+        HeaderFooterConfiguration previous = HeaderFooterConfiguration.None;
 
         foreach (OpenXml.OpenXmlCompositeElement child in body.ParagraphsAndTables())
         {
-            sectionElements.Add(child);
+            sectionElements = [.. sectionElements, child];
 
             if (child is not Word.Paragraph p)
             {
@@ -54,16 +55,18 @@ file static class Operators
                 continue;
             }
 
-            HeaderFooterConfiguration hfc = secProps.CreateHeaderFooterConfiguration(services);
+            HeaderFooterConfiguration hfc = secProps.CreateHeaderFooterConfiguration(previous, services);
             yield return new SectionData(secProps, [.. sectionElements], hfc);
-            sectionElements.Clear();
+
+            previous = hfc;
+            sectionElements = [];
         }
 
         Word.SectionProperties wordSectionProperties = body
            .ChildsOfType<Word.SectionProperties>()
            .Single();
 
-        HeaderFooterConfiguration headerFooterConfiguration = wordSectionProperties.CreateHeaderFooterConfiguration(services);
+        HeaderFooterConfiguration headerFooterConfiguration = wordSectionProperties.CreateHeaderFooterConfiguration(previous, services);
         yield return new SectionData(wordSectionProperties, [.. sectionElements], headerFooterConfiguration);
     }
 
@@ -162,6 +165,7 @@ file static class Operators
 
     private static HeaderFooterConfiguration CreateHeaderFooterConfiguration(
         this Word.SectionProperties sectionProperties,
+        HeaderFooterConfiguration previousHeaderFooterConfiguration,
         BuilderServices services
         )
     {
@@ -172,6 +176,16 @@ file static class Operators
 
         Dictionary<PageNumberType, Header> headers = sectionProperties.CreateHeaders(services);
         Dictionary<PageNumberType, Footer> footers = sectionProperties.CreateFooters(services);
+
+        if (headers.Count == 0)
+        {
+            headers = previousHeaderFooterConfiguration.Headers;
+        }
+
+        if (footers.Count == 0)
+        {
+            footers = previousHeaderFooterConfiguration.Footers;
+        }
 
         return new HeaderFooterConfiguration(
             HasTitlePage: hasTitlePage,

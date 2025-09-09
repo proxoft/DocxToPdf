@@ -13,11 +13,16 @@ internal class DocxToPdfExecutor(
     private readonly string _pdfOutputPattern = pdfOutputPattern;
     private readonly RenderOptions _options = options;
 
-    public void Convert(string fileName, Action<PageLayout[]> assert)
+    public PageLayout[] Convert(string fileName)
     {
         PageLayout[] pages = _docxSourcePattern.Replace("{0}", fileName).ReadAndLayoutDocument();
         _pdfOutputPattern.Replace("{0}", fileName).RenderAndSave(pages, _options);
+        return pages;
+    }
 
+    public void Convert(string fileName, Action<PageLayout[]> assert)
+    {
+        PageLayout[] pages = this.Convert(fileName);
         assert(pages);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Proxoft.DocxToPdf.Documents.Styles.Borders;
+using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Sections;
 using Proxoft.DocxToPdf.Tests.Assertions;
 using Proxoft.DocxToPdf.Tests.Tools;
@@ -143,6 +144,90 @@ public class SectionV2Test
         _executor.Convert("DefaultMargins", pages =>
         {
             pages.CountShouldBe(3);
+        });
+    }
+
+    [Fact]
+    public void DifferentHeaderFooterForSections()
+    {
+        _executor.Convert("DifferentHeaderFooterForSections", pages =>
+        {
+            pages.CountShouldBe(2);
+
+            pages[0]
+                .ShouldHaveHeader()
+                .ShouldHaveText("Header defined in the first section");
+
+            pages[1]
+                .ShouldHaveHeader()
+                .ShouldHaveText("Header defined in the second section");
+
+            pages[0]
+                .ShouldHaveFooter()
+                .ShouldHaveText("Footer defined in the first section");
+
+            pages[1]
+                .ShouldHaveFooter()
+                .ShouldHaveText("Footer defined in the second section");
+        });
+    }
+
+    [Fact]
+    public void DifferentHeaderSameFooterForSections()
+    {
+        _executor.Convert("DifferentHeaderSameFooterForSections", pages =>
+        {
+            pages.CountShouldBe(2);
+
+            pages[0]
+                .ShouldHaveHeader()
+                .ShouldHaveText("Header defined in the first section");
+
+            pages[1]
+                .ShouldHaveHeader()
+                .ShouldHaveText("Header defined in the second section");
+
+            pages[0]
+                .ShouldHaveFooter()
+                .ShouldHaveText("Footer defined in the first section");
+
+            pages[1]
+                .ShouldHaveFooter()
+                .ShouldHaveText("Footer defined in the first section");
+        });
+    }
+
+    [Fact]
+    public void HeaderFooterOnContinuosSections()
+    {
+        _executor.Convert("HeaderFooterOnContinuosSections", pages =>
+        {
+            pages.CountShouldBe(2);
+        });
+    }
+
+    [Fact]
+    public void SameHeaderDifferentFooterForSections()
+    {
+        _executor.Convert("SameHeaderDifferentFooterForSections", pages =>
+        {
+            pages.CountShouldBe(2);
+
+            pages[0]
+                .ShouldHaveHeader()
+                .ShouldHaveText("Header defined in the first section");
+
+            pages[1]
+                .ShouldHaveHeader()
+                .ShouldHaveText("Header defined in the first section");
+
+            pages[0]
+                .ShouldHaveFooter()
+                .ShouldHaveText("Footer defined in the first section");
+
+            pages[1]
+                .ShouldHaveFooter()
+                .ShouldHaveText("Footer defined in the second section");
         });
     }
 
