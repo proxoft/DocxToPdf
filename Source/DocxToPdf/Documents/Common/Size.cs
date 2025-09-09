@@ -6,6 +6,9 @@ internal record Size(float Width, float Height)
 {
     public static readonly Size Zero = new(0, 0);
 
+    public Size ExpandHeight(float delta) =>
+        new(this.Width, Math.Max(0, this.Height + delta));
+
     public Size DecreaseHeight(float height) =>
         new(this.Width, Math.Max(0, this.Height - height));
 

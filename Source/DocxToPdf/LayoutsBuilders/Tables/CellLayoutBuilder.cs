@@ -19,8 +19,6 @@ internal static class CellLayoutBuilder
         LayoutServices services)
     {
         Model[] unprocessed = cell.Unprocessed(previousLayout.ParagraphsOrTables);
-        
-
         Padding effectivePadding = cell.Padding.UpdatePaddingByPartitioning(previousLayout);
         Size remainingArea = availableArea
             .Clip(effectivePadding);
@@ -31,24 +29,7 @@ internal static class CellLayoutBuilder
             fieldVariables,
             services);
 
-        Position offset = new(effectivePadding.Left, effectivePadding.Top);
-        layouts = [..layouts.Select(l => l.Offset(offset))];
-
-        Rectangle boundingBox = layouts
-           .CalculateBoundingBox(new Size(remainingArea.Width, 0))
-           .Expand(effectivePadding)
-           ;
-
-        LayoutPartition layoutPartition = cell.CalculateLayoutPartition(layouts, previousLayout);
-        CellLayout cellLayout = new(
-            cell.Id,
-            layouts,
-            boundingBox,
-            cell.Borders,
-            cell.GridPosition,
-            layoutPartition
-        );
-
+        CellLayout cellLayout = layouts.CreateCellLayout(cell, remainingArea.Width, effectivePadding, previousLayout);
         return (cellLayout, processingInfo);
     }
 
@@ -65,7 +46,7 @@ internal static class CellLayoutBuilder
         Size cellContentArea = availableArea
             .Clip(effectivePadding);
 
-        (Layout[] updatedLayouts, UpdateInfo updateInfo) = cellLayout.ParagraphsOrTables.UpdateParagraphAndTableLayouts(
+        (Layout[] updatedLayouts, _) = cellLayout.ParagraphsOrTables.UpdateParagraphAndTableLayouts(
             cell.ParagraphsOrTables,
             cellContentArea,
             previousPageCellLayout,
@@ -73,30 +54,10 @@ internal static class CellLayoutBuilder
             services
         );
 
-        Position offset = new(effectivePadding.Left, effectivePadding.Top);
-        updatedLayouts = [.. updatedLayouts.Select(l => l.Offset(offset))];
-
-        Rectangle boundingBox = updatedLayouts
-           .CalculateBoundingBox(new Size(cellContentArea.Width, 0))
-           .Expand(effectivePadding)
-           ;
-
-        LayoutPartition layoutPartition = cell.CalculateLayoutPartition(
-            updatedLayouts,
-            previousPageCellLayout
-        );
-
-        CellLayout updatedCellLayout = new(
-            cell.Id,
-            updatedLayouts,
-            boundingBox,
-            cell.Borders,
-            cell.GridPosition,
-            layoutPartition
-        );
+        CellLayout updatedCellLayout = updatedLayouts.CreateCellLayout(cell, cellContentArea.Width, effectivePadding, previousPageCellLayout);
 
         bool isCellFinished = updatedLayouts.IsUpdateFinished(cellLayout.ParagraphsOrTables);
-        updateInfo = isCellFinished
+        UpdateInfo updateInfo = isCellFinished
             ? UpdateInfo.Done
             : UpdateInfo.ReconstructRequired;
 
@@ -162,6 +123,37 @@ internal static class CellLayoutBuilder
         {
             Partition = cellLayout.Partition.RemoveEnd()
         };
+
+    private static CellLayout CreateCellLayout(
+        this Layout[] childLayouts,
+        Cell cell,
+        float contentWidth,
+        Padding padding,
+        CellLayout previousLayout)
+    {
+        Position offset = new(padding.Left, padding.Top);
+        Layout[] positionedLayouts = [.. childLayouts.Select(l => l.Offset(offset))];
+
+        Size size = positionedLayouts
+            .Select(l => l.BoundingBox)
+            .CalculateBoundingBoxSize(new Size(contentWidth, 0))
+            .Expand(padding)
+            ;
+
+        Rectangle boundingBox = new(Position.Zero, size);
+
+        LayoutPartition layoutPartition = cell.CalculateLayoutPartition(positionedLayouts, previousLayout);
+        CellLayout cellLayout = new(
+            cell.Id,
+            positionedLayouts,
+            boundingBox,
+            cell.Borders,
+            cell.GridPosition,
+            layoutPartition
+        );
+
+        return cellLayout;
+    }
 }
 
 file static class CellOperators

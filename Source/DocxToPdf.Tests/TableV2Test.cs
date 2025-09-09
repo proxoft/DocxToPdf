@@ -2,6 +2,8 @@
 using Proxoft.DocxToPdf.Tests.Tools;
 using Proxoft.DocxToPdf.Tests.Assertions;
 using Proxoft.DocxToPdf.Layouts.Tables;
+using Proxoft.DocxToPdf.Documents.Styles;
+using Proxoft.DocxToPdf.Documents.Styles.Borders;
 
 namespace Proxoft.DocxToPdf.Tests;
 
@@ -12,6 +14,7 @@ public class TableV2Test
         "Tables/{0}_v2.pdf",
         new RenderOptions()
         {
+            SectionBorder = new BorderStyle(new Color("FF0000"), 1, LineStyle.Solid),
             RenderParagraphCharacter = true
         }
     );
