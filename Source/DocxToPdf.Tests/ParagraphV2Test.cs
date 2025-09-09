@@ -13,9 +13,8 @@ public class ParagraphV2Test
         {
             // PageContentBorder = new BorderStyle(new Documents.Styles.Color("458976"), 1, Documents.Styles.Borders.LineStyle.Solid),
             // SectionBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
-            // LineBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
-            // WordBorder = new BorderStyle(new Documents.Styles.Color("458976"), 1, Documents.Styles.Borders.LineStyle.Solid)
-            ParagraphBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
+            LineBorder = new BorderStyle(new Documents.Styles.Color("00FF00"), 1, Documents.Styles.Borders.LineStyle.Solid),
+            //ParagraphBorder = new BorderStyle(new Documents.Styles.Color("FF0000"), 1, Documents.Styles.Borders.LineStyle.Solid),
             RenderWhitespaceCharacters = true,
             RenderParagraphCharacter = true,
         }

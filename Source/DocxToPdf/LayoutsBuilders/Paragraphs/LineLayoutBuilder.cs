@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
+using DocumentFormat.OpenXml.Office2016.Drawing.Command;
 using Proxoft.DocxToPdf.Documents;
 using Proxoft.DocxToPdf.Documents.Common;
 using Proxoft.DocxToPdf.Documents.Paragraphs;
@@ -260,7 +262,7 @@ file static class LineSegmentFunctions
         LayoutServices services)
     {
         bool isLastLine = segments.IsLastLine(allElements);
-     
+
         ElementLayout[] elementLayouts = [
             ..segments
                 .AlignElements(alignment, isLastLine)
@@ -272,7 +274,7 @@ file static class LineSegmentFunctions
         return line;
     }
 
-    public static LineSegment[] AlignElements(this LineSegment[] segments, LineAlignment lineAlignment, bool isLastLine)
+    private static LineSegment[] AlignElements(this LineSegment[] segments, LineAlignment lineAlignment, bool isLastLine)
     {
         LineSegment[] alignedSegments = lineAlignment switch
         {
@@ -287,10 +289,10 @@ file static class LineSegmentFunctions
         return alignedSegments;
     }
 
-    public static IEnumerable<ElementLayout> PositionElementsInLine(this LineSegment[] segments) =>
+    private static IEnumerable<ElementLayout> PositionElementsInLine(this LineSegment[] segments) =>
         segments.SelectMany(s => s.PositionElementsInLine());
 
-    public static bool IsLastLine(this LineSegment[] lineSegments, Element[] allElements)
+    private static bool IsLastLine(this LineSegment[] lineSegments, Element[] allElements)
     {
         if (allElements.Length == 0) return true;
 
@@ -307,7 +309,7 @@ file static class LineSegmentFunctions
 
     private static (LineSegment segment, bool success) TryAdd(this LineSegment segment, ElementLayout element)
     {
-        if (!element.FitsIn(segment))
+        if (!element.CanAdd(segment))
         {
             return (
                 segment with
@@ -318,23 +320,34 @@ file static class LineSegmentFunctions
             );
         }
 
+        LineSegment updated = segment.Add(element);
+        return (updated, true);
+    }
+
+    private static bool CanAdd(this ElementLayout element, LineSegment segment) =>
+        segment.RemainingArea.Width >= element.Size.Width
+        || element is SpaceLayout;
+
+    private static LineSegment Add(this LineSegment segment, ElementLayout element)
+    {
+        Rectangle remainingArea = segment.RemainingArea.Width < element.Size.Width
+            ? new Rectangle(segment.RemainingArea.TopRight, Size.Zero)
+            : segment.RemainingArea.CropFromLeft(element.Size.Width);
+
         LineSegment updated = segment with
         {
             Active = true,
             Elements = [.. segment.Elements, element.ResetOffset().Offset(new Position(segment.RemainingArea.Left, 0))],
-            RemainingArea = segment.RemainingArea.CropFromLeft(element.Size.Width)
+            RemainingArea = remainingArea
         };
 
-        return (updated, true);
+        return updated;
     }
-
-    private static bool FitsIn(this ElementLayout element, LineSegment segment) =>
-        segment.RemainingArea.Width >= element.Size.Width;
 
     private static LineSegment CenterAlignElements(this LineSegment segment)
     {
         if (segment.Elements.Length == 0) return segment;
-        float xDiff = (segment.Area.Size.Width - segment.Elements[^1].BoundingBox.Right) / 2;
+        float xDiff = (segment.Area.Size.Width - segment.WidthWithoutTrailingSpaces()) / 2;
         ElementLayout[] alignedElements = [
             ..segment.Elements
                 .Select(e => e.Offset(new Position(xDiff, 0)))
@@ -349,7 +362,8 @@ file static class LineSegmentFunctions
     private static LineSegment RightAlignElements(this LineSegment segment)
     {
         if(segment.Elements.Length == 0) return segment;
-        float xDiff = segment.Area.Size.Width - segment.Elements[^1].BoundingBox.Right;
+
+        float xDiff = segment.Area.Size.Width - segment.WidthWithoutTrailingSpaces(); //segment.Elements[^1].BoundingBox.Right;
         ElementLayout[] alignedElements = [
             ..segment.Elements
                 .Select(e => e.Offset(new Position(xDiff, 0)))
@@ -364,24 +378,33 @@ file static class LineSegmentFunctions
     private static LineSegment JustifyElements(this LineSegment segment)
     {
         if (segment.Elements.Length == 0) return segment;
-        float availableSpace = segment.Area.Size.Width - segment.Elements[^1].BoundingBox.Right;
+
         int spacesCount = segment.Elements
+            .WithoutTrailingSpaces()
             .OfType<SpaceLayout>()
             .Count();
 
-        if(spacesCount == 0) return segment;
+        int trailingSpaceIndex = segment.Elements.WithoutTrailingSpaces().Count();
+
+        if (spacesCount == 0) return segment;
+
+        float availableSpace = segment.Area.Size.Width - segment.WidthWithoutTrailingSpaces(); //segment.Elements[^1].BoundingBox.Right;
         float widthPerSpace = availableSpace / spacesCount;
         float x = 0;
-        ElementLayout[] justified = [..segment.Elements
-            .Select(e =>
-            {
-                ElementLayout jel = e.JustifyWidth(widthPerSpace)
-                    .ResetOffset()
-                    .Offset(new Position(x, 0));
+        ElementLayout[] justified = [
+            ..segment
+                .Elements
+                .Select((e, index) =>
+                {
+                    bool isTrailing = index >= trailingSpaceIndex;
+                    ElementLayout jel = e
+                        .JustifyWidth(widthPerSpace, isTrailing)
+                        .ResetOffset()
+                        .Offset(new Position(x, 0));
 
-                x += jel.BoundingBox.Width;
-                return jel;
-            })
+                    x += jel.BoundingBox.Width;
+                    return jel;
+                })
         ];
 
         return segment with
@@ -390,8 +413,8 @@ file static class LineSegmentFunctions
         };
     }
 
-    private static ElementLayout JustifyWidth(this ElementLayout elementLayout, float spaceWidth) =>
-        elementLayout is SpaceLayout sl
+    private static ElementLayout JustifyWidth(this ElementLayout elementLayout, float spaceWidth, bool isTrailing) =>
+        elementLayout is SpaceLayout sl && !isTrailing
             ? sl with
             {
                 BoundingBox = sl.BoundingBox
@@ -401,6 +424,13 @@ file static class LineSegmentFunctions
 
     private static IEnumerable<ElementLayout> PositionElementsInLine(this LineSegment segment) =>
         segment.Elements.Select(e => e.Offset(new Position(segment.Area.Left, 0)));
+
+    private static float WidthWithoutTrailingSpaces(this LineSegment segment) =>
+        segment.Elements
+            .WithoutTrailingSpaces()
+            .Select(e => e.Size.Width)
+            .DefaultIfEmpty(0)
+            .Sum();
 }
 
 file static class ElementLayoutOperators
@@ -427,6 +457,7 @@ file static class ElementLayoutOperators
             .Max();
 
         Rectangle boundingBox = elements
+            .WithoutTrailingSpaces()
             .Append(FakeLayout.New(height)) // ensure the line will start on position 0,0
             .CalculateBoundingBox()
             ;
@@ -444,6 +475,15 @@ file static class ElementLayoutOperators
 
         return new LineLayout(justifiedElements, lineDecoration, boundingBox.MoveYBy(yPosition), Borders.None, specialChar);
     }
+
+    public static IEnumerable<ElementLayout> WithoutTrailingSpaces(this ElementLayout[] elements) =>
+        elements
+            .Reverse()
+            .SkipWhile(e => e.IsSpace())
+            .Reverse();
+
+    public static bool IsSpace(this ElementLayout element) =>
+        element is SpaceLayout;
 }
 
 file static class TextStyleExtensions
