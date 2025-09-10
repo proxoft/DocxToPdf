@@ -42,6 +42,7 @@ file static class XUnitCalculator
 {
     private static readonly D.Graphics _graphics;
     private static readonly D.StringFormat _stringFormat;
+    private static object _lock = new();
 
     static XUnitCalculator()
     {
@@ -58,7 +59,11 @@ file static class XUnitCalculator
     public static (Size boundingBox, float baseLineOffset) CalculateBoundingBox(string text, TextStyle textStyle)
     {
         D.Font font = new(textStyle.FontFamily, textStyle.FontSize, D.FontStyle.Regular);
-        D.SizeF sizeF = _graphics.MeasureString(text, font, D.PointF.Empty, _stringFormat);
+        D.SizeF sizeF = D.SizeF.Empty;
+        lock (_lock)
+        {
+            sizeF = _graphics.MeasureString(text, font, D.PointF.Empty, _stringFormat);
+        }
 
         float cellAscent = font.SizeInPoints * font.FontFamily.GetCellAscent(font.Style) / font.FontFamily.GetEmHeight(font.Style);
         return (new Size(sizeF.Width, sizeF.Height), sizeF.Height - cellAscent);

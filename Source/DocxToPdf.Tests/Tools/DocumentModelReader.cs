@@ -14,6 +14,8 @@ internal static class DocumentModelReader
     private const string _samples = "../../../../../Repository/Source/Samples/";
     private const string _outputFolder = $"../../../../TestOutputs/";
 
+    private static readonly object _lock = new();
+
     public static PageLayout[] ReadAndLayoutDocument(this string docxSubpath)
     {
         DocumentModel dm = docxSubpath.ReadDocumentModel();
@@ -37,7 +39,12 @@ internal static class DocumentModelReader
     public static void Save(this string pdfSubpath, PdfDocument pdfDocument)
     {
         using MemoryStream ms = new();
-        pdfDocument.Save(ms);
+
+        lock (_lock)
+        {
+            pdfDocument.Save(ms);
+        }
+
         string filePath = $"{_outputFolder}/{pdfSubpath}";
         string directory = Path.GetDirectoryName(filePath) ?? throw new DirectoryNotFoundException("Output directory not found.");
         if(!Directory.Exists(directory))
