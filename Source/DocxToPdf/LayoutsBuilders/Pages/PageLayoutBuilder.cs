@@ -24,7 +24,6 @@ internal static class PageLayoutBuilder
             return (PageLayout.None, ProcessingInfo.Done);
         }
 
-        // Rectangle pageContentRegion = unprocessed[0].CalculatePageDrawingArea();
         (Rectangle boundingBox, Orientation orientation) = unprocessed[0].GetPageProperties();
 
         (PageContentLayout pageContent, ProcessingInfo processingInfo) = unprocessed.CreatePageContent(

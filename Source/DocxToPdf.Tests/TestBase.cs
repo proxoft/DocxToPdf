@@ -7,7 +7,7 @@ public abstract class TestBase
     private readonly string _samplesFolder;
     private readonly string _outputFolder;
 
-    protected RenderingOptions Options { get; set; } = new RenderingOptions(hiddenChars: true);
+    internal RenderingOptions Options { get; set; } = new RenderingOptions(hiddenChars: true);
 
     protected TestBase(string samplesSubFolder)
     {
@@ -31,7 +31,7 @@ public abstract class TestBase
         var inputFileName = $"{_samplesFolder}/{docxSampleFileName}.docx";
         using var docxStream = File.Open(inputFileName, FileMode.Open, FileAccess.Read);
 
-        var pdfGenerator = new PdfGenerator();
+        var pdfGenerator = new PdfGeneratorV1();
         var pdf = pdfGenerator.Generate(docxStream, this.Options);
         pdf.Save(outputFileName);
     }

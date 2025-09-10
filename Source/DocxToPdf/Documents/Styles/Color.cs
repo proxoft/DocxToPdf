@@ -2,7 +2,7 @@
 
 namespace Proxoft.DocxToPdf.Documents.Styles;
 
-internal record Color(string Hex)
+public record Color(string Hex)
 {
     public static readonly Color Empty = new("");
     public static readonly Color Black = new("000000");

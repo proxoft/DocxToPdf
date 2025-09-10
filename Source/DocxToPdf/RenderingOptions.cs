@@ -2,7 +2,7 @@
 
 namespace Proxoft.DocxToPdf
 {
-    public class RenderingOptions
+    internal class RenderingOptions
     {
         public static readonly RenderingOptions Default = new RenderingOptions();
 

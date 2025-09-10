@@ -2,8 +2,11 @@
 using System.Text;
 using DocumentFormat.OpenXml.Packaging;
 using PdfSharp.Pdf;
-using Proxoft.DocxToPdf.Models;
-using Proxoft.DocxToPdf.Rendering;
+using Proxoft.DocxToPdf.Builders;
+using Proxoft.DocxToPdf.Documents;
+using Proxoft.DocxToPdf.Layouts.Pages;
+using Proxoft.DocxToPdf.LayoutsBuilders;
+using Proxoft.DocxToPdf.LayoutsRendering;
 
 namespace Proxoft.DocxToPdf;
 
@@ -14,14 +17,14 @@ public class PdfGenerator
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
 
-    public PdfDocument Generate(Stream docxStream, RenderingOptions? options = null)
+    public PdfDocument Generate(Stream docxStream, RenderOptions? options = null)
     {
         using WordprocessingDocument docx = WordprocessingDocument.Open(docxStream, false);
-        PdfDocument pdf = docx.Generate(options);
+        PdfDocument pdf = docx.Generate(options ?? RenderOptions.Default);
         return pdf;
     }
 
-    public MemoryStream GenerateAsStream(Stream docxStream, RenderingOptions? options = null)
+    public MemoryStream GenerateAsStream(Stream docxStream, RenderOptions? options = null)
     {
         PdfDocument pdf = this.Generate(docxStream, options);
         MemoryStream ms = new();
@@ -29,7 +32,7 @@ public class PdfGenerator
         return ms;
     }
 
-    public byte[] GenerateAsByteArray(Stream docxStream, RenderingOptions? options = null)
+    public byte[] GenerateAsByteArray(Stream docxStream, RenderOptions? options = null)
     {
         using MemoryStream ms = this.GenerateAsStream(docxStream, options);
         return ms.ToArray();
@@ -38,14 +41,11 @@ public class PdfGenerator
 
 file static class Operators
 {
-    public static PdfDocument Generate(this WordprocessingDocument docx, RenderingOptions? options = null)
+    public static PdfDocument Generate(this WordprocessingDocument docx, RenderOptions options)
     {
-        RenderingOptions renderingOptions = options ?? RenderingOptions.Default;
-
-        PdfDocument pdfDocument = new();
-        PdfRenderer renderer = new(pdfDocument, renderingOptions);
-        Document document = new(docx);
-        document.Render(renderer);
+        DocumentModel documentModel = docx.CreateDocumentModel();
+        PageLayout[] pages = new LayoutBuilder().CreatePages(documentModel);
+        PdfDocument pdfDocument = LayoutRenderer.CreatePdf(pages, options);
         return pdfDocument;
     }
 }

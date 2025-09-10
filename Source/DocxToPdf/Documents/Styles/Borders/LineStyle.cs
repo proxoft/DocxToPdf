@@ -1,6 +1,6 @@
 ﻿namespace Proxoft.DocxToPdf.Documents.Styles.Borders;
 
-internal enum LineStyle
+public enum LineStyle
 {
     None,
     Solid,

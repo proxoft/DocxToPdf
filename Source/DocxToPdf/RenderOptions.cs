@@ -6,9 +6,9 @@ using Proxoft.DocxToPdf.Layouts.Pages;
 using Proxoft.DocxToPdf.Layouts.Paragraphs;
 using Proxoft.DocxToPdf.Layouts.Sections;
 
-namespace Proxoft.DocxToPdf.LayoutsRendering;
+namespace Proxoft.DocxToPdf;
 
-internal class RenderOptions
+public class RenderOptions
 {
     public static readonly RenderOptions Default = new();
 
