@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <PackageIcon>Icon.png</PackageIcon>
         <PackageId>Proxoft.DocxToPdf</PackageId>
@@ -12,8 +12,9 @@
         <PackageReference Include="PDFsharpNetStandard2" Version="1.51.4845" />
         <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.7" />
     </ItemGroup>
-
+    
     <ItemGroup>
+        <Using Alias="OpenXml" Include="DocumentFormat.OpenXml" />
         <Using Alias="Word" Include="DocumentFormat.OpenXml.Wordprocessing" />
     </ItemGroup>
 

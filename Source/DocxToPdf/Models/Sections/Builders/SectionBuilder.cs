@@ -8,7 +8,6 @@ using Proxoft.DocxToPdf.Models.Common;
 using Proxoft.DocxToPdf.Models.Core;
 using Proxoft.DocxToPdf.Models.Sections.Columns;
 using Proxoft.DocxToPdf.Models.Styles.Services;
-using OpenXml = DocumentFormat.OpenXml;
 using Pack = DocumentFormat.OpenXml.Packaging;
 
 namespace Proxoft.DocxToPdf.Models.Sections.Builders;
@@ -90,7 +89,7 @@ internal static class SectionBuilder
         bool isFirst,
         IStyleFactory styleFactory)
     {
-        ImageAccessor imageAccessor = new(mainDocumentPart);
+        ImageAccessor imageAccessor = ImageAccessor.Create(mainDocumentPart);
 
         SectionProperties sectionProperties = wordSectionProperties.CreateSectionProperties(mainDocumentPart, isFirst, headerFooterConfiguration);
         ColumnsConfiguration columnsConfiguration = wordSectionProperties.CreateColumnsConfiguration(sectionProperties.PageConfiguration, sectionProperties.Margin);

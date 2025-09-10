@@ -1,0 +1,46 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using Proxoft.DocxToPdf.Documents.Paragraphs;
+using Proxoft.DocxToPdf.Documents.Styles;
+using Proxoft.DocxToPdf.Documents.Styles.Texts;
+
+namespace Proxoft.DocxToPdf.Builders.OpenXmlExtensions.Paragraphs;
+
+internal static class TextExtensions
+{
+    public static readonly TextStyle _default = new("Arial", 11, FontDecoration.None, new Color("000000"), Color.Empty);
+
+    public static Element[] SplitToElements(this Word.Text text, BuilderServices services, TextStyle paragraphTextStyle) =>
+        [..text.InnerText
+            .SplitToWordsAndWhitechars()
+            .Select(s =>
+            {
+                Element e = s switch
+                {
+                    " " => new Space(services.IdFactory.NextWordId(), paragraphTextStyle),
+                    _ => new Text(services.IdFactory.NextWordId(), s, paragraphTextStyle)
+                };
+
+                return e;
+            })
+        ];
+
+    private static IEnumerable<string> SplitToWordsAndWhitechars(this string text)
+    {
+        int start = 0, index;
+
+        while ((index = text.IndexOfAny([' ', '\t'], start)) != -1)
+        {
+            if (index - start > 0)
+                yield return text[start..index];
+
+            yield return text.Substring(index, 1);
+            start = index + 1;
+        }
+
+        if (start < text.Length)
+        {
+            yield return text[start..];
+        }
+    }
+}

@@ -19,20 +19,26 @@ public class PageNumberTest : TestBase
     }
 
     [Fact]
-    public void PageNumberTotalPages_Over10()
+    public void PageNumberTotalPagesOver10()
     {
-        this.Generate(nameof(PageNumberTotalPages_Over10));
+        this.Generate(nameof(PageNumberTotalPagesOver10));
     }
 
     [Fact]
-    public void TotalPages_ReconstructParagraph()
+    public void TotalPagesReconstructParagraph()
     {
-        this.Generate(nameof(TotalPages_ReconstructParagraph));
+        this.Generate(nameof(TotalPagesReconstructParagraph));
     }
 
     [Fact]
-    public void TotalPages_ReconstructMultipleParagraphs()
+    public void TotalPagesReconstructMultipleParagraphs()
     {
-        this.Generate(nameof(TotalPages_ReconstructMultipleParagraphs));
+        this.Generate(nameof(TotalPagesReconstructMultipleParagraphs));
+    }
+
+    [Fact]
+    public void TotalPagesWithImageTextWrapping()
+    {
+        this.Generate(nameof(TotalPagesWithImageTextWrapping));
     }
 }
