@@ -17,7 +17,7 @@ internal static class TableLayoutBuilder
         TableLayout previousLayout,
         Size availableArea,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         GridLayout gridLayout = table.InitializeGridLayout();
         Rectangle[] columnsAvailableArea = gridLayout.SplitToColumnAreas(availableArea);
@@ -69,7 +69,7 @@ internal static class TableLayoutBuilder
         TableLayout previousTableLayout,
         Size availableArea,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         CellLayout[] cellLayouts = [];
         GridLayout gridLayout = table.InitializeGridLayout();

@@ -16,7 +16,7 @@ internal static class ParagraphLayoutBuilder
         ParagraphLayout previousLayout,
         Size availableArea,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         ModelId lastProcessed = previousLayout.LastProcessedElementIdOf(paragraph.Id);
 
@@ -54,7 +54,7 @@ internal static class ParagraphLayoutBuilder
         ParagraphLayout previousLayout,
         Size availableArea,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         FixedImageLayout[] updatedFixedImages = layout.FixedImages.Update(paragraph.FixedDrawings, availableArea);
         ParagraphLayoutingArea area = paragraph.CreateArea(availableArea);

@@ -14,7 +14,7 @@ internal static class FooterLayoutBuilder
         this Section section,
         Size pageAreaSize,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Footer footer = section.FindFooter(fieldVariables);
         Size footerArea = section.CalculateFooterAvailableAreaSize(pageAreaSize);
@@ -43,7 +43,7 @@ internal static class FooterLayoutBuilder
         Section section,
         Size pageAreaSize,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Footer footer = section.FindFooter(fieldVariables);
         Size footerArea = section.CalculateFooterAvailableAreaSize(pageAreaSize);

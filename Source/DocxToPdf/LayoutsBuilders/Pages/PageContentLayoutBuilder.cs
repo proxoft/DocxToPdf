@@ -20,7 +20,7 @@ internal static class PageContentLayoutBuilder
         Rectangle pageArea,
         PageContentLayout previousPageContent,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         if (sections.Length == 0)
         {
@@ -86,7 +86,7 @@ internal static class PageContentLayoutBuilder
         Section[] sections,
         SectionLayout previousPageSectionLayout,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         SectionLayout[] sectionLayouts = [];
         UpdateInfo lastUpdateInfo = UpdateInfo.Done;

@@ -17,7 +17,7 @@ internal static class ParagraphsAndTablesBuilder
         Size availableArea,
         IComposedLayout previousLayout,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         ProcessingInfo processingInfo = ProcessingInfo.Done;
         float yOffset = 0;
@@ -73,7 +73,7 @@ internal static class ParagraphsAndTablesBuilder
         Size availableArea,
         IComposedLayout previousLayout,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Size remainingArea = availableArea;
         Layout[] updatedLayouts = [];

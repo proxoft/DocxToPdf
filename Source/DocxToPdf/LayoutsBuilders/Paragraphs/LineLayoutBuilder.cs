@@ -21,7 +21,7 @@ internal static class LineLayoutBuilder
         ParagraphLayoutingArea area,
         FieldVariables fieldVariables,
         ParagraphStyle style,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Element[] unprocessed = [.. elements];
         if (unprocessed.Length == 0)
@@ -78,7 +78,7 @@ internal static class LineLayoutBuilder
         Paragraph paragraph,
         ParagraphLayoutingArea area,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         ParagraphLayoutingArea remainingArea = area;
         LineLayout[] updatedLines = [];
@@ -127,7 +127,7 @@ internal static class LineLayoutBuilder
         LineAlignment alignment,
         FieldVariables fieldVariables,
         TextStyle paragraphTextStyle,
-        LayoutServices services)
+        ILayoutServices services)
     {
         int elementIndex = 0;
         ElementLayout element = elements[elementIndex].CreateElementLayout(fieldVariables, services);
@@ -169,7 +169,7 @@ internal static class LineLayoutBuilder
         FieldVariables fieldVariables,
         LineAlignment alignment,
         TextStyle paragraphTextStyle,
-        LayoutServices services)
+        ILayoutServices services)
     {
         if(line.Words.Length == 0)
         {
@@ -259,7 +259,7 @@ file static class LineSegmentFunctions
         LineAlignment alignment,
         Element[] allElements,
         TextStyle paragraphTextStyle,
-        LayoutServices services)
+        ILayoutServices services)
     {
         bool isLastLine = segments.IsLastLine(allElements);
 
@@ -445,7 +445,7 @@ file static class ElementLayoutOperators
         return LineDecoration.None;
     }
 
-    public static LineLayout CreateLine(this ElementLayout[] elements, float yPosition, LineDecoration lineDecoration, TextStyle textStyle, LayoutServices services)
+    public static LineLayout CreateLine(this ElementLayout[] elements, float yPosition, LineDecoration lineDecoration, TextStyle textStyle, ILayoutServices services)
     {
         if (elements.Length == 0)
         {
@@ -491,7 +491,7 @@ file static class TextStyleExtensions
     public static ElementLayout CreateLineCharacter(
        this TextStyle textStyle,
        LineDecoration lineDecoration,
-       LayoutServices services) =>
+       ILayoutServices services) =>
        lineDecoration switch
        {
            LineDecoration.Last => new Text(ModelId.None, "¶", textStyle).CreateElementLayout(FieldVariables.None, services),
@@ -500,7 +500,7 @@ file static class TextStyleExtensions
            _ => new EmptyLayout(ModelId.None, Rectangle.Empty, textStyle),
        };
 
-    public static LineLayout CreateEmptyLine(this TextStyle textStyle, float YPosition, LineDecoration lineDecoration, LayoutServices services)
+    public static LineLayout CreateEmptyLine(this TextStyle textStyle, float YPosition, LineDecoration lineDecoration, ILayoutServices services)
     {
         float defaultLineHeight = services.CalculateLineHeight(textStyle);
         Rectangle bb = new(new Position(0, YPosition), new Size(0, defaultLineHeight));

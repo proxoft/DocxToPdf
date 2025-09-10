@@ -16,7 +16,7 @@ internal static class PageLayoutBuilder
         this Section[] sections,
         PageLayout previousPage,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Section[] unprocessed = sections.Unprocessed(previousPage);
         if(unprocessed.Length == 0)
@@ -46,7 +46,7 @@ internal static class PageLayoutBuilder
         Section[] sections,
         SectionLayout previousPageSectionLayout,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         (PageContentLayout content, UpdateInfo updateInfo) = pageLayout.PageContent.UpdatePageContent(sections, previousPageSectionLayout, fieldVariables, services);
 

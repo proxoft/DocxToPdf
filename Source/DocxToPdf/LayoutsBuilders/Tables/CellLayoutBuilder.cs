@@ -16,7 +16,7 @@ internal static class CellLayoutBuilder
         Size availableArea,
         FieldVariables fieldVariables,
         CellLayout previousLayout,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Model[] unprocessed = cell.Unprocessed(previousLayout.ParagraphsOrTables);
         Padding effectivePadding = cell.Padding.UpdatePaddingByPartitioning(previousLayout);
@@ -39,7 +39,7 @@ internal static class CellLayoutBuilder
         Size availableArea,
         FieldVariables fieldVariables,
         CellLayout previousPageCellLayout,
-        LayoutServices services
+        ILayoutServices services
     )
     {
         Padding effectivePadding = cell.Padding.UpdatePaddingByPartitioning(previousPageCellLayout);

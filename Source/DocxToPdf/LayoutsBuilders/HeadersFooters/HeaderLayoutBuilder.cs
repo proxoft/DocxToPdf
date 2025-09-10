@@ -14,7 +14,7 @@ internal static class HeaderLayoutBuilder
         this Section section,
         Size pageAreaSize,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Header header = section.FindHeader(fieldVariables);
         Size headerArea = section.CalculateHeaderAvailableAreaSize(pageAreaSize);
@@ -40,7 +40,7 @@ internal static class HeaderLayoutBuilder
         Section section,
         Size pageAreaSize,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         Header header = section.FindHeader(fieldVariables);
         Size headerArea = section.CalculateHeaderAvailableAreaSize(pageAreaSize);

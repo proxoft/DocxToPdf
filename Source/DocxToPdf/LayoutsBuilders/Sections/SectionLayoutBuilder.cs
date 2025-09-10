@@ -15,7 +15,7 @@ internal static class SectionLayoutBuilder
         SectionLayout previousSectionLayout,
         Size availableArea,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         ColumnLayout[] columns = [];
         ProcessingInfo sectionProcessingInfo = ProcessingInfo.Done;
@@ -73,7 +73,7 @@ internal static class SectionLayoutBuilder
         SectionLayout previousSectionLayout,
         Size availableArea,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         ColumnLayout[] updatedColumns = [];
         ColumnLayout previousColumnLayout = previousSectionLayout.ModelId == section.Id

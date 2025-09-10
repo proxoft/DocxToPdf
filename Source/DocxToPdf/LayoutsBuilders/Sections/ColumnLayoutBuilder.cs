@@ -17,7 +17,7 @@ internal static class ColumnLayoutBuilder
         Size availableArea,
         ColumnLayout previousColumn,
         FieldVariables fieldVariables,
-        LayoutServices services
+        ILayoutServices services
     )
     {
         Model[] unprocessed = section.Unprocessed(previousColumn.ParagraphsOrTables);
@@ -44,7 +44,7 @@ internal static class ColumnLayoutBuilder
         ColumnLayout previousColumnLayout,
         Size availableArea,
         FieldVariables fieldVariables,
-        LayoutServices services)
+        ILayoutServices services)
     {
         (Layout[] updatedLayouts, UpdateInfo updateInfo) = column.ParagraphsOrTables.UpdateParagraphAndTableLayouts(
             section.Elements,

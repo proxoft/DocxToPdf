@@ -10,7 +10,7 @@ namespace Proxoft.DocxToPdf.LayoutsBuilders;
 
 internal class LayoutBuilder
 {
-    private readonly LayoutServices _layoutServices = new();
+    private readonly ILayoutServices _layoutServices = LayoutServicesFactory.CreateServices();
 
     public PageLayout[] CreatePages(DocumentModel document) =>
         document.Sections.Length == 0
